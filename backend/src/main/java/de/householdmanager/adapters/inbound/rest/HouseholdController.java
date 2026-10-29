@@ -2,7 +2,9 @@ package de.householdmanager.adapters.inbound.rest;
 
 import de.householdmanager.adapters.inbound.rest.dto.HouseholdRequest;
 import de.householdmanager.adapters.inbound.rest.dto.HouseholdResponse;
+import de.householdmanager.application.port.in.CurrentUserPort;
 import de.householdmanager.application.port.in.HouseholdUseCase;
+import de.householdmanager.domain.model.UserAccount;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +28,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class HouseholdController {
 
     private final HouseholdUseCase householdUseCase;
+    private final CurrentUserPort currentUserPort;
 
     @GetMapping
     public List<HouseholdResponse> listHouseholds() {
-        return householdUseCase.listHouseholds().stream().map(HouseholdResponse::from).toList();
+        return householdUseCase.listHouseholds(currentUserId()).stream()
+                .map(HouseholdResponse::from)
+                .toList();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public HouseholdResponse createHousehold(@Valid @RequestBody HouseholdRequest request) {
-        return HouseholdResponse.from(householdUseCase.createHousehold(request.name()));
+        return HouseholdResponse.from(householdUseCase.createHousehold(currentUserId(), request.name()));
+    }
+
+    private String currentUserId() {
+        return currentUserPort.currentUser().map(UserAccount::id)
+                .orElseThrow(AuthController.NotAuthenticatedException::new);
     }
 }

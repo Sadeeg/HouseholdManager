@@ -43,6 +43,18 @@ class SecurityConfigTest {
     @MockitoBean
     private HouseholdUseCase householdUseCase;
 
+    @MockitoBean
+    private de.householdmanager.application.port.in.TaskUseCase taskUseCase;
+
+    @MockitoBean
+    private de.householdmanager.application.port.in.MembershipUseCase membershipUseCase;
+
+    @MockitoBean
+    private de.householdmanager.application.port.in.UserSearchUseCase userSearchUseCase;
+
+    @MockitoBean
+    private de.householdmanager.application.port.in.WorkspaceUseCase workspaceUseCase;
+
     @Test
     void apiWithoutToken_isUnauthorized() throws Exception {
         mockMvc.perform(get("/api/households"))
@@ -51,7 +63,9 @@ class SecurityConfigTest {
 
     @Test
     void apiWithValidToken_isAllowed() throws Exception {
-        when(householdUseCase.listHouseholds()).thenReturn(List.of());
+        when(currentUserPort.currentUser())
+                .thenReturn(java.util.Optional.of(new de.householdmanager.domain.model.UserAccount("hm-test", "hm-test", null)));
+        when(householdUseCase.listHouseholds("hm-test")).thenReturn(List.of());
 
         mockMvc.perform(get("/api/households").with(jwt().jwt(token -> token.subject("hm-test"))))
                 .andExpect(status().isOk());

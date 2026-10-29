@@ -3,6 +3,7 @@ package de.householdmanager.adapters.outbound.persistence;
 import de.householdmanager.application.port.out.HouseholdRepository;
 import de.householdmanager.domain.model.Household;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +22,16 @@ public class HouseholdRepositoryAdapter implements HouseholdRepository {
     @Override
     public List<Household> findAll() {
         return householdJpaRepository.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public Optional<Household> findById(long id) {
+        return householdJpaRepository.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public List<Household> findByCreatedBy(String userId) {
+        return householdJpaRepository.findByCreatedBy(userId).stream().map(this::toDomain).toList();
     }
 
     @Override
@@ -43,6 +54,7 @@ public class HouseholdRepositoryAdapter implements HouseholdRepository {
                 .id(entity.getId())
                 .name(entity.getName())
                 .createdAt(entity.getCreatedAt())
+                .createdBy(entity.getCreatedBy())
                 .build();
     }
 
@@ -51,6 +63,7 @@ public class HouseholdRepositoryAdapter implements HouseholdRepository {
                 .id(household.getId())
                 .name(household.getName())
                 .createdAt(household.getCreatedAt())
+                .createdBy(household.getCreatedBy())
                 .build();
     }
 }

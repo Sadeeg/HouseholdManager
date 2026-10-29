@@ -40,4 +40,8 @@ public class HouseholdJpaEntity {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    /** Kennung der Erstellerin/des Erstellers — die Haushaltsleitung. */
+    @Column(name = "created_by", nullable = false)
+    private String createdBy;
 }

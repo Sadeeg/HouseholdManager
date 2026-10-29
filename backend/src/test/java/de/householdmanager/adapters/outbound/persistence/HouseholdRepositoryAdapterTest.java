@@ -36,10 +36,12 @@ class HouseholdRepositoryAdapterTest {
         Household saved = adapter.save(Household.builder()
                 .name("Haushalt Müller")
                 .createdAt(Instant.parse("2026-01-01T10:15:30Z"))
+                .createdBy("alice")
                 .build());
 
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getName()).isEqualTo("Haushalt Müller");
+        assertThat(saved.getCreatedBy()).isEqualTo("alice");
 
         List<Household> all = adapter.findAll();
         assertThat(all).hasSize(1);
@@ -49,23 +51,37 @@ class HouseholdRepositoryAdapterTest {
     }
 
     @Test
-    void save_updatesExistingHouseholdAndKeepsCreatedAt() {
+    void save_updatesExistingHouseholdAndKeepsCreatedAtAndOwner() {
         Household created = adapter.save(Household.builder()
                 .name("Haushalt Müller")
                 .createdAt(Instant.parse("2026-01-01T10:15:30Z"))
+                .createdBy("alice")
                 .build());
 
         // Update-Zweig: id != null, geänderter Name, abweichender createdAt.
-        // createdAt muss trotzdem aus der Datenbank stammen.
+        // createdAt und created_by bleiben unverändert.
         adapter.save(Household.builder()
                 .id(created.getId())
                 .name("Haushalt Schmidt")
                 .createdAt(Instant.parse("2026-06-01T08:00:00Z"))
+                .createdBy("bob")
                 .build());
 
         List<Household> all = adapter.findAll();
         assertThat(all).hasSize(1);
         assertThat(all.getFirst().getName()).isEqualTo("Haushalt Schmidt");
         assertThat(all.getFirst().getCreatedAt()).isEqualTo(Instant.parse("2026-01-01T10:15:30Z"));
+        assertThat(all.getFirst().getCreatedBy()).isEqualTo("alice");
+    }
+
+    @Test
+    void findByCreatedBy_returnsOnlyHouseholdsOfThatPerson() {
+        adapter.save(Household.builder().name("A").createdAt(Instant.now()).createdBy("alice").build());
+        adapter.save(Household.builder().name("B").createdAt(Instant.now()).createdBy("bob").build());
+
+        List<Household> aliceOwns = adapter.findByCreatedBy("alice");
+
+        assertThat(aliceOwns).hasSize(1);
+        assertThat(aliceOwns.getFirst().getName()).isEqualTo("A");
     }
 }

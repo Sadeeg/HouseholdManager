@@ -1,5 +1,6 @@
 package de.householdmanager.adapters.outbound.persistence;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -9,4 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * Typ nicht.
  */
 public interface HouseholdJpaRepository extends JpaRepository<HouseholdJpaEntity, Long> {
+
+    List<HouseholdJpaEntity> findByCreatedBy(String createdBy);
 }
