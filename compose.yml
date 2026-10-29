@@ -18,5 +18,27 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    build: ./backend
+    container_name: householdmanager-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/householdmanager
+      DB_USER: household
+      DB_PASSWORD: household
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+  frontend:
+    build: ./frontend
+    container_name: householdmanager-frontend
+    depends_on:
+      - backend
+    ports:
+      # nginx lauscht intern auf Port 80
+      - "${FRONTEND_PORT:-4200}:80"
+
 volumes:
   household-db:

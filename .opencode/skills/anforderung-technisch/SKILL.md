@@ -19,6 +19,20 @@ nächste Issue sie nicht neu erfindet.
 
 ## Schritte
 
+### 0. Vorgaben des ARC-Agenten
+
+Vor dem ersten Schritt: die **Vorgaben aus der ARC-Runde** (Runde 2b)
+übernehmen. Sie nennen Zielort, betroffene Ports und Adapter, Daten,
+Frontend-Schichten und offene Architekturfragen. Was dort steht, ist
+**Vorgabe**, nicht Vorschlag — Abweichungen brauchen einen Grund und eine
+Rückfrage. Ist die ARC-Runde nicht gelaufen (z. B. bei einem Issue, das
+ohne Architekturfolgen auskommt), wird sie nachgeholt.
+
+Die arc42-Dokumentation unter `arc42/` ist der architektonische Kontext:
+Bausteine, Abläufe und Entscheidungen sind dort beschrieben und mit dem
+Code verknüpft. Widersprüche zwischen Issue, arc42 und Code sind Befunde —
+sie werden hier aufgelöst, nicht stillschweigend übergangen.
+
 ### 1. Zielort im Code
 
 Für jeden Teil der Umsetzung: welche Schicht, welche Klasse, neu oder

@@ -121,6 +121,7 @@ Grilling da, nicht das Gate.
 - [ ] Verify-Block mit kopierfertigen Kommandos (siehe `issue-formulierung`)
 - [ ] Risiken und bekannte Gotchas benannt
 - [ ] Fachliche Akzeptanzkriterien sind technisch prüfbar (jedes Kriterium hat einen Testfall oder ein Kommando)
+- [ ] **Die arc42-Dokumentation ist aktualisiert.** Die vom ARC-Agenten berührten Dokumente unter `arc42/` beschreiben das Feature (Bausteine, Abläufe, Daten, Entscheidungen); offene Punkte sind als `> **Offen:** …` markiert, nicht geraten.
 - [ ] **Jedes Akzeptanzkriterium hat eine Testzuordnung.** Die Teststrategie führt jede `AC<n>` in einer Zeile mit Testart und Ort. Ein AC ohne Zeile ist eine Lücke der Art `TECH` → runde=3
 - [ ] **Begriffsabgleich vorhanden.** `## Begriffe` führt für jeden im Dokument sichtbaren Fachbegriff DB-Feld, UI-Label und das Literal im Ergebnis. Wo die vier auseinanderlaufen, ist das benannt
 - [ ] **Die Verträge passen zum Zielort.** Kein Vertrag widerspricht dem Zielort aus Schritt 1 — insbesondere kein Vertrag, der eine Datenbankabfrage verbietet, während der Zielort Daten aus der Datenbank lädt

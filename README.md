@@ -20,21 +20,30 @@ Haushalt.
 ## Schnellstart
 
 ```bash
-# 1. Datenbank
-docker compose -f compose.yml up -d postgres
+# Alles in Docker: Postgres + Backend + Frontend
+docker compose -f compose.yml up -d --build
+#   Frontend  http://localhost:4200
+#   Backend   http://localhost:8080  (Health: /actuator/health)
 
-# 2. Backend (http://localhost:8080, Health: /actuator/health)
+# Nur die Datenbank (für die lokale Entwicklung)
+docker compose -f compose.yml up -d postgres
+```
+
+Lokal statt Docker:
+
+```bash
+# Backend (http://localhost:8080, Health: /actuator/health)
 cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 
-# 3. Frontend (http://localhost:4200, /api wird auf das Backend geproxyt)
+# Frontend (http://localhost:4200, /api wird auf das Backend geproxyt)
 cd frontend
 npm install
 npm start
 ```
 
 Im Profil `local` startet Spring Boot die Compose-Datei aus dem Repo-Root
-selbst (Dev Services) — Schritt 1 entfällt dann.
+selbst (Dev Services) — der Datenbank-Schritt entfällt dann.
 
 ## Architektur
 
@@ -71,10 +80,13 @@ frontend/                      Angular-22-App (Feature-Architektur)
   sheriff.config.ts            Modulgrenzen (Steyer)
   eslint.config.js             Lint-Regeln inkl. Sheriff-Plugin
 
-docs/adr/                      Architekturentscheidungen
+docs/adr/                      Architekturentscheidungen (ADRs)
+arc42/                         Architekturdokumentation (12 Kapitel),
+                               gepflegt vom ARC-Agenten
 .opencode/                     Skills und Commands für OpenCode
   skills/                      Anforderungs-Loop, Architektur-, Angular- und Spring-Skills
-  commands/                    /anforderung, /issue-check, /issue-github
+  commands/                    /anforderung, /review, /abnahme, /issue-check, /issue-github
+  agents/                      arc-agent, architektur-reviewer, kritischer-tester
 
 AGENTS.md                      Projektkonventionen (Quelle der Wahrheit)
 ```

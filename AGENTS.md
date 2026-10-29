@@ -79,6 +79,10 @@ frontend/src/app/
     routes.ts                lazy; Feature-Services route-scoped
     <feature>-page.ts        smart Component
     model/ data/ ui/         Modell, Datenzugriff, dumb Components
+
+arc42/                       Architekturdokumentation (12 Kapitel),
+                             gepflegt vom ARC-Agenten
+docs/adr/                    Architekturentscheidungen (ADRs)
 ```
 
 **Backend:** Ports & Adapters, `adapters → application → domain` —
@@ -87,6 +91,9 @@ frontend/src/app/
 **Frontend:** Feature-Architektur (Manfred Steyer) — [ADR 0002](docs/adr/0002-frontend-feature-architecture.md),
 Skill `frontend-feature-architecture`. Grenzen werden von **Sheriff**
 geprüft (`frontend/sheriff.config.ts`).
+**arc42:** wird vom ARC-Agenten (`@arc-agent`) zwischen fachlicher und
+technischer Runde gepflegt; ADRs sind die Quelle der Wahrheit für
+Entscheidungen, arc42/09 verweist darauf.
 
 ## Skills
 
@@ -103,8 +110,9 @@ geprüft (`frontend/sheriff.config.ts`).
 | `anforderung-loop` (+ `-intake`/`-fachlich`/`-technisch`/`-gate`) · `issue-formulierung` · `issue-github` | Issues anlegen und verfeinern |
 
 **Agent:** `architektur-reviewer` (Subagent) — Architektur-Gate
-(`OK`/`KORREKTUREN`, Korrekturauftrag) und `kritischer-tester` (Subagent) —
-Test-Gate (`PASS`/`FAIL`), siehe „Definition of Done".
+(`OK`/`KORREKTUREN`, Korrekturauftrag), `kritischer-tester` (Subagent) —
+Test-Gate (`PASS`/`FAIL`) und `arc-agent` (Subagent) — pflegt `arc42/`
+zwischen fachlicher und technischer Runde. Siehe „Definition of Done".
 
 Herkunft und Aktualisierung: `.opencode/skills/README.md`. Vollständige
 Konventionstabellen: `.opencode/skills/anforderung-technisch/references/technik-checkliste.md`.

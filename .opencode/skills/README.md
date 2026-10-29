@@ -34,6 +34,7 @@ Diese Skills sind **projektspezifisch** und werden hier gepflegt:
 
 | Agent | Aufgabe |
 |-------|---------|
+| `.opencode/agents/arc-agent.md` | ARC-Runde (zwischen fachlicher und technischer Runde): prüft die Architektur über das ganze Bild, pflegt `arc42/`, liefert Vorgaben für Runde 3, stellt Architekturfragen — er entscheidet nichts |
 | `.opencode/agents/architektur-reviewer.md` | Architektur-Gate: prüft read-only gegen `AGENTS.md`, ADRs und Skills, urteilt `OK`/`KORREKTUREN`, liefert den ausführbaren Korrekturauftrag (wird delegiert, nicht selbst umgesetzt) |
 | `.opencode/agents/kritischer-tester.md` | Test-Gate: prüft adversarial gegen die Akzeptanzkriterien, schreibt fehlende Tests, urteilt `PASS`/`FAIL` |
 

@@ -37,7 +37,12 @@ und nach jeder Runde aktualisiert. Es gibt keine lokale Draft-Datei.
    weitermachen?" — A: weiter, B: pausieren (Issue bleibt `[WIP]`), C: eigene
    Richtung. Bei B zusammenfassen, was erreicht ist und was als Nächstes
    kommt, dann enden.
-7. Nach Runde 3: `anforderung-gate` mit `runde: final`. Bei `PASS` →
+7. **Zwischen Runde 2 und Runde 3: ARC-Runde.** Nach der Bestätigung für
+   Runde 3 den Subagenten `arc-agent` starten: Er prüft die Architektur
+   über das ganze Bild, pflegt `arc42/` und liefert die Vorgaben für
+   Runde 3. Offene Architekturfragen dem Auftraggeber stellen, bevor Runde 3
+   beginnt.
+8. Nach Runde 3: `anforderung-gate` mit `runde: final`. Bei `PASS` →
    `issue-github` **Teil C** — finalisieren, `[WIP]` aus dem Titel, Labels
    und Typ setzen, Abschlusskommentar.
 

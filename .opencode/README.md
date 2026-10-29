@@ -68,12 +68,14 @@ Die Frontend-Grenzen werden von **Sheriff** maschinell geprüft
 
 Aus einer groben Idee entsteht in drei Runden ein Issue, das ein Agent ohne
 Rückfragen umsetzen kann. Jede Runde hat ein Grilling und ein Gate; bei
-Lücken läuft die Schleife in die zuständige Runde zurück.
+Lücken läuft die Schleife in die zuständige Runde zurück. Zwischen Runde 2
+und Runde 3 steht die **ARC-Runde**.
 
-| Runde | Skill | Grilling | Ergebnis |
-|-------|-------|----------|----------|
+| Runde | Skill/Agent | Grilling | Ergebnis |
+|-------|-------------|----------|----------|
 | 1 — Erfassen | `anforderung-intake` | Verständnis sichern (Ziel, Kern, Verzicht) | Ziel, Kontext, Scope, Nicht-Ziele, Epic-/Phasen-Schnitt — **Issue wird angelegt** |
 | 2 — Fachlich | `anforderung-fachlich` | Regeln attackieren (Randfall, Rolle, Umkehr) | Rollen, Nutzerfluss, fachliche Regeln, prüfbare Akzeptanzkriterien, Fehlerfälle |
+| 2b — Architektur | Agent `arc-agent` | — | **arc42 gepflegt**, Vorgaben für Runde 3, offene Architekturfragen |
 | 3 — Technisch | `anforderung-technisch` | Bauplan attackieren (Widerspruch, Folge, Zeit) | Zielort, Datenmodell, API-Vertrag, UI, Dateiliste, Tests, Verify |
 
 | Skill | Aufgabe |
@@ -82,6 +84,31 @@ Lücken läuft die Schleife in die zuständige Runde zurück.
 | `anforderung-gate` | Vollständigkeitscheckliste je Runde, Urteil `PASS`/`GAPS` |
 | `issue-formulierung` | Hausstil: Titel, Labels, Section-Reihenfolge, Verify-Block |
 | `issue-github` | Issue anlegen, Body je Runde ersetzen, Protokoll kommentieren, finalisieren |
+
+### ARC-Runde (Runde 2b)
+
+Der ARC-Agent betrachtet die Architektur über das ganze Bild — Kontext,
+Bausteine, Ports & Adapters, Feature-Grenzen, Daten, Laufzeit, Verteilung,
+Querschnittskonzepte, Qualität, Risiken — und pflegt die
+**arc42-Dokumentation** unter [`arc42/`](../arc42/):
+
+| Dokument | Inhalt |
+|----------|--------|
+| `01_Einfuehrung_und_Ziele.md` | Zweck, Qualitätsziele, Stakeholder |
+| `02_Randbedingungen.md` | Stack, Versionen, organisatorische Grenzen |
+| `03_Kontextabgrenzung.md` | Fachlicher Kontext, bounded contexts, Scope |
+| `04_Loesungsstrategie.md` | Technologieentscheidungen, Muster |
+| `05_Bausteinsicht.md` | Bausteine und Beziehungen |
+| `06_Laufzeitsicht.md` | Abläufe, Szenarien, Fehlerpfade |
+| `07_Verteilungssicht.md` | Container, Ports, Konfiguration |
+| `08_Querschnittliche_Konzepte.md` | Fehler, Validierung, Security, Transaktionen |
+| `09_Architekturentscheidungen.md` | Verweis auf die ADRs unter `docs/adr/` |
+| `10_Qualitaetsanforderungen.md` | Qualitätsszenarien mit Priorität |
+| `11_Risiken_und_Schulden.md` | Risiken, technische Schulden |
+| `12_Glossar.md` | Fach- und Architekturbegriffe |
+
+Der Agent **entscheidet nichts**: Architekturfragen gehen als Rückfrage an
+den Auftraggeber, Entscheidungen werden als ADR festgehalten.
 
 ### Arbeitsstand: das GitHub-Issue
 
