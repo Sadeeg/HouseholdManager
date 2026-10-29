@@ -46,6 +46,6 @@ zu welchem Feature gehört. Feature-Ordner machen die Zugehörigkeit am
 Pfad ablesbar; die Matrix-Subordner (`model`, `data`, `ui`) verhindern,
 dass ein dumb Component den Datenzugriff anfasst.
 
-> **Offen:** Mandantenfähigkeit (Context pro Haushalt statt pro Anwendung)
-> und die Frage, ob Aufgaben/Ausgaben/Termine eigene Services werden oder
-> Module im selben Service — mit dem ersten Epic entscheiden.
+> **Entschieden (ADR 0003):** Fach-Contexte sind Module derselben
+> Anwendung, kein eigener Service je Context.
+> **Offen:** Mandantenfähigkeit (Context pro Haushalt statt pro Anwendung).

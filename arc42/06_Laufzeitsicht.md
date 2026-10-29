@@ -42,6 +42,26 @@
    als Aktion verdrahtet.
 ```
 
+## Szenario 4 — Aufgaben-Tafel im gewählten Workspace (Issue #1, entworfen)
+
+```text
+1. Person wählt den Haushalt im Workspace-Wähler (core/workspace); Auswahl wird
+   beim nächsten Besuch wiederhergestellt
+2. GET /api/households/{householdId}/tasks → TaskUseCase prüft zuerst die
+   Mitgliedschaft (CurrentUserPort); Nicht-Mitglied → 403 → Navigationspunkt
+   „AUFGABEN“ erscheint nicht (AC12)
+3. Board rendert drei Bahnen in gespeicherter Reihenfolge (`position`, A15);
+   „überfällig“ = dueDate < heutiger lokaler Tag
+   und Status ≠ DONE — ohne Backend-Beteiligung auf der Karte berechnet (AC22)
+4. Drag & Drop → PATCH /api/households/{householdId}/tasks/{taskId} {status};
+   Fehler → Karte springt in die Ausgangsbahn zurück, Toast (AC19)
+5. Workspace-Wechsel: die Data-Services laden mit neuer householdId neu;
+   die Seite lädt nicht neu (AC23)
+```
+
+**Fehlerpfad:** Nicht-Mitglied / fremder Haushalt → Fachfehler →
+`ProblemDetail` **403**; Löschaktionen wirken nur nach Bestätigung im Dialog.
+
 ## Zeitverhalten
 
 | Vorgang | Dauer (lokal) | Anmerkung |

@@ -5,7 +5,7 @@
 | Nr | Risiko | Auswirkung | Gegenmaßnahme | Status |
 |----|--------|------------|---------------|--------|
 | R1 | ~~Keine Authentifizierung~~ — **gemindert**: Nextcloud/OIDC ist eingerichtet (JWT-Access-Tokens, JWKS-Validierung), die API ist ohne Token 401 | Kein Zugriffsschutz für Endnutzer, wenn der Client umgangen wird | `SecurityConfig` (Ports & Adapters), CORS auf den Frontend-Origin, `.env` außerhalb des Repos | **aktiv** |
-| R2 | Mandanten-Cut fehlt (ein Nutzer sieht alle Haushalte) | Datenleck bei Mehrhaushalten | Kontext-Schnitt + Autorisierung je Haushalt (mit dem Auth-Epic entscheiden) | offen |
+| R2 | Mandanten-Cut (ein Nutzer sah alle Haushalte) | Datenleck bei Mehrhaushalten | entworfen (Issue #1): `household_member` + Prüfung je Use Case (siehe 08) | in Arbeit |
 | R3 | Kleines lokales Modell (27B, 256k) | Fehler in der Umsetzung, vergessene Regeln | Gates (Review + Abnahme), Kontext-Disziplin, Handover-Datei | aktiv |
 | R4 | ~~Keine CI~~ — **gemindert**: CI prüft bei jedem PR Build, Tests, Lint, Modulgrenzen und den Compose-Stack | Ein Feature kann ohne grünes CI nicht gemergt werden; der menschliche Merge bleibt nötig | GitHub Actions (`.github/workflows/ci.yml`), Branch-Schutz auf `main` | **aktiv** |
 | R5 | Kein E2E-Test (Playwright) | Schnittstellenfehler zwischen SPA und API werden spät entdeckt | Integrationstest im Backend ergänzen; E2E mit dem ersten UI-Feature | offen |
@@ -30,5 +30,16 @@
 > abgesichert durch `HouseholdRepositoryAdapterTest`) und die Fach-Exception
 > `InvalidHouseholdNameException` statt einer pauschalen
 > `IllegalArgumentException` — umgesetzt und in 08 beschrieben.
+
+> **Architekturpunkte aus Issue #1 — Stand 2026-10-29:**
+> 1. Ersteller nicht persistiert — **entschieden (A14):** `created_by`
+>    NOT NULL, frische Dev-DB, kein Backfill (siehe 05, Migration V2).
+> 2. Kartenreihenfolge je Spalte — **entschieden (A15):** dauerhaftes
+>    `position`-Feld im Task-Datenmodell (siehe 05, 06).
+> 3. **Offen:** Name der Zugewiesenen: Live-Auflösung über `UserDirectory` je
+>    Request (Verzeichnisabhängigkeit) oder Namens-Snapshot bei Zuweisung —
+>    Entscheidung in Runde 3 (siehe 05).
+> 4. **Offen:** Markdown-Renderer `shared` vs. `features/tasks/ui` —
+>    Entscheidung in Runde 3 (siehe 05).
 
 > **Offen:** Risiken priorisieren und mit dem Auftraggeber durchgehen.
