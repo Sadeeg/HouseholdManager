@@ -22,3 +22,75 @@
     border-radius: var(--hm-radius);
   }
 }
+
+// Eintrag und Mitglieder-Aktion sind zwei Spalten derselben Zeile: die
+// Aktion überlagert nie Name oder Erstellungsdatum. Ein geöffneter
+// Mitglieder-Abschnitt spannt die volle Breite der Zeile.
+.households__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--hm-space-3);
+  row-gap: 0;
+}
+
+app-member-section {
+  grid-column: 1 / -1;
+}
+
+// Anlegen-Formular: eine Zeile unter dem Kopf, solange es offen ist.
+.households__create {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--hm-space-3);
+  margin-top: var(--hm-space-4);
+  padding: var(--hm-space-4);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  background: var(--hm-surface);
+}
+
+.households__create-field {
+  flex: 1 1 20rem;
+  min-width: 16rem;
+
+  label {
+    display: block;
+    margin-bottom: var(--hm-space-1);
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-muted);
+  }
+}
+
+.households__create-actions {
+  display: flex;
+  gap: var(--hm-space-3);
+}
+
+.households__create-error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-danger);
+}
+
+.households__empty-action {
+  margin-left: var(--hm-space-3);
+}
+
+.households__members-action {
+  justify-self: end;
+}
+
+.toast {
+  position: fixed;
+  bottom: var(--hm-space-6);
+  right: var(--hm-space-6);
+  z-index: var(--hm-z-toast);
+  padding: var(--hm-space-3) var(--hm-space-4);
+  background: var(--hm-surface-2);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  box-shadow: var(--hm-shadow);
+}

@@ -1,0 +1,106 @@
+<app-page-header title="Aufgaben">
+  <div actions>
+    <button type="button" class="hm-button hm-button--primary" (click)="openCreate()">
+      Aufgabe anlegen
+    </button>
+    @if (doneCount() > 0) {
+      <button type="button" class="hm-button hm-button--secondary" (click)="showClearDone()">
+        Erledigte löschen
+      </button>
+    }
+  </div>
+</app-page-header>
+
+@if (workspace.currentHouseholdId() === null) {
+  <p class="state">Kein Haushalt gewählt. Wähle oben einen Haushalt oder öffne die Haushaltsverwaltung.</p>
+} @else if (loadFailed()) {
+  <p class="state state--error" role="alert">
+    Die Aufgaben konnten nicht geladen werden. Bitte später erneut versuchen.
+  </p>
+} @else {
+  @if (tasksData.tasks.isLoading()) {
+    <p class="state">Aufgaben werden geladen …</p>
+  }
+
+  @if (isEmptyBoard() && !tasksData.tasks.isLoading()) {
+    <p class="board__hint">
+      Noch keine Aufgaben in diesem Haushalt.
+      <button type="button" class="hm-button hm-button--primary board__hint-action" (click)="openCreate()">
+        Aufgabe anlegen
+      </button>
+    </p>
+  }
+
+  <div class="board" aria-label="Aufgaben-Board">
+    @for (column of columns(); track column.status) {
+      <section class="board__column" [attr.data-status]="column.status">
+        <header class="board__column-head">
+          <span class="board__column-name">{{ column.status }}</span>
+          <span class="board__column-count">{{ column.tasks.length }}</span>
+        </header>
+
+        <div
+          class="board__cards"
+          cdkDropList
+          [id]="listId(column.status)"
+          [cdkDropListData]="column.tasks"
+          [cdkDropListConnectedTo]="connectedLists(column.status)"
+          (cdkDropListDropped)="onDrop(column.status, $event)"
+        >
+          @for (task of column.tasks; track task.id) {
+            <app-task-card
+              [task]="task"
+              [busy]="busyTaskId() === task.id"
+              (editRequested)="openEdit($event)"
+              (deleteRequested)="pendingTaskDelete.set($event)"
+              (moved)="moveToColumn(task, $event)"
+            />
+          } @empty {
+            <p class="board__empty">Keine Aufgaben</p>
+          }
+        </div>
+      </section>
+    }
+  </div>
+}
+
+<p class="board__announce" aria-live="polite">{{ announcement() }}</p>
+
+@if (pendingTaskDelete(); as task) {
+  <app-confirm-dialog
+    title="Aufgabe löschen"
+    [description]="task.title"
+    detail="Diese Aufgabe wird endgültig gelöscht. Auch ihre Labels, Frist und Zuständige werden entfernt."
+    actionLabel="Endgültig löschen"
+    [busy]="deleting()"
+    (confirmed)="confirmTaskDelete()"
+    (cancelled)="pendingTaskDelete.set(null)"
+  />
+}
+
+@if (pendingClearDone()) {
+  <app-confirm-dialog
+    title="Erledigte löschen"
+    [description]="clearDoneDescription()"
+    [detail]="clearDoneDetail()"
+    actionLabel="Endgültig löschen"
+    [busy]="deleting()"
+    (confirmed)="confirmClearDone()"
+    (cancelled)="pendingClearDone.set(false)"
+  />
+}
+
+@if (formOpen()) {
+  <app-task-form
+    [initial]="editingTask()"
+    [saving]="savingForm()"
+    [saveError]="formError()"
+    [labelSuggestions]="tasksData.knownLabels()"
+    (saved)="saveForm($event)"
+    (cancelled)="closeForm()"
+  />
+}
+
+@if (toast(); as message) {
+  <div class="toast" role="status">{{ message }}</div>
+}

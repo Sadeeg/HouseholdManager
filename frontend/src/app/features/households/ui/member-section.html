@@ -1,0 +1,63 @@
+<section class="member-section" aria-label="Mitglieder">
+  @if (loading()) {
+    <p class="member-section__state">Mitglieder werden geladen …</p>
+  } @else if (failed()) {
+    <p class="member-section__state member-section__state--error" role="alert">
+      Die Mitglieder konnten nicht geladen werden: Der Dienst ist nicht erreichbar.
+      <button type="button" class="hm-link-action" (click)="retry.emit()">ERNEUT VERSUCHEN</button>
+    </p>
+  } @else {
+    @if ((members() ?? []).length === 0) {
+      <p class="member-section__state">
+        Noch keine Mitglieder ernannt. Ernenne eine Person aus dem Nutzerverzeichnis.
+      </p>
+    } @else {
+      <ul class="member-section__list">
+        @for (member of members() ?? []; track member.userId) {
+          <li class="member-section__row">
+            <span class="member-section__name">{{ member.displayName ?? member.userId }}</span>
+            <span class="member-section__login">@{{ member.userId }}</span>
+            @if (member.householdAdmin) {
+              <span class="hm-badge hm-badge--admin">HAUSHALTSLEITUNG</span>
+            }
+            <button
+              type="button"
+              class="hm-link-action member-section__remove"
+              [disabled]="member.householdAdmin"
+              (click)="removeRequested.emit(member)"
+            >
+              ENTFERNEN
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="member-section__appoint">
+      <div class="member-section__appoint-row">
+        <app-user-picker (selected)="selectPerson($event)" />
+
+        <button
+          type="button"
+          class="hm-button hm-button--primary member-section__appoint-action"
+          [disabled]="!canAppoint()"
+          (click)="appoint()"
+        >
+          Ernennen
+        </button>
+      </div>
+
+      @if (pendingPerson(); as person) {
+        <p class="member-section__pending">
+          <span class="hm-chip">{{ person.displayName }} @{{ person.id }}</span>
+          @if (isPendingMember(person)) {
+            <span class="member-section__hint">Bereits Mitglied</span>
+          } @else {
+            <span class="member-section__hint">Ausgewählt — „Ernennen" bestätigt.</span>
+          }
+          <button type="button" class="hm-link-action" (click)="clearPerson()">ABBRECHEN</button>
+        </p>
+      }
+    </div>
+  }
+</section>

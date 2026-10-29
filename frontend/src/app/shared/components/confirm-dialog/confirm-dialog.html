@@ -1,0 +1,41 @@
+<!-- Der Backdrop-Button schließt den Dialog durch Klick außerhalb;
+     Escape schließt ihn über den Key-Handler des Dialogs. -->
+<div class="confirm-dialog">
+  <button
+    type="button"
+    class="confirm-dialog__backdrop"
+    aria-label="Dialog schließen"
+    (click)="cancelled.emit()"
+  ></button>
+  <div
+    class="confirm-dialog__panel"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirm-dialog-title"
+    (keydown.escape)="cancelled.emit()"
+  >
+    <h3 id="confirm-dialog-title" class="confirm-dialog__title">{{ title() }}</h3>
+    <p class="confirm-dialog__description">{{ description() }}</p>
+    @if (detail(); as text) {
+      <p class="confirm-dialog__detail">{{ text }}</p>
+    }
+
+    <div class="confirm-dialog__actions">
+      <button
+        type="button"
+        class="hm-button hm-button--danger"
+        [disabled]="busy()"
+        (click)="confirmed.emit()"
+      >
+        @if (busy()) {
+          Wird gelöscht …
+        } @else {
+          {{ actionLabel() }}
+        }
+      </button>
+      <button type="button" class="hm-button hm-button--secondary" [disabled]="busy()" (click)="cancelled.emit()">
+        Abbrechen
+      </button>
+    </div>
+  </div>
+</div>

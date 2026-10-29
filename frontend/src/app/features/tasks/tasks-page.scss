@@ -1,0 +1,129 @@
+// Board — Muster aus docs/design/design-dna.md: Bahnen nur durch 1px-Linien,
+// keine Bahnflächen, keine Status-Farben.
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--hm-space-4);
+  margin-top: var(--hm-space-4);
+}
+
+@media (max-width: 960px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.board__column {
+  min-width: 0;
+  border-left: 1px solid var(--hm-border);
+  padding: 0 var(--hm-space-3);
+}
+
+.board__column:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.board__column-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: var(--hm-space-2);
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.board__column-name,
+.board__column-count {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--hm-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.board__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hm-space-2);
+  min-height: 96px;
+  padding: var(--hm-space-2) 0;
+}
+
+// Ziel-Bahn beim Drop: Akzent-Linie (Drag-Zustände, Design-DNA).
+.board__cards.cdk-drop-list-dragging {
+  outline: 1px solid var(--hm-accent-line);
+  outline-offset: var(--hm-space-1);
+}
+
+// Einrück-Platzhalter: gestrichelt.
+.board__cards .cdk-drag-placeholder {
+  border: 1px dashed var(--hm-border-strong);
+  border-radius: var(--hm-radius);
+  background: transparent;
+  min-height: 64px;
+}
+
+.board__cards .cdk-drag-preview {
+  border: 1px solid var(--hm-border-strong);
+  box-shadow: var(--hm-shadow);
+}
+
+// Original während des Drag
+.board__cards .cdk-drag-animating {
+  transition: transform var(--hm-duration) var(--hm-ease);
+}
+
+.board__empty {
+  display: grid;
+  place-items: center;
+  min-height: 96px;
+  border: 1px dashed var(--hm-border);
+  border-radius: var(--hm-radius);
+  color: var(--hm-text-faint);
+  font-size: var(--hm-text-sm);
+}
+
+.board__hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hm-space-4);
+  margin-top: var(--hm-space-4);
+  padding: var(--hm-space-3) var(--hm-space-4);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  font-size: var(--hm-text-sm);
+}
+
+.board__announce {
+  margin-top: var(--hm-space-3);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+  min-height: 1.2em;
+}
+
+.state {
+  margin-top: var(--hm-space-4);
+  color: var(--hm-text-muted);
+}
+
+.state--error {
+  padding: var(--hm-space-3);
+  background: var(--hm-danger-soft);
+  border-left: 1px solid var(--hm-danger);
+  color: var(--hm-danger);
+}
+
+.toast {
+  position: fixed;
+  bottom: var(--hm-space-6);
+  right: var(--hm-space-6);
+  z-index: var(--hm-z-toast);
+  padding: var(--hm-space-3) var(--hm-space-4);
+  background: var(--hm-surface-2);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  box-shadow: var(--hm-shadow);
+}

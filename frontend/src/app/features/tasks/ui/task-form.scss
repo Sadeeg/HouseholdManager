@@ -1,0 +1,153 @@
+// Dialog — Muster aus docs/design/design-dna.md.
+// Der Overlays (fix, Grid) ist der Wrapper; Backdrop-Button und Dialog liegen
+// in derselben Gitterzelle — so bleibt der Dialog sichtbar und bedienbar.
+.task-form {
+  position: fixed;
+  inset: 0;
+  z-index: var(--hm-z-overlay);
+  background: var(--hm-overlay);
+  display: grid;
+  place-items: center;
+  padding: var(--hm-space-6);
+}
+
+.task-form__backdrop {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.task-form__dialog {
+  grid-area: 1 / 1;
+  width: min(640px, 100%);
+  // Ein hoher Dialog darf nicht über den Rand wachsen: er scrollt innerhalb
+  // seiner Zelle, damit Titel und Aktionen immer erreichbar bleiben.
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--hm-space-6);
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-lg);
+  box-shadow: var(--hm-shadow-lg);
+}
+
+.task-form__title {
+  font-size: var(--hm-text-xl);
+  margin-bottom: var(--hm-space-4);
+}
+
+.task-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hm-space-4);
+}
+
+.task-form__field > label {
+  display: block;
+  margin-bottom: var(--hm-space-1);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
+
+.task-form__field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hm-space-3);
+  margin-bottom: var(--hm-space-1);
+
+  label {
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-muted);
+  }
+}
+
+.task-form__preview-toggle {
+  height: auto;
+  padding: var(--hm-space-1) var(--hm-space-2);
+  font-size: var(--hm-text-xs);
+}
+
+.task-form__preview {
+  background: var(--hm-surface-2);
+  border-radius: var(--hm-radius);
+  padding: var(--hm-space-3);
+  min-height: 120px;
+}
+
+.task-form__markdown {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-md);
+  min-height: 200px;
+  resize: vertical;
+}
+
+.task-form__date {
+  font-family: var(--hm-font-mono);
+  font-variant-numeric: tabular-nums;
+  max-width: 16ch;
+}
+
+.task-form__help {
+  margin-top: var(--hm-space-1);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+}
+
+.task-form__field-error {
+  margin-top: var(--hm-space-1);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-danger);
+}
+
+.task-form__assignee-chip {
+  margin: 0;
+}
+
+.task-form__chip-remove {
+  background: none;
+  border: none;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+  font-size: var(--hm-text-sm);
+  padding: 0 0 0 var(--hm-space-1);
+
+  &:hover {
+    color: var(--hm-danger);
+  }
+}
+
+.task-form__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hm-space-1);
+  margin: 0 0 var(--hm-space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.task-form__label-add {
+  display: flex;
+  gap: var(--hm-space-2);
+}
+
+.task-form__error-summary {
+  margin-top: var(--hm-space-4);
+  padding: var(--hm-space-2) var(--hm-space-3);
+  background: var(--hm-danger-soft);
+  border-left: 1px solid var(--hm-danger);
+  color: var(--hm-danger);
+  font-size: var(--hm-text-sm);
+}
+
+.task-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hm-space-3);
+  margin-top: var(--hm-space-6);
+}

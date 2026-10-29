@@ -1,0 +1,76 @@
+.member-section {
+  margin-top: var(--hm-space-2);
+  padding: var(--hm-space-3);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+}
+
+.member-section__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member-section__row {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-3);
+  min-height: 40px;
+}
+
+.member-section__name {
+  font-size: var(--hm-text-md);
+}
+
+.member-section__login {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+}
+
+.member-section__remove:hover:not(:disabled) {
+  color: var(--hm-danger);
+}
+
+.member-section__appoint {
+  margin-top: var(--hm-space-3);
+}
+
+// Suchfeld und „Ernennen" in einer Zeile: die Zuordnungsaktion ist immer
+// sichtbar, nicht erst nach der Auswahl.
+.member-section__appoint-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--hm-space-3);
+
+  app-user-picker {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.member-section__appoint-action {
+  flex: 0 0 auto;
+}
+
+.member-section__pending {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-3);
+  margin-top: var(--hm-space-2);
+}
+
+.member-section__hint {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-faint);
+}
+
+.member-section__state {
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
+
+.member-section__state--error {
+  color: var(--hm-danger);
+}

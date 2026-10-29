@@ -1,0 +1,91 @@
+// Workspace-Wähler — Muster aus docs/design/design-dna.md.
+:host {
+  position: relative;
+  display: inline-block;
+}
+
+.workspace-switcher__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hm-space-2);
+  height: 2rem;
+  padding: 0 var(--hm-space-3);
+  background: transparent;
+  border: 1px solid var(--hm-border-strong);
+  border-radius: var(--hm-radius);
+  color: var(--hm-text);
+  font-family: var(--hm-font-sans);
+  font-size: var(--hm-text-md);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hm-surface-2);
+  }
+
+  &--empty {
+    color: var(--hm-text-faint);
+  }
+}
+
+.workspace-switcher__marker {
+  color: var(--hm-text-muted);
+}
+
+.workspace-switcher__list {
+  position: absolute;
+  top: calc(100% + var(--hm-space-1));
+  right: 0;
+  z-index: var(--hm-z-dropdown);
+  min-width: 14rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  box-shadow: var(--hm-shadow);
+}
+
+.workspace-switcher__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hm-space-3);
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--hm-space-3);
+  background: transparent;
+  border: none;
+  color: var(--hm-text);
+  font-family: var(--hm-font-sans);
+  font-size: var(--hm-text-md);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hm-surface-2);
+  }
+
+  &--current {
+    background: var(--hm-surface-2);
+  }
+}
+
+.workspace-switcher__current {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  letter-spacing: 0.06em;
+  color: var(--hm-text-muted);
+}
+
+.workspace-switcher__empty {
+  padding: var(--hm-space-3);
+  color: var(--hm-text-muted);
+  font-size: var(--hm-text-sm);
+}
+
+.workspace-switcher__hint {
+  display: block;
+  padding: var(--hm-space-3);
+  font-size: var(--hm-text-sm);
+}

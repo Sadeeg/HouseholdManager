@@ -1,0 +1,52 @@
+// Bestätigungsdialog — Muster aus docs/design/design-dna.md.
+// Der Backdrop ist ein Button (Klick außerhalb schließt), der Dialog liegt darüber.
+.confirm-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--hm-z-overlay);
+  background: var(--hm-overlay);
+  display: grid;
+  place-items: center;
+}
+
+.confirm-dialog__backdrop {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.confirm-dialog__panel {
+  grid-area: 1 / 1;
+  width: min(480px, calc(100vw - 2 * var(--hm-space-6)));
+  padding: var(--hm-space-6);
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-lg);
+  box-shadow: var(--hm-shadow-lg);
+}
+
+.confirm-dialog__title {
+  font-size: var(--hm-text-xl);
+  margin-bottom: var(--hm-space-4);
+}
+
+.confirm-dialog__description {
+  font-size: var(--hm-text-md);
+}
+
+.confirm-dialog__detail {
+  margin-top: var(--hm-space-2);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hm-space-3);
+  margin-top: var(--hm-space-6);
+}
