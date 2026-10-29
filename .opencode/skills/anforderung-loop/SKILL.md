@@ -43,15 +43,15 @@ nach dem finalen Gate).
 |---|-------|-------------|----------|----------|
 | 1 | Erfassen | `anforderung-intake` | Verständnis sichern (Ziel, Kern, Verzicht) | Issue angelegt: bestätigtes Ziel, Kontext, Scope, Epic-/Phasen-Schnitt |
 | 2 | Fachliches Refinement | `anforderung-fachlich` | Fachliche Regeln attackieren (Randfall, Rolle, Umkehr) | Body ersetzt: Rollen, Nutzerfluss, Regeln, Akzeptanzkriterien, Fehlerfälle |
+| 2a | **UX-Entwurf (Querrunde)** | Agent `ux-designer` | — (keine Fragen an den Nutzer) | Body ergänzt: `## UX` — Screens, Abläufe, Zustände, Inhalte, Design-DNA |
 | 2b | **Architektur (Querrunde)** | Agent `arc-agent` | — (keine Fragen an den Nutzer) | arc42 gepflegt, Vorgaben für Runde 3, offene Architekturfragen |
 | 3 | Technisches Refinement | `anforderung-technisch` | Technische Entscheidungen attackieren (Widerspruch, Folge, Zeit) | Body ersetzt: Architektur, Datenmodell, API, UI, Dateien, Tests, Verify |
 
-Die ARC-Runde läuft **nach** der fachlichen und **vor** der technischen
-Runde: Wenn die Fachlogik steht, aber die Umsetzung noch offen ist, prüft
-der ARC-Agent das ganze Bild (Context, Bausteine, Ports, Daten, Laufzeit,
-Querschnitt, Qualität, Risiken), pflegt die arc42-Dokumentation unter
-`arc42/` und liefert die Vorgaben für Runde 3. Er entscheidet nichts —
-Architekturfragen gehen als Rückfrage an den Auftraggeber.
+Die Querrunden liegen **zwischen** den Fachrunden: Wenn die Fachlogik steht,
+aber die Umsetzung noch offen ist, entwirft der UX-Agent die Oberfläche
+(`## UX` im Issue) und der ARC-Agent die Architektur (arc42, Vorgaben für
+Runde 3). Beide entscheiden nichts — offene Fragen gehen als Rückfrage an
+den Auftraggeber.
 
 Querschnitt in jeder Runde: `issue-formulierung` (Hausstil, Title-Format,
 Labels, Section-Reihenfolge). Prüfung nach jeder Runde: `anforderung-gate`.
@@ -71,28 +71,39 @@ endet sauber, das Issue bleibt `[WIP]` und kann später fortgesetzt werden.
    und ausführen, Grilling durchführen, `issue-github` **Teil B** (Body
    ersetzen, Protokoll der Runde 2 anhängen), Gate mit `runde: 2`.
    **→ Phasen-Übergang fragen.**
-3. **Runde 2b — Architektur (Querrunde).** Nach der Bestätigung für Runde 3
-   den Subagenten `arc-agent` starten (eigene Session, frischer Kontext):
+3. **Runde 2a — UX-Entwurf (Querrunde).** Nach der Bestätigung für Runde 3
+   den Subagenten `ux-designer` starten (eigene Session, frischer Kontext):
+
+   ```text
+   Entwirfe die Oberfläche für das Feature aus Issue <Nr> (fachliche Runde
+   steht) nach der Design-DNA. Schreibe den Entwurf als Abschnitt „## UX"
+   in den Issue-Body. Rückfragen formulieren, nichts erfinden.
+   ```
+
+   Ergebnis: `## UX` im Issue. **Offene UX-Fragen** werden dem Auftraggeber
+   gestellt — ist eine davon blockierend, wird sie **vor** Runde 3 geklärt.
+4. **Runde 2b — Architektur (Querrunde).** Danach den Subagenten `arc-agent`
+   starten:
 
    ```text
    Prüfe die Architektur für das Feature aus Issue <Nr> (fachliche Runde
-   steht). Pflege die arc42-Dokumentation unter arc42/ und liefere die
-   Vorgaben für die technische Runde. Offene Architekturfragen als
-   Rückfrage formulieren, nichts selbst entscheiden.
+   steht, UX-Abschnitt ist geschrieben). Pflege die arc42-Dokumentation
+   unter arc42/ und liefere die Vorgaben für die technische Runde. Offene
+   Architekturfragen als Rückfrage formulieren, nichts selbst entscheiden.
    ```
 
    Ergebnis: arc42 aktualisiert, Vorgaben für Runde 3. **Offene
    Architekturfragen** werden dem Auftraggeber gestellt — ist eine davon
    blockierend, wird sie **vor** Runde 3 geklärt.
-4. **Runde 3 — Technisches Refinement.** Skill `anforderung-technisch` laden
-   und ausführen (die Vorgaben des ARC-Agenten sind die Eingabe), Grilling
+5. **Runde 3 — Technisches Refinement.** Skill `anforderung-technisch` laden
+   und ausführen (UX-Abschnitt und ARC-Vorgaben sind die Eingabe), Grilling
    durchführen, `issue-github` **Teil B**, Gate mit `runde: 3`.
    **→ Phasen-Übergang fragen.**
-5. **Gate final.** `anforderung-gate` mit `runde: final`. Bei `PASS`:
+6. **Gate final.** `anforderung-gate` mit `runde: final`. Bei `PASS`:
    `issue-github` **Teil C** — Body finalisieren, `[WIP]` aus dem Titel,
    Labels und Typ setzen, Abschlusskommentar anhängen. Status im Marker
    wird `READY_FOR_AGENT`.
-6. **Ausgabe** — der fertige Issue-Text im Chat, mit Nummer, URL und Status.
+7. **Ausgabe** — der fertige Issue-Text im Chat, mit Nummer, URL und Status.
 
 ### Phasen-Übergang
 
@@ -240,6 +251,7 @@ Epic-Nummer-Präfix `[Epic N]` und der Phasen-Title `[N.M]` sind fix, siehe
 anforderung-loop
   → references/grilling.md
   → anforderung-intake | anforderung-fachlich
+  → ux-designer (nur zwischen Runde 2 und 3, bei UI-Anteil)
   → arc-agent (nur zwischen Runde 2 und 3)
   → anforderung-technisch
   → issue-github

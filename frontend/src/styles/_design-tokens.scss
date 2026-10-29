@@ -1,0 +1,137 @@
+// =============================================================================
+// Design-DNA HouseholdManager
+//
+// Quelle der Wahrheit für alle visuellen Werte. Wer eine Komponente baut,
+// benutzt diese Tokens — keine eigenen Farben, keine Hex-Literale im Code.
+//
+// Stil: modern, Dark Mode als Standard, etwas Hacker-Anmutung (Terminal,
+// Monospace, scharfe Kanten, Grid) — aber zurückhaltend, kein Effekt-Spiel.
+//
+// Siehe docs/design/design-dna.md für die Begründung und die Regeln.
+// =============================================================================
+
+:root {
+  // --- Flächen -------------------------------------------------------------
+  --hm-bg: #0b0f14; // App-Hintergrund
+  --hm-surface: #111820; // Karten, Panels
+  --hm-surface-2: #17202b; // Inputs, Tabellenkopf, Hover-Flächen
+  --hm-surface-3: #1e2937; // aktive Elemente, Tooltips
+  --hm-overlay: rgba(3, 6, 10, 0.72); // Backdrop
+
+  // --- Linien --------------------------------------------------------------
+  --hm-border: #22303f; // 1px-Rahmen
+  --hm-border-strong: #33465c; // betonte Linie, Fokus
+  --hm-grid: rgba(94, 234, 212, 0.045); // Hintergrund-Grid
+
+  // --- Text ---------------------------------------------------------------
+  --hm-text: #e6edf3; // primär
+  --hm-text-muted: #8b98a5; // sekundär, Labels
+  --hm-text-faint: #5d6b7a; // deaktiviert, Platzhalter
+  --hm-text-inverse: #0b0f14; // auf Akzentflächen
+
+  // --- Akzente ------------------------------------------------------------
+  // Bedeutung tragen, nicht dekorieren: max. 2 Akzente je Ansicht.
+  --hm-accent: #00e5a0; // Primär: Aktion, Bestätigung, Fokus
+  --hm-accent-2: #22d3ee; // Sekundär: Information, Links
+  --hm-accent-3: #e879f9; // Tertiär: Experimentell, Hinweis auf Besitz
+  --hm-success: #3fb950;
+  --hm-warning: #ffb000;
+  --hm-danger: #ff5c5c;
+  --hm-info: #58a6ff;
+
+  // --- Akzent-Ableitungen --------------------------------------------------
+  --hm-accent-soft: rgba(0, 229, 160, 0.12); // Flächen mit Akzent-Tönung
+  --hm-accent-line: rgba(0, 229, 160, 0.38); // Akzent-Rahmen
+  --hm-accent-glow: rgba(0, 229, 160, 0.28); // Fokus-Glow
+  --hm-danger-soft: rgba(255, 92, 92, 0.12);
+  --hm-warning-soft: rgba(255, 176, 0, 0.12);
+
+  // --- Typografie ----------------------------------------------------------
+  --hm-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --hm-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --hm-text-xs: 0.75rem; // 12px — Labels, Tabellenzahlen
+  --hm-text-sm: 0.8125rem; // 13px — Sekundärtext
+  --hm-text-md: 0.875rem; // 14px — Fließtext, Standard
+  --hm-text-lg: 1rem; // 16px — Eingaben, Tabellenköpfe
+  --hm-text-xl: 1.25rem; // 20px — Seitentitel
+  --hm-text-2xl: 1.5rem; // 24px — Abschnittstitel
+
+  --hm-line-tight: 1.25;
+  --hm-line-normal: 1.5;
+
+  // --- Maße ----------------------------------------------------------------
+  --hm-space-1: 0.25rem; // 4px
+  --hm-space-2: 0.5rem; // 8px
+  --hm-space-3: 0.75rem; // 12px
+  --hm-space-4: 1rem; // 16px
+  --hm-space-6: 1.5rem; // 24px
+  --hm-space-8: 2rem; // 32px
+
+  --hm-radius-sm: 2px; // Chips, Badges
+  --hm-radius: 4px; // Standard — scharf, kein Pill
+  --hm-radius-lg: 6px; // Overlays
+
+  --hm-control-height: 2.25rem; // Inputs, Buttons
+  --hm-border-width: 1px;
+
+  // --- Schatten & Effekte ---------------------------------------------------
+  --hm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --hm-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --hm-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --hm-focus-ring: 0 0 0 3px var(--hm-accent-glow);
+  --hm-scanline: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.015) 0 1px,
+    transparent 1px 3px
+  );
+
+  // --- Bewegung ------------------------------------------------------------
+  --hm-duration-fast: 120ms;
+  --hm-duration: 180ms;
+  --hm-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  // --- Ebenen --------------------------------------------------------------
+  --hm-z-base: 0;
+  --hm-z-sticky: 10;
+  --hm-z-dropdown: 100;
+  --hm-z-overlay: 200;
+  --hm-z-toast: 300;
+}
+
+// Helle Variante — nur wenn ausdrücklich gewünscht (data-theme="light").
+// Dark Mode bleibt die Standardausrichtung.
+[data-theme='light'] {
+  --hm-bg: #f6f8fa;
+  --hm-surface: #ffffff;
+  --hm-surface-2: #eef1f4;
+  --hm-surface-3: #e2e8ee;
+  --hm-overlay: rgba(16, 22, 28, 0.45);
+
+  --hm-border: #d0d7de;
+  --hm-border-strong: #9aa7b4;
+  --hm-grid: rgba(0, 0, 0, 0.03);
+
+  --hm-text: #1f2328;
+  --hm-text-muted: #57606a;
+  --hm-text-faint: #8c959f;
+  --hm-text-inverse: #ffffff;
+
+  --hm-accent: #00875a;
+  --hm-accent-2: #0b7285;
+  --hm-accent-3: #8250df;
+  --hm-success: #1a7f37;
+  --hm-warning: #9a6700;
+  --hm-danger: #cf222e;
+  --hm-info: #0969da;
+
+  --hm-accent-soft: rgba(0, 135, 90, 0.1);
+  --hm-accent-line: rgba(0, 135, 90, 0.35);
+  --hm-accent-glow: rgba(0, 135, 90, 0.22);
+  --hm-danger-soft: rgba(207, 34, 46, 0.1);
+  --hm-warning-soft: rgba(154, 103, 0, 0.12);
+
+  --hm-shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.08);
+  --hm-shadow: 0 4px 16px rgba(31, 35, 40, 0.1);
+  --hm-shadow-lg: 0 16px 48px rgba(31, 35, 40, 0.16);
+}

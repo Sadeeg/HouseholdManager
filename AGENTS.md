@@ -83,6 +83,8 @@ frontend/src/app/
 arc42/                       Architekturdokumentation (12 Kapitel),
                              gepflegt vom ARC-Agenten
 docs/adr/                    Architekturentscheidungen (ADRs)
+docs/design/design-dna.md    Gestaltungssprache (Dark Mode, Tokens, Muster)
+frontend/src/styles/         Design-Tokens (_design-tokens.scss)
 ```
 
 **Backend:** Ports & Adapters, `adapters → application → domain` —
@@ -103,6 +105,7 @@ Entscheidungen, arc42/09 verweist darauf.
 | `frontend-feature-architecture` | jede Frontend-Änderung: Feature-Struktur, Grenzen, Smart/Dumb, Sheriff |
 | `feature-testing` | Tests schreiben/prüfen: Testebene, AC-Abdeckung, Anti-Patterns |
 | `code-review-gate` | Review-Kategorien, Severity, OK/KORREKTUREN, Format des Korrekturauftrags |
+| `ux-design` | UX-Entwurf: Methode, Issue-Abschnitt `## UX`, Design-DNA |
 | `angular-developer` · `angular-new-app` | Frontend-Handwerk: Signals, `httpResource`, Signal Forms, zoneless, Vitest |
 | `vitest` | Frontend-Testwerkzeug (Vitest 5): Mocking, Coverage, Filter |
 | `spring-boot` · `spring-framework` · `spring-data-jpa` · `spring-flyway` · `spring-web` · `spring-security` · `spring-testing` | Backend-Handwerk |
@@ -111,8 +114,9 @@ Entscheidungen, arc42/09 verweist darauf.
 
 **Agent:** `architektur-reviewer` (Subagent) — Architektur-Gate
 (`OK`/`KORREKTUREN`, Korrekturauftrag), `kritischer-tester` (Subagent) —
-Test-Gate (`PASS`/`FAIL`) und `arc-agent` (Subagent) — pflegt `arc42/`
-zwischen fachlicher und technischer Runde. Siehe „Definition of Done".
+Test-Gate (`PASS`/`FAIL`), `ux-designer` (Subagent) — UX-Entwurf als
+`## UX` im Issue, `arc-agent` (Subagent) — pflegt `arc42/` zwischen
+fachlicher und technischer Runde. Siehe „Definition of Done".
 
 Herkunft und Aktualisierung: `.opencode/skills/README.md`. Vollständige
 Konventionstabellen: `.opencode/skills/anforderung-technisch/references/technik-checkliste.md`.
@@ -188,6 +192,12 @@ für *wie* gebaut wird.
 - Reaktivität: `signal()` / `computed()`; Lesen per `httpResource` im
   Data-Service, Schreiben per `HttpClient` im API-Client; Formulare als
   **Signal Forms**.
+- **Design-DNA ist bindend**: Tokens aus
+  `frontend/src/styles/_design-tokens.scss`, beschrieben in
+  [`docs/design/design-dna.md`](docs/design/design-dna.md). Dark Mode ist
+  Standard, Akzent trägt Bedeutung, Monospace für Daten, Radius 4px,
+  1px-Linien statt Schatten. **Keine Hex-Literale** im Code — nur
+  `var(--hm-…)`. Komponenten aus `shared/components/` wiederverwenden.
 - Modulgrenzen: `npm run sheriff`; Stil: `npm run lint`.
 - Tests: Vitest + TestBed + `provideHttpClientTesting()`.
 

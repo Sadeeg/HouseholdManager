@@ -58,6 +58,8 @@ Regeln:
 
 ## Out of Scope
 
+## UX
+
 ## Begriffe
 
 ## Referenz
@@ -80,8 +82,11 @@ Regeln:
 ```
 
 Pflicht: `Goal`, `Scope`, `Out of Scope`, `Files`, `Acceptance Criteria`,
-`Tests`, `Verify`. Optional: `Context`, `Implementation`, `Begriffe`,
-`Referenz`, `Depends on`, `Offene Punkte`, `Gotchas`.
+`Tests`, `Verify`. Optional: `Context`, `UX` (bei UI-Anteil), `Implementation`,
+`Begriffe`, `Referenz`, `Depends on`, `Offene Punkte`, `Gotchas`.
+
+`## UX` steht nach `## Out of Scope` und vor `## Begriffe`: Erst das Was und
+Wofür, dann die Oberfläche, dann die Begriffe und die Dateien.
 
 `## Begriffe` steht vor `## Files`, weil es die Benennung des Features festlegt,
 bevor über Dateien gesprochen wird. `## Referenz` steht direkt danach, weil
@@ -134,6 +139,38 @@ gekommen ist — meist "nach #7 fehlt nur noch …".>
 ## Out of Scope
 
 - <bewusst nicht dabei, mit Begründung>
+
+## UX
+
+**Gestaltung:** Dark Mode, Design-DNA (Akzent für Aktion, Monospace für Daten)
+
+### Screen: <Name>
+
+| | |
+|---|---|
+| Rolle | <wer> |
+| Zweck | <was der Nutzer hier erreicht> |
+| Eingang / Ausgang | <woher / wohin> |
+
+**Ablauf**
+
+1. <Schritt> — <was der Nutzer tut>
+
+**Elemente**
+
+| Element | Typ | Verhalten | Zustände |
+|---------|-----|-----------|----------|
+| <Bezeichnung> | <Button / Input / …> | <was passiert> | default, hover, focus, disabled |
+
+**Zustände**
+
+- Leer: <Text> + <Aktion>
+- Lade: <Text>
+- Fehler: <Text> + <nächste Handlung>
+
+**Regeln**
+
+- <Entscheidung mit Begründung>
 
 ## Files
 

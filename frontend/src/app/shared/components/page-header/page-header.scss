@@ -1,0 +1,16 @@
+.page-header {
+  padding-bottom: var(--hm-space-3);
+  border-bottom: 1px solid var(--hm-border);
+
+  &__title {
+    font-size: var(--hm-text-xl);
+    font-weight: 600;
+    color: var(--hm-text);
+  }
+
+  &__subtitle {
+    margin-top: var(--hm-space-1);
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-muted);
+  }
+}

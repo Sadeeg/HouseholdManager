@@ -28,6 +28,7 @@ Diese Skills sind **projektspezifisch** und werden hier gepflegt:
 | `frontend-feature-architecture/` | Feature-Architektur nach Manfred Steyer (Architektur-Matrix, Ordnerregeln, Smart/Dumb, Sheriff-Tags) — Entscheid: [ADR 0002](../../docs/adr/0002-frontend-feature-architecture.md) |
 | `feature-testing/` | Teststrategie: Testebene je Fehler, AC-Abdeckung, Definition von „vollständig getestet", Anti-Patterns |
 | `code-review-gate/` | Review-Doktrin: 7 Kategorien, Severity, OK/KORREKTUREN, Format des Korrekturauftrags |
+| `ux-design/` | UX-Methode: Ablauf, Screens, Zustände, Issue-Abschnitt `## UX`, Design-DNA |
 | `anforderung-*`, `issue-formulierung`, `issue-github` | Anforderungs-Loop und GitHub-Schreibvorgänge (siehe `.opencode/README.md`) |
 
 ## Agenten
@@ -35,6 +36,7 @@ Diese Skills sind **projektspezifisch** und werden hier gepflegt:
 | Agent | Aufgabe |
 |-------|---------|
 | `.opencode/agents/arc-agent.md` | ARC-Runde (zwischen fachlicher und technischer Runde): prüft die Architektur über das ganze Bild, pflegt `arc42/`, liefert Vorgaben für Runde 3, stellt Architekturfragen — er entscheidet nichts |
+| `.opencode/agents/ux-designer.md` | UX-Runde (zwischen fachlicher und technischer Runde): entwirft die Oberfläche nach der Design-DNA und schreibt den Abschnitt `## UX` in den Issue-Body |
 | `.opencode/agents/architektur-reviewer.md` | Architektur-Gate: prüft read-only gegen `AGENTS.md`, ADRs und Skills, urteilt `OK`/`KORREKTUREN`, liefert den ausführbaren Korrekturauftrag (wird delegiert, nicht selbst umgesetzt) |
 | `.opencode/agents/kritischer-tester.md` | Test-Gate: prüft adversarial gegen die Akzeptanzkriterien, schreibt fehlende Tests, urteilt `PASS`/`FAIL` |
 

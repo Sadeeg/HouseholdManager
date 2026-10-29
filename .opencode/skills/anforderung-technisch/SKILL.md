@@ -33,6 +33,27 @@ Bausteine, Abläufe und Entscheidungen sind dort beschrieben und mit dem
 Code verknüpft. Widersprüche zwischen Issue, arc42 und Code sind Befunde —
 sie werden hier aufgelöst, nicht stillschweigend übergangen.
 
+### 0a. UX-Vorgaben und Design-DNA
+
+Bei UI-Anteilen ist der **Abschnitt `## UX`** des Issues die Vorgabe: Screens,
+Abläufe, Elemente, Zustände, Texte. Er wird **umgesetzt, nicht neu
+entworfen** — Abweichungen brauchen einen Grund und eine Rückfrage.
+
+Gestaltung ist **nicht frei erfunden**: Die Design-DNA
+(`docs/design/design-dna.md`) und die Tokens in
+`frontend/src/styles/_design-tokens.scss` sind bindend. Konkret:
+
+- Farben, Maße, Radien, Schriftgrößen **ausschließlich** als Token
+  (`var(--hm-…)`) — keine Hex-Literale im Komponenten-Stylesheet.
+- Dark Mode ist Standard; helle Variante nur, wenn die DNA es vorsieht.
+- Komponenten aus `shared/components/` wiederverwenden, statt eigene zu
+  bauen.
+- Zustände (default/hover/focus/disabled/loading/error) müssen umgesetzt
+  sein — die Fokus-Sichtbarkeit ist Pflicht (`--hm-focus-ring`).
+- Braucht das Feature ein **neues** UI-Muster, wird das in der UX-Runde
+  beschrieben; hier wird es nur umgesetzt. Fehlt die Beschreibung, ist das
+  eine Lücke der Art `TECH` → runde=3.
+
 ### 1. Zielort im Code
 
 Für jeden Teil der Umsetzung: welche Schicht, welche Klasse, neu oder

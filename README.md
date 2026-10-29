@@ -81,12 +81,13 @@ frontend/                      Angular-22-App (Feature-Architektur)
   eslint.config.js             Lint-Regeln inkl. Sheriff-Plugin
 
 docs/adr/                      Architekturentscheidungen (ADRs)
+docs/design/design-dna.md      Gestaltungssprache: Dark Mode, Tokens, Muster
 arc42/                         Architekturdokumentation (12 Kapitel),
                                gepflegt vom ARC-Agenten
 .opencode/                     Skills und Commands für OpenCode
-  skills/                      Anforderungs-Loop, Architektur-, Angular- und Spring-Skills
+  skills/                      Anforderungs-Loop, Architektur-, UX-, Angular- und Spring-Skills
   commands/                    /anforderung, /review, /abnahme, /issue-check, /issue-github
-  agents/                      arc-agent, architektur-reviewer, kritischer-tester
+  agents/                      ux-designer, arc-agent, architektur-reviewer, kritischer-tester
 
 AGENTS.md                      Projektkonventionen (Quelle der Wahrheit)
 ```

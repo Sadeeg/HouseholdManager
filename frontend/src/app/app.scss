@@ -1,13 +1,25 @@
 .app-header {
-  border-bottom: 1px solid var(--hm-border, #d0d7de);
-  padding: 1rem 1.5rem;
+  padding: var(--hm-space-4) var(--hm-space-6);
+  border-bottom: 1px solid var(--hm-border);
+  background: var(--hm-surface);
 
   h1 {
-    font-size: 1.25rem;
-    margin: 0;
+    font-family: var(--hm-font-mono);
+    font-size: var(--hm-text-lg);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--hm-text);
+  }
+
+  // Terminal-Andeutung: Prefix-Markierung vor dem Titel
+  &::before {
+    content: '$';
+    margin-right: var(--hm-space-2);
+    color: var(--hm-accent);
   }
 }
 
 .app-main {
-  padding: 1.5rem;
+  padding: var(--hm-space-6);
+  max-width: 72rem;
 }

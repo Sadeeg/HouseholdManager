@@ -13,6 +13,7 @@ import { Household } from '../model/household.model';
   selector: 'app-household-item',
   imports: [DatePipe],
   templateUrl: './household-item.html',
+  styleUrl: './household-item.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HouseholdItem {

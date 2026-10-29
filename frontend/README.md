@@ -42,6 +42,33 @@ Konventionen (Angular 22): Dateinamen ohne Rollen-Suffix, Modelle mit
 `.model.ts`, `core/` / `features/` / `shared/` als Ordnungsweg, Standalone
 ohne `NgModule`, `signal()`/`computed()`, `httpResource` für Lesezugriffe.
 
+## Design
+
+Die Gestaltung folgt der **Design-DNA**
+([`../docs/design/design-dna.md`](../docs/design/design-dna.md)): modern,
+**Dark Mode als Standard**, mit Terminal-Anmutung — Monospace für Daten,
+scharfe Kanten (Radius 4px), 1px-Linien statt Schatten, Akzentfarbe nur
+als Bedeutung.
+
+Die Tokens liegen in `src/styles/_design-tokens.scss` und sind die einzige
+Quelle für Farben, Maße und Schriftgrößen:
+
+```scss
+// in Component-Stylesheets — niemals Hex-Literale
+color: var(--hm-text-muted);
+border: 1px solid var(--hm-border);
+border-left: 2px solid var(--hm-accent-line);
+```
+
+| Datei | Inhalt |
+|-------|--------|
+| `src/styles/_design-tokens.scss` | Flächen, Linien, Text, Akzente, Typografie, Maße, Effekte, helle Variante |
+| `src/styles.scss` | Basis-Styles: Tokens einbinden, Grid-Hintergrund, Fokus, Typografie |
+| `src/app/shared/components/` | Wiederverwendbare UI-Bausteine im DNA-Stil |
+
+Ein **neues** UI-Muster wird zuerst entworfen (UX-Runde, Skill `ux-design`),
+dann in der DNA dokumentiert — nicht spontan im Code erfunden.
+
 ## Node-Version
 
 Angular CLI 22 verlangt Node ≥ 22.22.3 (oder 24.15+ / 26+). Ältere

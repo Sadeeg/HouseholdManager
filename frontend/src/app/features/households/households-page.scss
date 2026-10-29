@@ -1,18 +1,24 @@
 .households {
   &__items {
     list-style: none;
-    margin: 0;
+    margin: var(--hm-space-4) 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--hm-space-2);
   }
 }
 
 .state {
-  color: var(--hm-muted, #57606a);
+  margin-top: var(--hm-space-4);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
 
   &--error {
-    color: var(--hm-error, #cf222e);
+    padding: var(--hm-space-3) var(--hm-space-4);
+    color: var(--hm-danger);
+    background: var(--hm-danger-soft);
+    border-left: 2px solid var(--hm-danger);
+    border-radius: var(--hm-radius);
   }
 }

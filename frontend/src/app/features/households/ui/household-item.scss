@@ -1,0 +1,24 @@
+.household-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hm-space-4);
+  padding: var(--hm-space-3) var(--hm-space-4);
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-left: 2px solid var(--hm-accent-line);
+  border-radius: var(--hm-radius);
+
+  &__name {
+    font-family: var(--hm-font-mono);
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text);
+  }
+
+  &__created {
+    font-family: var(--hm-font-mono);
+    font-size: var(--hm-text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--hm-text-muted);
+  }
+}

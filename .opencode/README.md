@@ -45,6 +45,7 @@ geladen, sobald eine Änderung in den jeweiligen Bereich geht:
 | Frontend | `angular-developer` (Angular 22: Signals, `httpResource`, Signal Forms, zoneless, Vitest) · `angular-new-app` · `vitest` (Vitest 5: Mocking, Coverage, Filter) |
 | Backend | `spring-boot` · `spring-framework` · `spring-data-jpa` · `spring-flyway` · `spring-web` · `spring-security` · `spring-testing` · `spring-versions` |
 | Architektur | `hexagonal-architecture` (allgemeine Methodik) · `backend-ports-adapters` (projektspezifisch) · `frontend-feature-architecture` (Steyer, projektspezifisch) |
+| Design | `ux-design` (projektspezifisch: UX-Methode, Issue-Abschnitt `## UX`, Design-DNA) |
 | Testen | `feature-testing` (projektspezifisch: Testebenen, AC-Abdeckung) |
 | Review | `code-review-gate` (projektspezifisch: Kategorien, Severity, Korrekturauftrag) |
 
@@ -75,6 +76,7 @@ und Runde 3 steht die **ARC-Runde**.
 |-------|-------------|----------|----------|
 | 1 — Erfassen | `anforderung-intake` | Verständnis sichern (Ziel, Kern, Verzicht) | Ziel, Kontext, Scope, Nicht-Ziele, Epic-/Phasen-Schnitt — **Issue wird angelegt** |
 | 2 — Fachlich | `anforderung-fachlich` | Regeln attackieren (Randfall, Rolle, Umkehr) | Rollen, Nutzerfluss, fachliche Regeln, prüfbare Akzeptanzkriterien, Fehlerfälle |
+| 2a — UX | Agent `ux-designer` | — | **`## UX` im Issue**: Screens, Abläufe, Zustände, Texte — nach Design-DNA |
 | 2b — Architektur | Agent `arc-agent` | — | **arc42 gepflegt**, Vorgaben für Runde 3, offene Architekturfragen |
 | 3 — Technisch | `anforderung-technisch` | Bauplan attackieren (Widerspruch, Folge, Zeit) | Zielort, Datenmodell, API-Vertrag, UI, Dateiliste, Tests, Verify |
 
