@@ -2,7 +2,7 @@ package de.householdmanager.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
 import org.springframework.security.oauth2.jwt.JwtTypeValidator;
@@ -22,6 +23,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -52,11 +55,14 @@ public class SecurityConfig {
     private final boolean authenticationEnabled;
     private final List<String> allowedOrigins;
     private final String issuerUri;
+    private final String clientId;
 
     public SecurityConfig(
             @Value("${nextcloud.oidc.issuer-uri:}") String issuerUri,
+            @Value("${nextcloud.oidc.client-id:}") String clientId,
             @Value("${householdmanager.security.allowed-origins:http://localhost:4200}") List<String> allowedOrigins) {
         this.issuerUri = issuerUri;
+        this.clientId = clientId;
         this.authenticationEnabled = issuerUri != null && !issuerUri.isBlank();
         this.allowedOrigins = allowedOrigins;
         if (!authenticationEnabled) {
@@ -64,6 +70,11 @@ public class SecurityConfig {
                     [SICHERHEIT] Kein OIDC-Issuer konfiguriert (NEXTCLOUD_OIDC_ISSUER) — \
                     die API läuft OHNE Authentifizierung. Nur für die lokale Entwicklung, \
                     niemals für den Betrieb.""");
+        } else if (clientId == null || clientId.isBlank()) {
+            log.warn("""
+                    [SICHERHEIT] Keine OIDC-Client-ID konfiguriert (NEXTCLOUD_OIDC_CLIENT_ID) — \
+                    die API prüft nicht, für welchen Client ein Token ausgestellt wurde. \
+                    Damit dürfen Tokens aller Clients desselben Issuers verwendet werden.""");
         }
     }
 
@@ -77,26 +88,52 @@ public class SecurityConfig {
      * Token mit 401 abgewiesen. Deshalb wird der Typ-Validator hier
      * ausdrücklich auf beide Werte gesetzt.
      *
-     * <p>Geprüft werden Signatur (JWKS des Issuers), Ablaufzeit und Issuer.
+     * <p>Die Bedingung prüft auf einen **leeren** Issuer: ohne Issuer darf
+     * kein Decoder gebaut werden, sonst bricht der Start mit
+     * „URI is not absolute" ab, statt wie dokumentiert ohne Authentifizierung
+     * zu laufen.
      */
     @Bean
-    @ConditionalOnProperty(name = "nextcloud.oidc.issuer-uri")
+    @ConditionalOnExpression("!'${nextcloud.oidc.issuer-uri:}'.isBlank()")
     public JwtDecoder jwtDecoder() {
         log.info("JWT-Validierung gegen Nextcloud/OIDC: {}", issuerUri);
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withIssuerLocation(issuerUri).build();
-        decoder.setJwtValidator(jwtValidator(issuerUri));
+        decoder.setJwtValidator(jwtValidator(issuerUri, clientId));
         return decoder;
     }
 
     /**
-     * Prüfkette für die Access-Tokens: Typ (JWT oder at+jwt), Ablaufzeit
-     * und Issuer.
+     * Prüfkette für die Access-Tokens: Typ (JWT oder at+jwt), Ablaufzeit,
+     * Issuer und — falls konfiguriert — Audience.
+     *
+     * <p>Die Audience-Prüfung bindet ein Token an den Client, für den es
+     * ausgestellt wurde: sonst würde ein Token eines anderen Nextcloud-Client
+     * desselben Issuers ebenfalls die API öffnen.
      *
      * <p>Extrahiert, damit die Regeln ohne Netzwerkzugriff testbar sind.
      */
-    static OAuth2TokenValidator<Jwt> jwtValidator(String issuerUri) {
-        return JwtValidators.createDefaultWithValidators(
-                List.of(new JwtIssuerValidator(issuerUri), new JwtTypeValidator("JWT", "at+jwt")));
+    static OAuth2TokenValidator<Jwt> jwtValidator(String issuerUri, String clientId) {
+        List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
+        validators.add(new JwtIssuerValidator(issuerUri));
+        validators.add(new JwtTypeValidator("JWT", "at+jwt"));
+        if (clientId != null && !clientId.isBlank()) {
+            validators.add(audienceValidator(clientId));
+        }
+        return JwtValidators.createDefaultWithValidators(validators);
+    }
+
+    /**
+     * Prüft, ob die Audience des Tokens den erwarteten Client enthält.
+     *
+     * <p>RFC 7519 erlaubt für {@code aud} einen einzelnen String oder eine
+     * Liste — der Nextcloud-OIDC-Client liefert einen String, während
+     * Spring Securitys {@code JwtAudienceValidator} ausschließlich Listen
+     * erwartet. Deshalb wird der Claim hier selbst ausgewertet.
+     */
+    private static OAuth2TokenValidator<Jwt> audienceValidator(String expectedAudience) {
+        return new JwtClaimValidator<>("aud", value -> value instanceof Collection<?> audiences
+                ? audiences.contains(expectedAudience)
+                : expectedAudience.equals(value));
     }
 
     @Bean

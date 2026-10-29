@@ -1,9 +1,10 @@
 /**
  * OIDC-Konfiguration des Frontends (Nextcloud als Identity Provider).
  *
- * Öffentliche Werte — kein Secret. Die Client-ID gehört zum *Frontend*-Client
- * (public) auf dem Nextcloud; das Backend hat einen eigenen confidential
- * Client, dessen Secret ausschließlich in `.env` steht (siehe `.env.example`).
+ * Öffentliche Werte — kein Secret. Es gibt nur *einen* Client: den
+ * public Frontend-Client auf dem Nextcloud. Das Backend ist reiner
+ * Resource Server und prüft die JWT-Access-Tokens über den JWKS des
+ * Issuers — es braucht deshalb weder Client-ID noch Client-Secret.
  *
  * Der Redirect-URI wird aus der Laufzeit-Origin abgeleitet: damit funktioniert
  * die App auf jedem Port (4200 lokal, 4300 im Test-Setup, 80 hinter nginx).

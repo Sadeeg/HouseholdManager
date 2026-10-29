@@ -175,6 +175,7 @@ Constructly.
 |-------|-----------|
 | Protokoll | OAuth2/OIDC, **JWT-Access-Tokens** (RFC 9068) — Signaturprüfung über den JWKS des Issuers (`nextcloud.oidc.issuer-uri`) |
 | Backend | Resource Server (`spring-boot-starter-oauth2-resource-server`), **kein Client-Secret** nötig |
+| Client-Bindung | `nextcloud.oidc.client-id` — ohne sie würde ein Token jedes anderen Clients desselben Issuers passen |
 | Frontend | `angular-oauth2-oidc`, Code-Flow, **public** Client (nur Client-ID, kein Secret) |
 | Konfiguration | `.env` (Properties-Format, in `.gitignore`). **Niemals** Secrets committen — `.env.example` ist die Vorlage |
 | Nutzerverzeichnis | Nextcloud OCS-API, Service-User + App-Password (`householdmanager-svc`) |

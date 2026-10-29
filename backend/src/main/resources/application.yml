@@ -52,6 +52,10 @@ nextcloud:
     # Issuer des Nextcloud-OIDC: das Backend validiert die JWT-Access-Tokens
     # über dessen JWKS. Kein Client-Secret nötig.
     issuer-uri: ${NEXTCLOUD_OIDC_ISSUER:}
+    # Client-ID des Frontend-Clients (öffentlich, kein Secret). Damit wird
+    # geprüft, für welchen Client ein Token ausgestellt wurde — ohne sie
+    # würde ein Token jedes anderen Clients desselben Issuers passen.
+    client-id: ${NEXTCLOUD_OIDC_CLIENT_ID:}
 
 householdmanager:
   security:

@@ -42,7 +42,7 @@ JPA-Entity.
 | Backend | Spring Boot als Resource Server, **kein Client-Secret** nötig (JWT statt opaker Tokens) |
 | Frontend | `angular-oauth2-oidc`, Code-Flow, public Client, Token im Speicher, Bearer-Header per Interceptor |
 | Nutzerverzeichnis | Nextcloud OCS-API mit Service-User (`householdmanager-svc`) + App-Password |
-| Konfiguration | `.env` (Properties, gitignored), Property `nextcloud.oidc.issuer-uri` |
+| Konfiguration | `.env` (Properties, gitignored), Properties `nextcloud.oidc.issuer-uri` und `nextcloud.oidc.client-id` |
 | Grenzen | `CurrentUserPort` (ein-) und `UserDirectory` (aus-) — die Anwendung kennt keine Security-Klassen |
 
 **Ohne konfigurierten Issuer läuft die API ohne Authentifizierung** (lauter
