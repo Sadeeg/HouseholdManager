@@ -166,6 +166,42 @@ Sprache: Issue-Texte und Kommentare auf **Deutsch**, Identifier im Code
 **englisch**. Der Issue-Text ist die Quelle für die Umsetzung, diese Datei
 für *wie* gebaut wird.
 
+### Authentifizierung (Nextcloud/OIDC)
+
+Nextcloud ist der Identity Provider **und** das Nutzerverzeichnis — wie in
+Constructly.
+
+| Thema | Festlegung |
+|-------|-----------|
+| Protokoll | OAuth2/OIDC, **opake Tokens** + Introspection (`/apps/oidc/introspect`) |
+| Backend | Resource Server (`spring-boot-starter-oauth2-resource-server`), Client **confidential** — die OIDC-App ab 2.6.0 lässt Public Clients nicht zur Introspection zu |
+| Frontend | `angular-oauth2-oidc`, Code-Flow, **public** Client (nur Client-ID, kein Secret) |
+| Konfiguration | `.env` (Properties-Format, in `.gitignore`). **Niemals** Secrets committen — `.env.example` ist die Vorlage |
+| Nutzerverzeichnis | Nextcloud OCS-API, Service-User + App-Password (`householdmanager-svc`) |
+
+**Ohne konfigurierte Credentials startet die API ohne Authentifizierung** —
+mit lauter Warnung im Log. Das ist der Zustand eines frischen Setups, kein
+Produktivbetrieb.
+
+Struktur (Ports & Adapters):
+
+```text
+application/port/in/CurrentUserPort          eingehender Port: wer ist angemeldet?
+application/port/out/UserDirectory           ausgehender Port: Nutzerverzeichnis
+adapters/inbound/security/…CurrentUser      liest den SecurityContext
+adapters/inbound/rest/AuthController         GET /api/auth/me
+adapters/outbound/nextcloud/…UserDirectory  OCS-API (Suche + Details)
+```
+
+Regeln:
+
+- Die Anwendung kennt **keine** Security-Klassen: `CurrentUserPort` und
+  `UserDirectory` sind die einzigen Einstiegspunkte.
+- Fachliche Validierung bleibt unabhängig von der Auth: die Regeln greifen
+  auch bei fehlender Anmeldung (401).
+- CORS-Origin des Frontends: `householdmanager.security.allowed-origins`
+  (Default `http://localhost:4200`).
+
 ### Backend
 
 - **Schichten:** Fachmodell in `domain`, Orchestrierung in
@@ -328,3 +364,13 @@ Ablauf hier: Versions-Bump, Tag, Deploy, Rollback.
   (`--group-add`) — der Socket gehört `root:docker`.
 - Hibernate 7 + `ddl-auto: validate`: Jede Entity-Änderung braucht eine
   Migration, sonst startet die App nicht.
+- **Boot 4 modularisiert die Starter**: `RestClient.Builder` ist ein Bean des
+  Starters `spring-boot-starter-restclient` — ohne ihn startet die App nicht.
+- **Boot 4 + Security 7.1**: Die Introspection-API ist neu
+  (`opaqueToken(opaque -> opaque.introspectionUri(...).clientId(...))`);
+  `OAuth2TokenIntrospectionClient` gibt es nicht mehr.
+- **Jackson 3 ist strikt**: unbekannte Felder lassen die Deserialisierung
+  scheitern (`@JsonIgnoreProperties(ignoreUnknown = true)`); Annotationen
+  kommen weiterhin aus `com.fasterxml.jackson.annotation`.
+- **Der OIDC-Principal steckt in `getPrincipal()`**, nicht in der
+  `Authentication` selbst.

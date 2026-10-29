@@ -2,6 +2,12 @@ spring:
   application:
     name: household-manager
 
+  # Lokale Konfiguration aus .env (steht in .gitignore). Fehlt die Datei,
+  # startet die Anwendung mit den Defaults aus dieser Datei.
+  # Relative Pfade decken beide Startverzeichnisse ab (Repo-Root und backend/).
+  config:
+    import: optional:file:.env[.properties],optional:file:../.env[.properties]
+
   datasource:
     # Überschreibbar per Umgebungsvariable; Defaults sind die lokalen
     # Dev-Werte aus compose.yml.
@@ -34,6 +40,19 @@ spring:
 
 server:
   port: 8080
+
+# --- Nextcloud ---
+# Werte kommen aus .env (siehe .env.example). Ohne die Datei bleibt alles
+# leer: der Nutzerverzeichnis-Adapter ist dann deaktiviert.
+nextcloud:
+  base-url: ${NEXTCLOUD_BASE_URL:}
+  admin-user: ${NEXTCLOUD_ADMIN_USER:}
+  admin-app-password: ${NEXTCLOUD_ADMIN_APP_PASSWORD:}
+
+householdmanager:
+  security:
+    # Origin des Frontends (CORS). Weitere Origins per Komma trennen.
+    allowed-origins: ${HOUSEHOLDMANAGER_ALLOWED_ORIGINS:http://localhost:4200}
 
 management:
   endpoints:

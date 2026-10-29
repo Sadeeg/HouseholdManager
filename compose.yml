@@ -25,6 +25,11 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/householdmanager
       DB_USER: household
       DB_PASSWORD: household
+    # Die lokale Konfiguration (Secrets) wird nicht ins Image kopiert,
+    # sondern read-only eingebunden. Fehlt die Datei, startet der Container
+    # ohne Authentifizierung (siehe Backend-Log).
+    volumes:
+      - ./.env:/app/.env:ro
     depends_on:
       postgres:
         condition: service_healthy

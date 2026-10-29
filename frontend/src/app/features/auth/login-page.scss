@@ -1,0 +1,62 @@
+.login {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--hm-space-8);
+
+  &__panel {
+    width: min(28rem, 100%);
+    padding: var(--hm-space-6);
+    background: var(--hm-surface);
+    border: 1px solid var(--hm-border);
+    border-radius: var(--hm-radius);
+  }
+
+  &__eyebrow {
+    font-family: var(--hm-font-mono);
+    font-size: var(--hm-text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--hm-accent);
+    margin-bottom: var(--hm-space-2);
+  }
+
+  &__title {
+    font-size: var(--hm-text-2xl);
+    margin-bottom: var(--hm-space-3);
+  }
+
+  &__hint {
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-muted);
+    margin-bottom: var(--hm-space-6);
+  }
+
+  &__action {
+    width: 100%;
+    height: var(--hm-control-height);
+    font-family: var(--hm-font-mono);
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-inverse);
+    background: var(--hm-accent);
+    border: none;
+    border-radius: var(--hm-radius);
+    cursor: pointer;
+    transition: filter var(--hm-duration-fast) var(--hm-ease);
+
+    &:hover {
+      filter: brightness(1.08);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--hm-accent);
+      outline-offset: 2px;
+      box-shadow: var(--hm-focus-ring);
+    }
+  }
+
+  &__note {
+    margin-top: var(--hm-space-4);
+    font-size: var(--hm-text-xs);
+    color: var(--hm-text-faint);
+  }
+}

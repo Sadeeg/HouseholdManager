@@ -35,7 +35,7 @@
 
 | Einschränkung | Folge |
 |---------------|-------|
-| Noch kein Spring Security | Keine Authentifizierung/Autorisierung — vor Produktivbetrieb zu klären (siehe 11) |
+| Noch kein Spring Security für Rollen | Authentifizierung ist da (Nextcloud/OIDC), **Autorisierung** je Haushalt fehlt — vor Produktivbetrieb zu klären (siehe 11) |
 | CI vorhanden | Gates laufen in GitHub Actions bei jedem PR (`.github/workflows/ci.yml`) — zusätzlich lokal |
 | Noch kein E2E-Setup (Playwright) | Journeys werden über Backend-Integrationstests abgedeckt |
 | `ddl-auto: validate` | Schema-Änderungen brauchen zwingend eine Flyway-Migration |

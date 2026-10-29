@@ -54,6 +54,34 @@ selbst (Dev Services) — der Datenbank-Schritt entfällt dann.
 | Backend | **Ports & Adapters** (hexagonal): `domain` → `application` (Ports, Use Cases) → `adapters` (REST, JPA) | [ADR 0001](docs/adr/0001-backend-ports-and-adapters.md) |
 | Frontend | **Feature-basiert** (Manfred Steyer): Feature-Ordner mit `routes.ts`, smart Component, `model/`, `data/`, `ui/`; Grenzen per Sheriff erzwungen | [ADR 0002](docs/adr/0002-frontend-feature-architecture.md) |
 
+## Authentifizierung
+
+Nextcloud ist Identity Provider und Nutzerverzeichnis (wie in Constructly):
+
+- **Backend**: OAuth2 Resource Server, opake Tokens + Introspection
+  (`/apps/oidc/introspect`), confidential Client
+- **Frontend**: `angular-oauth2-oidc`, Code-Flow, public Client
+- **Konfiguration**: `.env` (Properties-Format) — **enthält Secrets, wird
+  nie committet**. Vorlage: `.env.example`
+
+Einrichtung (Nextcloud-Host `docker-extern`):
+
+```bash
+# Clients anlegen (Details in .env.example)
+docker exec -u www-data nextcloud php occ oidc:create "HouseholdManagerBackend" \
+  "http://localhost:4200" --type=confidential --client_id="…" --client_secret="…" \
+  --resource_url="http://localhost:8080/api"
+
+# Service-User für das Nutzerverzeichnis
+docker exec -u www-data nextcloud php occ user:add --password-from-env \
+  --display-name "HouseholdManager Service" householdmanager-svc -g admin
+docker exec -u www-data nextcloud php occ user:auth-tokens:add \
+  householdmanager-svc --name householdmanager-local
+```
+
+Ohne konfigurierte Credentials startet die API **ohne** Authentifizierung
+(lauter Warnhinweis im Log) — nur für die lokale Entwicklung.
+
 ## Struktur
 
 ```text

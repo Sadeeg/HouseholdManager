@@ -26,6 +26,14 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(AuthController.NotAuthenticatedException.class)
+    public ProblemDetail handleNotAuthenticated(AuthController.NotAuthenticatedException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED, "Nicht angemeldet.");
+        problem.setTitle("Nicht angemeldet");
+        return problem;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException exception) {
         String detail = exception.getBindingResult().getFieldErrors().stream()

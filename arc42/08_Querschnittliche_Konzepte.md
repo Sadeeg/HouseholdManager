@@ -33,11 +33,24 @@ JPA-Entity.
 
 ## Security
 
-> **Offen — wesentliche Lücke:** Es gibt **keine Authentifizierung und keine
-> Autorisierung**. `spring-boot-starter-security` ist nicht eingebunden, die
-> API ist ungeschützt. Vor einem Produktivbetrieb ist zu entscheiden:
-> Session, JWT (OAuth2 Resource Server) oder zentraler Identity Provider.
-> Der ARC-Agent markiert dies als Risiko (siehe 11).
+**Stand: umgesetzt.** Nextcloud ist Identity Provider und Nutzerverzeichnis
+(wie in Constructly).
+
+| Thema | Entscheidung |
+|-------|--------------|
+| Protokoll | OAuth2/OIDC, opake Tokens, Introspection über die OIDC-App (`/apps/oidc/introspect`) |
+| Backend | Spring Boot als Resource Server, **confidential** Client (Introspection erlaubt ab OIDC-App 2.6.0 keine Public Clients) |
+| Frontend | `angular-oauth2-oidc`, Code-Flow, public Client, Token im Speicher, Bearer-Header per Interceptor |
+| Nutzerverzeichnis | Nextcloud OCS-API mit Service-User (`householdmanager-svc`) + App-Password |
+| Konfiguration | `.env` (Properties, gitignored), Boot-native Property-Namen für die Introspection |
+| Grenzen | `CurrentUserPort` (ein-) und `UserDirectory` (aus-) — die Anwendung kennt keine Security-Klassen |
+
+**Ohne konfigurierte Credentials läuft die API ohne Authentifizierung** (lauter
+Warnhinweis im Log). Das ist der Zustand eines frischen, noch nicht
+eingerichteten Setups — **kein** Produktivbetrieb.
+
+Noch offen: Mandantentrennung (ein Nutzer sieht nur seinen Haushalt) und
+Rollen/Rechte innerhalb eines Haushalts.
 
 ## Logging und Observability
 
