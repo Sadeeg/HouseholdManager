@@ -7,11 +7,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import de.householdmanager.application.port.in.CurrentUserPort;
 import de.householdmanager.application.port.in.HouseholdUseCase;
 import de.householdmanager.domain.model.Household;
 import de.householdmanager.domain.model.InvalidHouseholdNameException;
+import de.householdmanager.domain.model.UserAccount;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -34,22 +37,37 @@ class HouseholdControllerTest {
     @MockitoBean
     private HouseholdUseCase householdUseCase;
 
+    @MockitoBean
+    private CurrentUserPort currentUserPort;
+
     @Test
-    void listHouseholds_returnsHouseholds() throws Exception {
-        when(householdUseCase.listHouseholds()).thenReturn(List.of(Household.builder()
+    void listHouseholds_returnsHouseholdsOfTheSignedInPerson() throws Exception {
+        givenSignedInAs("alice");
+        when(householdUseCase.listHouseholds("alice")).thenReturn(List.of(Household.builder()
                 .id(1L)
                 .name("Haushalt Müller")
                 .createdAt(Instant.parse("2026-01-01T00:00:00Z"))
+                .createdBy("alice")
                 .build()));
 
         mockMvc.perform(get("/api/households"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value("Haushalt Müller"));
+                .andExpect(jsonPath("$[0].name").value("Haushalt Müller"))
+                .andExpect(jsonPath("$[0].createdBy").value("alice"));
+    }
+
+    @Test
+    void listHouseholds_withoutSignedInPerson_isUnauthorized() throws Exception {
+        when(currentUserPort.currentUser()).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/households"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void createHousehold_rejectsBlankName() throws Exception {
+        givenSignedInAs("alice");
         mockMvc.perform(post("/api/households")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"  \"}"))
@@ -58,10 +76,11 @@ class HouseholdControllerTest {
 
     @Test
     void createHousehold_mapsDomainErrorToBadRequest() throws Exception {
+        givenSignedInAs("alice");
         // Die Längengrenze ist eine Invariante der Anwendung (Use Case) —
         // der Controller übersetzt nur ihren Fehler. Geprüft wird hier die
         // Abbildung, nicht die Grenze selbst (siehe HouseholdUseCaseImplTest).
-        when(householdUseCase.createHousehold(anyString()))
+        when(householdUseCase.createHousehold(anyString(), anyString()))
                 .thenThrow(new InvalidHouseholdNameException(
                         "Der Name des Haushalts darf höchstens " + Household.MAX_NAME_LENGTH
                                 + " Zeichen lang sein."));
@@ -77,16 +96,24 @@ class HouseholdControllerTest {
 
     @Test
     void createHousehold_returnsCreatedHousehold() throws Exception {
-        when(householdUseCase.createHousehold(anyString())).thenReturn(Household.builder()
+        givenSignedInAs("alice");
+        when(householdUseCase.createHousehold(anyString(), anyString())).thenReturn(Household.builder()
                 .id(7L)
                 .name("Haushalt Müller")
                 .createdAt(Instant.parse("2026-01-01T00:00:00Z"))
+                .createdBy("alice")
                 .build());
 
         mockMvc.perform(post("/api/households")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Haushalt Müller\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(7));
+                .andExpect(jsonPath("$.id").value(7))
+                .andExpect(jsonPath("$.createdBy").value("alice"));
+    }
+
+    private void givenSignedInAs(String userId) {
+        when(currentUserPort.currentUser())
+                .thenReturn(Optional.of(new UserAccount(userId, userId, null)));
     }
 }

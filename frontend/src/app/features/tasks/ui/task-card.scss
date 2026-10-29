@@ -1,0 +1,140 @@
+// Kanban-Karte — Muster aus docs/design/design-dna.md.
+:host {
+  display: block;
+}
+
+.task-card {
+  position: relative;
+  min-height: 64px;
+  padding: var(--hm-space-3);
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  transition: border-color var(--hm-duration-fast) var(--hm-ease);
+
+  &:hover {
+    border-color: var(--hm-border-strong);
+  }
+
+  // Status wird nicht über Farbe angezeigt — DONE titelt nur gedämpft.
+  &--done .task-card__title {
+    color: var(--hm-text-muted);
+  }
+}
+
+.task-card__title {
+  font-size: var(--hm-text-md);
+  font-weight: 600;
+  margin-bottom: var(--hm-space-2);
+}
+
+.task-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-2);
+  margin-top: var(--hm-space-1);
+  font-size: var(--hm-text-sm);
+}
+
+.task-card__meta-label {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--hm-text-muted);
+}
+
+.task-card__mono {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--hm-text-muted);
+}
+
+.task-card__name {
+  font-size: var(--hm-text-sm);
+}
+
+.task-card__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hm-space-1);
+  margin: var(--hm-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Label-Chip: Farbe folgt dem normalisierten Namen (--label-color wird
+// pro Chip gesetzt), Rand als color-mix, keine Füllfläche.
+.task-card__label {
+  color: var(--label-color);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--label-color) 45%, transparent);
+}
+
+.task-card__actions {
+  position: relative;
+  display: flex;
+  gap: var(--hm-space-3);
+  margin-top: var(--hm-space-3);
+  opacity: 0;
+  transition: opacity var(--hm-duration-fast) var(--hm-ease);
+}
+
+.task-card:hover .task-card__actions,
+.task-card:focus-within .task-card__actions {
+  opacity: 1;
+}
+
+.task-card__delete:hover:not(:disabled) {
+  color: var(--hm-danger);
+}
+
+.task-card__move-menu {
+  position: absolute;
+  top: calc(100% + var(--hm-space-1));
+  right: 0;
+  z-index: var(--hm-z-dropdown);
+  display: flex;
+  flex-direction: column;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  box-shadow: var(--hm-shadow);
+
+  button {
+    min-height: 36px;
+    padding: 0 var(--hm-space-3);
+    background: transparent;
+    border: none;
+    color: var(--hm-text);
+    font-family: var(--hm-font-mono);
+    font-size: var(--hm-text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--hm-surface-2);
+    }
+  }
+}
+
+.task-card__saving {
+  margin-top: var(--hm-space-2);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+}
+
+// Drag-Zustände (CDK): Vorschau echte Ebene, Original halbiert,
+// Platzhalter gestrichelt.
+.task-card.cdk-drag-preview {
+  border: 1px solid var(--hm-border-strong);
+  box-shadow: var(--hm-shadow);
+}
+
+.cdk-drag-animating {
+  transition: transform var(--hm-duration) var(--hm-ease);
+}

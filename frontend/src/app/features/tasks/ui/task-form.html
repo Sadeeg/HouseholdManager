@@ -1,0 +1,162 @@
+<!-- Der Backdrop-Button schließt den Dialog durch Klick außerhalb;
+     Escape schließt ihn über den Key-Handler des Dialogs. -->
+<div class="task-form">
+  <button
+    type="button"
+    class="task-form__backdrop"
+    aria-label="Dialog schließen"
+    (click)="cancelled.emit()"
+  ></button>
+  <div
+    class="task-form__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="task-form-title"
+    (keydown.escape)="cancelled.emit()"
+  >
+    <h3 id="task-form-title" class="task-form__title">
+      @if (initial() !== null) {
+        Aufgabe bearbeiten
+      } @else {
+        Aufgabe anlegen
+      }
+    </h3>
+
+    <div class="task-form__fields">
+      <!-- Titel: einziges Pflichtfeld -->
+      <div class="task-form__field">
+        <label for="task-title">Titel <span aria-hidden="true">*</span></label>
+        <input
+          id="task-title"
+          class="hm-input"
+          [class.hm-input--invalid]="taskForm.title().invalid() && taskForm.title().touched()"
+          [formField]="taskForm.title"
+          aria-describedby="task-title-error"
+        />
+        @if (taskForm.title().invalid() && taskForm.title().touched()) {
+          <p id="task-title-error" class="task-form__field-error" role="alert">
+            {{ taskForm.title().errors()[0]?.message }}
+          </p>
+        }
+      </div>
+
+      <!-- Markdown-Inhalt mit Vorschau (AC3) -->
+      <div class="task-form__field">
+        <div class="task-form__field-head">
+          <label for="task-content">Markdown-Inhalt</label>
+          <button type="button" class="hm-button hm-button--secondary task-form__preview-toggle" (click)="previewOpen.update(v => !v)">
+            @if (previewOpen()) {
+              Quelltext
+            } @else {
+              Vorschau
+            }
+          </button>
+        </div>
+        @if (previewOpen()) {
+          <div class="task-form__preview">
+            <app-markdown-view [content]="model().content" />
+          </div>
+        } @else {
+          <textarea
+            id="task-content"
+            class="hm-textarea task-form__markdown"
+            [formField]="taskForm.content"
+            rows="8"
+          ></textarea>
+        }
+      </div>
+
+      <!-- Zuständige nur aus dem Nutzerverzeichnis (AC8) -->
+      <div class="task-form__field">
+        <label for="task-assignee-search">Zuständige</label>
+        @if (assignee(); as selected) {
+          <p class="task-form__assignee-chip">
+            <span class="hm-chip">
+              {{ selected.displayName }} @{{ selected.id }}
+              <button type="button" class="task-form__chip-remove" aria-label="Zuständige entfernen" (click)="clearAssignee()">×</button>
+            </span>
+          </p>
+        } @else {
+          <app-user-picker (selected)="selectAssignee($event)" />
+        }
+      </div>
+
+      <!-- Frist TT.MM.JJJJ -->
+      <div class="task-form__field">
+        <label for="task-due">Frist</label>
+        <input
+          id="task-due"
+          class="hm-input task-form__date"
+          [class.hm-input--invalid]="taskForm.dueDate().invalid() && taskForm.dueDate().touched()"
+          [formField]="taskForm.dueDate"
+          placeholder="TT.MM.JJJJ"
+          aria-describedby="task-due-help task-due-error"
+        />
+        <p id="task-due-help" class="task-form__help">Format: TT.MM.JJJJ</p>
+        @if (taskForm.dueDate().invalid() && taskForm.dueDate().touched()) {
+          <p id="task-due-error" class="task-form__field-error" role="alert">
+            Das Datum ist ungültig. Bitte im Format TT.MM.JJJJ eingeben.
+          </p>
+        }
+        @if (dueDateInPast()) {
+          <p class="task-form__help">Die Aufgabe wird als überfällig gekennzeichnet.</p>
+        }
+      </div>
+
+      <!-- Labels: Duplikate werden zusammengeführt (AC20) -->
+      <div class="task-form__field">
+        <label for="task-label">Labels</label>
+        @if (labels().length > 0) {
+          <ul class="task-form__labels" aria-label="Gesetzte Labels">
+            @for (label of labels(); track label) {
+              <li class="hm-chip">
+                {{ label }}
+                <button type="button" class="task-form__chip-remove" [attr.aria-label]="'Label ' + label + ' entfernen'" (click)="removeLabel(label)">×</button>
+              </li>
+            }
+          </ul>
+        }
+        <div class="task-form__label-add">
+          <input
+            id="task-label"
+            class="hm-input"
+            list="label-suggestions"
+            [value]="newLabel()"
+            (input)="newLabel.set($any($event.target).value)"
+            (keydown.enter)="$event.preventDefault(); addLabel()"
+          />
+          <button type="button" class="hm-button hm-button--secondary" (click)="addLabel()">Hinzufügen</button>
+        </div>
+        <datalist id="label-suggestions">
+          @for (label of labelSuggestions(); track label) {
+            <option [value]="label"></option>
+          }
+        </datalist>
+      </div>
+    </div>
+
+    @if (saveError(); as error) {
+      <p class="task-form__error-summary" role="alert">{{ error }}</p>
+    }
+
+    <div class="task-form__actions">
+      <button
+        type="button"
+        class="hm-button hm-button--primary"
+        [disabled]="saving()"
+        (click)="save()"
+      >
+        @if (saving()) {
+          Wird gespeichert …
+        } @else if (initial() !== null) {
+          Änderungen speichern
+        } @else {
+          Speichern
+        }
+      </button>
+      <button type="button" class="hm-button hm-button--secondary" [disabled]="saving()" (click)="cancelled.emit()">
+        Abbrechen
+      </button>
+    </div>
+  </div>
+</div>

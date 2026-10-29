@@ -27,7 +27,10 @@ public class Household {
     private final String name;
     private final Instant createdAt;
 
+    /** Kennung der Person, die den Haushalt angelegt hat — die Haushaltsleitung. */
+    private final String createdBy;
+
     public Household withId(Long id) {
-        return new Household(id, name, createdAt);
+        return new Household(id, name, createdAt, createdBy);
     }
 }

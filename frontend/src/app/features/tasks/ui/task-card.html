@@ -1,0 +1,69 @@
+<article
+  class="task-card"
+  [class.task-card--done]="task().status === 'DONE'"
+  cdkDrag
+  [cdkDragDisabled]="busy()"
+>
+  <h3 class="task-card__title">{{ task().title }}</h3>
+
+  @if (task().dueDate; as dueDate) {
+    <p class="task-card__meta">
+      @if (overdue()) {
+        <span class="hm-badge hm-badge--warning">ÜBERFÄLLIG</span>
+      }
+      <span class="task-card__meta-label">FRIST</span>
+      <span class="task-card__mono">{{ dueDateLabel(dueDate) }}</span>
+    </p>
+  }
+
+  @if (task().assigneeUserId; as assigneeId) {
+    <p class="task-card__meta">
+      <span class="task-card__meta-label">ZUSTÄNDIG</span>
+      <span class="task-card__name">{{ task().assigneeDisplayName ?? assigneeId }}</span>
+      <span class="task-card__mono">@{{ assigneeId }}</span>
+      @if (!task().assigneeInHousehold) {
+        <span class="hm-badge hm-badge--warning">NICHT IM HAUSHALT</span>
+      }
+    </p>
+  }
+
+  @if (task().labels.length > 0) {
+    <ul class="task-card__labels" aria-label="Labels">
+      @for (label of task().labels; track label) {
+        <li class="hm-chip task-card__label" [style.--label-color]="'var(--hm-label-' + colorIndex(label) + ')'">
+          {{ label }}
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="task-card__actions">
+    <button type="button" class="hm-link-action" [disabled]="busy()" (click)="editRequested.emit(task())">
+      BEARBEITEN
+    </button>
+    <button type="button" class="hm-link-action task-card__delete" [disabled]="busy()" (click)="deleteRequested.emit(task())">
+      LÖSCHEN
+    </button>
+    <button
+      type="button"
+      class="hm-link-action"
+      [disabled]="busy()"
+      aria-haspopup="menu"
+      [attr.aria-expanded]="moveMenuOpen()"
+      (click)="toggleMoveMenu()"
+    >
+      VERSCHIEBEN NACH …
+    </button>
+    @if (moveMenuOpen()) {
+      <div class="task-card__move-menu" role="menu" aria-label="Verschieben nach">
+        @for (status of otherStatuses(); track status) {
+          <button type="button" role="menuitem" (click)="moveTo(status)">Nach {{ status }}</button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (busy()) {
+    <p class="task-card__saving">Wird gespeichert …</p>
+  }
+</article>

@@ -1,0 +1,34 @@
+<div class="user-picker">
+  <input
+    class="hm-input"
+    type="search"
+    placeholder="Person suchen"
+    aria-label="Person suchen"
+    [value]="query"
+    (input)="searchNow($any($event.target).value)"
+  />
+
+  @if (searching()) {
+    <p class="user-picker__state">Personen werden gesucht …</p>
+  }
+  @if (failed()) {
+    <p class="user-picker__state user-picker__state--error" role="alert">
+      Nutzerverzeichnis nicht erreichbar.
+    </p>
+  }
+
+  @if (results().length > 0) {
+    <ul class="user-picker__results" role="listbox" aria-label="Personenvorschläge">
+      @for (user of results(); track user.id) {
+        <li>
+          <button type="button" role="option" aria-selected="false" class="user-picker__result" (click)="pick(user)">
+            <span class="user-picker__name">{{ user.displayName }}</span>
+            <span class="user-picker__login">@{{ user.id }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (searching() === false && query.trim().length >= 2 && !failed()) {
+    <p class="user-picker__state user-picker__state--empty">Keine Person gefunden.</p>
+  }
+</div>

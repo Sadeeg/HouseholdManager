@@ -1,15 +1,19 @@
 .app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-6);
   padding: var(--hm-space-4) var(--hm-space-6);
   border-bottom: 1px solid var(--hm-border);
   background: var(--hm-surface);
+  min-height: 48px;
+}
 
-  h1 {
-    font-family: var(--hm-font-mono);
-    font-size: var(--hm-text-lg);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--hm-text);
-  }
+.app-header__title {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-lg);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--hm-text);
 
   // Terminal-Andeutung: Prefix-Markierung vor dem Titel
   &::before {
@@ -17,6 +21,36 @@
     margin-right: var(--hm-space-2);
     color: var(--hm-accent);
   }
+}
+
+.app-nav {
+  display: flex;
+  gap: var(--hm-space-4);
+  flex: 1;
+}
+
+.app-nav__link {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--hm-text-muted);
+  text-decoration: none;
+  padding: var(--hm-space-1) 0;
+
+  &:hover {
+    color: var(--hm-text);
+    text-decoration: none;
+  }
+
+  &--active {
+    color: var(--hm-text);
+    border-bottom: 1px solid var(--hm-accent);
+  }
+}
+
+.app-header__workspace {
+  margin-left: auto;
 }
 
 .app-main {

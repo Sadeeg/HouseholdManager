@@ -1,0 +1,41 @@
+// Markdown-Lesefläche — Muster aus design-dna.md („Markdown-Vorschau“).
+:host {
+  display: block;
+}
+
+.markdown__heading {
+  font-family: var(--hm-font-sans);
+  margin: var(--hm-space-3) 0 var(--hm-space-1);
+
+  &--1 {
+    font-size: var(--hm-text-lg);
+  }
+
+  &--n {
+    font-size: var(--hm-text-md);
+  }
+}
+
+.markdown__list {
+  margin: var(--hm-space-1) 0;
+  padding-left: var(--hm-space-4);
+}
+
+.markdown__code {
+  margin: var(--hm-space-2) 0;
+  padding: var(--hm-space-3);
+  background: var(--hm-surface);
+  border-left: 2px solid var(--hm-border-strong);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.markdown__paragraph {
+  margin: var(--hm-space-1) 0;
+}
+
+code {
+  background: var(--hm-surface-3);
+  border-radius: var(--hm-radius-sm);
+  padding: 0 var(--hm-space-1);
+}

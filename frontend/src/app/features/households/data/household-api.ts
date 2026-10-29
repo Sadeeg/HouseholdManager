@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { API_CONFIG } from '../../../core/config/api.config';
 import { Household } from '../model/household.model';
+import { Member } from '../model/member.model';
 
 const HOUSEHOLDS_URL = `${API_CONFIG.basePath}/households`;
 
@@ -29,5 +30,17 @@ export class HouseholdApi {
 
   create(name: string): Observable<Household> {
     return this.http.post<Household>(HOUSEHOLDS_URL, { name });
+  }
+
+  listMembers(householdId: number): Observable<Member[]> {
+    return this.http.get<Member[]>(`${HOUSEHOLDS_URL}/${householdId}/members`);
+  }
+
+  addMember(householdId: number, userId: string): Observable<Member> {
+    return this.http.post<Member>(`${HOUSEHOLDS_URL}/${householdId}/members`, { userId });
+  }
+
+  removeMember(householdId: number, userId: string): Observable<void> {
+    return this.http.delete<void>(`${HOUSEHOLDS_URL}/${householdId}/members/${userId}`);
   }
 }

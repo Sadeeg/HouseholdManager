@@ -1,0 +1,77 @@
+@for (block of blocks(); track $index) {
+  @switch (block.type) {
+    @case ('heading') {
+      @if (block.level === 1) {
+        <h3 class="markdown__heading markdown__heading--1">
+          @for (segment of block.segments; track $index) {
+            @switch (segment.format) {
+              @case ('bold') { <strong>{{ segment.text }}</strong> }
+              @case ('italic') { <em>{{ segment.text }}</em> }
+              @case ('code') { <code>{{ segment.text }}</code> }
+              @default { {{ segment.text }} }
+            }
+          }
+        </h3>
+      } @else {
+        <h4 class="markdown__heading markdown__heading--n">
+          @for (segment of block.segments; track $index) {
+            @switch (segment.format) {
+              @case ('bold') { <strong>{{ segment.text }}</strong> }
+              @case ('italic') { <em>{{ segment.text }}</em> }
+              @case ('code') { <code>{{ segment.text }}</code> }
+              @default { {{ segment.text }} }
+            }
+          }
+        </h4>
+      }
+    }
+    @case ('list') {
+      @if (block.ordered) {
+        <ol class="markdown__list">
+          @for (item of block.items; track $index) {
+            <li>
+              @for (segment of item; track $index) {
+                @switch (segment.format) {
+                  @case ('bold') { <strong>{{ segment.text }}</strong> }
+                  @case ('italic') { <em>{{ segment.text }}</em> }
+                  @case ('code') { <code>{{ segment.text }}</code> }
+                  @default { {{ segment.text }} }
+                }
+              }
+            </li>
+          }
+        </ol>
+      } @else {
+        <ul class="markdown__list">
+          @for (item of block.items; track $index) {
+            <li>
+              @for (segment of item; track $index) {
+                @switch (segment.format) {
+                  @case ('bold') { <strong>{{ segment.text }}</strong> }
+                  @case ('italic') { <em>{{ segment.text }}</em> }
+                  @case ('code') { <code>{{ segment.text }}</code> }
+                  @default { {{ segment.text }} }
+                }
+              }
+            </li>
+          }
+        </ul>
+      }
+    }
+    @case ('code') {
+      <pre class="markdown__code"><code>{{ block.lines.join('\n') }}</code></pre>
+    }
+    @case ('paragraph') {
+      <p class="markdown__paragraph">
+        @for (segment of block.segments; track $index) {
+          @switch (segment.format) {
+            @case ('bold') { <strong>{{ segment.text }}</strong> }
+            @case ('italic') { <em>{{ segment.text }}</em> }
+            @case ('code') { <code>{{ segment.text }}</code> }
+            @default { {{ segment.text }} }
+          }
+        }
+      </p>
+    }
+  }
+}

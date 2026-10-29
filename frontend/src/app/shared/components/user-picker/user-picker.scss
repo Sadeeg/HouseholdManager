@@ -1,0 +1,52 @@
+// Die Vorschlagsliste gehört in den Fluss der Seite: eine überlagerte Liste
+// verdeckt andere Einträge und Aktionen (und macht Aktionen unerreichbar).
+.user-picker__results {
+  margin-top: var(--hm-space-1);
+  padding: 0;
+  list-style: none;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+}
+
+.user-picker__result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hm-space-3);
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--hm-space-3);
+  background: transparent;
+  border: none;
+  color: var(--hm-text);
+  font-family: var(--hm-font-sans);
+  font-size: var(--hm-text-md);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hm-surface-2);
+  }
+}
+
+.user-picker__login {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+}
+
+.user-picker__state {
+  margin-top: var(--hm-space-1);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+
+  &--empty {
+    color: var(--hm-text-faint);
+  }
+
+  &--error {
+    color: var(--hm-danger);
+  }
+}

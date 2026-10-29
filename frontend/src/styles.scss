@@ -1,6 +1,9 @@
 // Design-DNA: Tokens zuerst, dann Basis-Styles.
 // Siehe docs/design/design-dna.md
 @use 'design-tokens';
+// Hinweis: Das CDK drag-drop bringt ab v22 keine separaten Stylesheets mehr
+// mit — die Zustandsklassen (.cdk-drag-preview/-placeholder) werden in den
+// Komponenten-Styles der Design-DNA entsprechend gestaltet.
 
 * {
   box-sizing: border-box;
@@ -74,4 +77,134 @@ pre {
 * {
   scrollbar-color: var(--hm-surface-3) transparent;
   scrollbar-width: thin;
+}
+
+// -----------------------------------------------------------------------------
+// UI-Primitive der Design-DNA — Buttons, Inputs, Chips, Badges.
+// Tokens sind die einzigen Werte; Klassen tragen die Rolle, nicht die Farbe.
+// -----------------------------------------------------------------------------
+
+.hm-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hm-space-2);
+  height: var(--hm-control-height);
+  padding: 0 var(--hm-space-4);
+  border-radius: var(--hm-radius);
+  border: 1px solid transparent;
+  font-family: var(--hm-font-sans);
+  font-size: var(--hm-text-md);
+  cursor: pointer;
+  transition: background-color var(--hm-duration-fast) var(--hm-ease);
+}
+
+.hm-button--primary {
+  background: var(--hm-accent);
+  color: var(--hm-text-inverse);
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.12);
+  }
+}
+
+.hm-button--secondary {
+  background: transparent;
+  border-color: var(--hm-border-strong);
+  color: var(--hm-text);
+
+  &:hover:not(:disabled) {
+    background: var(--hm-surface-2);
+  }
+}
+
+.hm-button--danger {
+  background: transparent;
+  border-color: var(--hm-danger);
+  color: var(--hm-danger);
+
+  &:hover:not(:disabled) {
+    background: var(--hm-danger-soft);
+  }
+}
+
+.hm-button:disabled {
+  color: var(--hm-text-faint);
+  border-color: var(--hm-border);
+  background: transparent;
+  cursor: default;
+}
+
+.hm-link-action {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--hm-text);
+  }
+
+  &:disabled {
+    color: var(--hm-text-faint);
+    cursor: default;
+  }
+}
+
+.hm-input,
+.hm-textarea {
+  width: 100%;
+  background: var(--hm-surface-2);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  color: var(--hm-text);
+  font-family: var(--hm-font-sans);
+  font-size: var(--hm-text-md);
+  padding: var(--hm-space-2) var(--hm-space-3);
+
+  &:focus {
+    outline: none;
+    border-color: var(--hm-border-strong);
+    box-shadow: var(--hm-focus-ring);
+  }
+}
+
+.hm-input--invalid {
+  border-color: var(--hm-danger);
+}
+
+.hm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hm-space-1);
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-3);
+  color: var(--hm-text);
+  font-size: var(--hm-text-xs);
+  padding: 2px var(--hm-space-2);
+}
+
+.hm-badge {
+  display: inline-block;
+  border-radius: var(--hm-radius-sm);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px var(--hm-space-2);
+}
+
+.hm-badge--warning {
+  background: var(--hm-warning-soft);
+  color: var(--hm-warning);
+}
+
+.hm-badge--admin {
+  background: var(--hm-accent-soft);
+  color: var(--hm-accent-3);
 }

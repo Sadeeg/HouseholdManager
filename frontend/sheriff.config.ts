@@ -27,6 +27,10 @@ export const config: SheriffConfig = {
     'src/app/features/households/model': ['domain:households', 'type:model'],
     'src/app/features/households/data': ['domain:households', 'type:data'],
     'src/app/features/households/ui': ['domain:households', 'type:ui'],
+    'src/app/features/tasks': ['domain:tasks', 'type:feature'],
+    'src/app/features/tasks/model': ['domain:tasks', 'type:model'],
+    'src/app/features/tasks/data': ['domain:tasks', 'type:data'],
+    'src/app/features/tasks/ui': ['domain:tasks', 'type:ui'],
   },
 
   depRules: {

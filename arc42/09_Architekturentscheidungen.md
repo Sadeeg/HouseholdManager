@@ -8,6 +8,8 @@ Entscheidung — **keine** Dublette.
 |-----|-------|--------|-------|------------|
 | [0001](../docs/adr/0001-backend-ports-and-adapters.md) | Backend: Ports-and-Adapters-Architektur | angenommen | 2026-10-29 | Fachkern ohne Framework, Adapter an den Rändern, Tests je Schicht |
 | [0002](../docs/adr/0002-frontend-feature-architecture.md) | Frontend: Feature-basierte Architektur (Manfred Steyer) | angenommen | 2026-10-29 | Feature = bounded context, Matrix-Schichten, Grenzen per Sheriff |
+| [0003](../docs/adr/0003-fach-contexte-als-module-einer-anwendung.md) | Fach-Contexte als Module einer Anwendung | angenommen | 2026-10-29 | Eine Deploymenteinheit; Contextgrenzen nur über In-Ports |
+| [0004](../docs/adr/0004-workspace-auswahl-des-haushalts-in-core.md) | Workspace-Auswahl des Haushalts in core/ | angenommen | 2026-10-29 | Auswahl app-weit in `core/workspace`; Features lesen nur den gewählten Haushalt |
 
 ## Weitere Entscheidungen (ohne ADR, bewusst)
 
@@ -19,9 +21,13 @@ Entscheidung — **keine** Dublette.
 | Docker Compose für Development | gleiche Umgebung lokal und im Betrieb | Continuous Deployment eingeführt wird |
 | `open-in-view: false` | verhindert Lazy-Lazy-Lad-Fehler und N+1 | — (dauerhafte Festlegung) |
 
-> **Offen:** Mandantenfähigkeit (ein Service pro Context oder Context pro
-> Haushalt), Authentifizierungskonzept, Monorepo-Tooling (Nx?) — jeweils als
-> ADR, sobald entschieden.
+## ADR-Vorschläge — entschieden (2026-10-29)
+
+Die aus Issue #1 abgeleiteten Vorschläge sind als **ADR 0003** und
+**ADR 0004** angenommen (siehe Tabelle oben).
+
+> **Offen:** Mandantenfähigkeit im Sinne „Context pro Haushalt/Mieter" und
+> Monorepo-Tooling (Nx?) — jeweils als ADR, sobald entschieden.
 
 ## Wie Entscheidungen entstehen
 

@@ -41,6 +41,13 @@ nicht wie eine Retro-Hacker-Demo.
 allein. Der Fokus ist sichtbar (Ring `--hm-focus-ring`), auch im Dark Mode.
 Kontraste: Fließtext ≥ 4.5:1, große Schrift und Linien ≥ 3:1.
 
+**Label-Farben (`--hm-label-1` … `--hm-label-8`):** eigenständige Klasse,
+**keine Akzente** — sie tragen Identität, nie Aktion, und zählen deshalb
+nicht zur Zwei-Akzente-Grenze. Zuordnung deterministisch über
+`Hash(normalisierter Name) mod 8`, damit derselbe Name boardweit dieselbe
+Farbe erhält. Sie werden nur als Rand und Text von Label-Chips benutzt
+(`color-mix(... 45 %, transparent)` als Rand), nie als Fläche einer Karte.
+
 ## Typografie
 
 | Rolle | Größe | Font |
@@ -73,11 +80,18 @@ Kontraste: Fließtext ≥ 4.5:1, große Schrift und Linien ≥ 3:1.
 | **Button sekundär** | transparent, 1px `--hm-border-strong`, Text `--hm-text`; Hover `--hm-surface-2` |
 | **Input** | `--hm-surface-2`, 1px `--hm-border`, Radius 4px; Fokus: `--hm-border-strong` + `--hm-focus-ring` |
 | **Tabelle** | Kopfzeile `--hm-surface-2`, 12px Mono uppercase; Zellenhöhe 40px; Zahlen rechtsbündig, tabellarisch |
-| **Badge/Status** | 2px Radius, 12px Mono uppercase, Fläche `--hm-accent-soft` + Text `--hm-accent` |
+| **Badge/Status** | 2px Radius, 12px Mono uppercase; Fläche `--hm-accent-soft` + Text `--hm-accent` (Aktion/Bestätigung), `--hm-warning-soft` + `--hm-warning` (Statuskennzeichnung an Karten, z. B. „überfällig"), `--hm-accent-soft` + `--hm-accent-3` (Mitgliedschaft/Leitung). Nie Fläche allein: der Text steht im Badge |
+| **Workspace-Wähler** (App-Kopf) | Auslöser im App-Kopf: transparent, 1px `--hm-border-strong`, Radius `--hm-radius`, Höhe 32px, Name der aktuellen Auswahl 14px Sans + Marker `▾` in `--hm-text-muted`; Liste: `--hm-surface`, 1px `--hm-border`, Radius `--hm-radius`, `--hm-shadow`, `--hm-z-dropdown`, Zeilenhöhe 40px, aktuelle Zeile `--hm-surface-2` + Mono-Label „AKTUELL" (kein Akzent). Auswahl ohne Neuladen der Seite |
 | **Terminal-Block** | Monospace, `--hm-surface`, links 2px `--hm-accent`, Zeilen mit `$`-Präfix für Kommandos — nur für echte Kommandos/Ausgaben |
 | **Leerzustand** | Zentriert, Icon in `--hm-text-faint`, eine Zeile Klartext + eine Zeile Aktion |
 | **Fehlerzustand** | `--hm-danger-soft` als Fläche, `--hm-danger` als Linie links, Text + optional Aktion |
 | **Toast** | `--hm-surface-2`, 1px `--hm-border`, Radius 4px, `--hm-shadow`, 4s Standzeit |
+| **Dialog (Overlay)** | Backdrop `--hm-overlay`; Panel `--hm-surface`, 1px `--hm-border`, Radius `--hm-radius-lg`, `--hm-shadow-lg`, Ebene `--hm-z-overlay`; Innenabstand `--hm-space-6`; Titel `--hm-text-xl`, actions rechtsbündig: Primäraktion + „Abbrechen"; Fokusfalle, `Esc` schließt |
+| **Bestätigungsdialog** | wie Dialog, Text nennt **Zahl und Objekt** („N Aufgaben in „DONE" werden endgültig gelöscht."); destruktive Primäraktion: transparent, 1px `--hm-danger`, Text `--hm-danger`, Hover `--hm-danger-soft`; daneben „Abbrechen" (sekundär) |
+| **Board-Spalte** | Bahn ohne eigene Fläche (nutzt `--hm-bg`), Spalten nur durch 1px `--hm-border` getrennt; Kopf: 12px Mono uppercase `--hm-text-muted` (Name) + Anzahl rechts in Mono, 1px-Linie unten; Spalte ist immer sichtbar, Mindestbreite 0 |
+| **Kanban-Karte** | `--hm-surface`, 1px `--hm-border`, Radius `--hm-radius`, Innenabstand `--hm-space-3`; Titel 14px Sans; Meta-Zeilen 12–13px Mono/Sans `--hm-text-muted`; Karten **nicht** klickbar (Drag-Fläche), Aktionen als explizite Buttons; Status wird **nicht** über Farbe angezeigt, DONE-Titel in `--hm-text-muted` |
+| **Label-Chip** | Radius `--hm-radius-sm`, 12px Mono, **nicht** uppercase (Namen sind Nutzereingaben), Text `var(--hm-label-n)`, Rand 1px `color-mix(… 45 %)`, keine Füllfläche; Entfernen als `×`-Button am Chip |
+| **Drag-Zustände** | Vorschau: Karte mit 1px `--hm-border-strong` + `--hm-shadow` (echte Ebene), Original Deckkraft 0.35; Einrück-Platzhalter: 1px gestrichelt `--hm-border-strong`, Radius `--hm-radius`; Ziel-Bahn: 1px `--hm-accent-line`; Speichern läuft: Mono-Zeile „Wird gespeichert …" `--hm-text-muted`, Karte nicht erneut greifbar; Übergänge ≤ `--hm-duration` |
 
 ## Zustände (Pflicht für jedes interaktive Element)
 

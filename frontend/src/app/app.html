@@ -1,5 +1,14 @@
 <header class="app-header">
-  <h1>HouseholdManager</h1>
+  <h1 class="app-header__title">HouseholdManager</h1>
+
+  <nav class="app-nav" aria-label="Hauptnavigation">
+    <a class="app-nav__link" routerLink="/haushalte" routerLinkActive="app-nav__link--active">HAUSHALTE</a>
+    @if (hasWorkspace()) {
+      <a class="app-nav__link" routerLink="/aufgaben" routerLinkActive="app-nav__link--active">AUFGABEN</a>
+    }
+  </nav>
+
+  <app-workspace-switcher class="app-header__workspace" />
 </header>
 
 <main class="app-main">

@@ -1,0 +1,51 @@
+@let current = currentHousehold();
+@if (current) {
+  <button
+    type="button"
+    class="workspace-switcher__trigger"
+    (click)="toggle()"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="open()"
+  >
+    <span class="workspace-switcher__name">{{ current.name }}</span>
+    <span class="workspace-switcher__marker" aria-hidden="true">▾</span>
+  </button>
+} @else {
+  <button
+    type="button"
+    class="workspace-switcher__trigger workspace-switcher__trigger--empty"
+    (click)="toggle()"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="open()"
+  >
+    <span class="workspace-switcher__name">Kein Haushalt</span>
+    <span class="workspace-switcher__marker" aria-hidden="true">▾</span>
+  </button>
+}
+
+@if (open()) {
+  <ul class="workspace-switcher__list" role="listbox" aria-label="Haushalte">
+    @for (household of households(); track household.id) {
+      <li>
+        <button
+          type="button"
+          role="option"
+          class="workspace-switcher__option"
+          [class.workspace-switcher__option--current]="household.id === currentHousehold()?.id"
+          [attr.aria-selected]="household.id === currentHousehold()?.id"
+          (click)="select(household.id)"
+        >
+          <span>{{ household.name }}</span>
+          @if (household.id === currentHousehold()?.id) {
+            <span class="workspace-switcher__current">AKTUELL</span>
+          }
+        </button>
+      </li>
+    } @empty {
+      <li class="workspace-switcher__empty">Du bist in keinem Haushalt ernannt.</li>
+      <li>
+        <a class="workspace-switcher__hint" routerLink="/haushalte">Haushalte ansehen</a>
+      </li>
+    }
+  </ul>
+}

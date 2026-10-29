@@ -8,8 +8,12 @@ trägt der ARC-Agent hier ein.
 | Begriff | Bedeutung |
 |---------|-----------|
 | **Haushalt** | Die zentrale Einheit: ein Wohnumfeld mit Mitgliedern, Aufgaben, Ausgaben und Terminen. Alle Daten sind einem Haushalt zugeordnet. |
-| **Mitglied** | Person, die einem Haushalt angehört und Aufgaben/Ausgaben zugeteordnet bekommt. |
-| **Aufgabe** | Arbeitseinheit in einem Haushalt (späterer Context). |
+| **Haushaltsleitung** | Die Person, die den Haushalt erstellt hat; sie ernennt und entfernt Mitglieder und ist selbst immer Mitglied. |
+| **Haushaltsmitglied** | Person aus dem Nutzerverzeichnis, die von der Haushaltsleitung zum Haushalt ernannt wurde; die ernannte Zugehörigkeit ist Zugangsvoraussetzung zu den Aufgaben des Haushalts. |
+| **Aufgabe** | Eintrag eines Haushalts mit Titel, optionalem Markdown-Inhalt, Status (TODO/DOING/DONE), optionaler Zuständiger, Frist und Labels (Issue #1). |
+| **Label** | Frei benannter Text an einer Aufgabe; Identität ist groß-/kleinschreibungsunabhängig, angezeigt wird die zuerst gespeicherte Schreibweise; gleiche Namen erscheinen in gleicher Farbe. |
+| **Überfällig** | Aufgabe mit Frist vor dem heutigen (lokalen) Tag und Status ungleich DONE. |
+| **Workspace (der App)** | Der auf App-Ebene gewählte Haushalt; alle Ansichten zeigen ausschließlich dessen Daten. |
 | **Ausgabe** | Geldbetrag in einem Haushalt, optional mit Kategorie und Beleg (späterer Context). |
 | **Termin** | Zeitpunkt mit Beschreibung, ggf. wiederkehrend (späterer Context). |
 | **Invariante** | Fachregel, die immer gilt (z. B. Name nicht leer, höchstens 120 Zeichen). |

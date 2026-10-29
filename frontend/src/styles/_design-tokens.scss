@@ -46,6 +46,19 @@
   --hm-danger-soft: rgba(255, 92, 92, 0.12);
   --hm-warning-soft: rgba(255, 176, 0, 0.12);
 
+  // --- Label-Farben ----------------------------------------------------------
+  // Keine Akzente (Prinzip 5 gilt nicht für sie): sie tragen Identität.
+  // Zuordnung deterministisch: Index = Hash(normalisierter Label-Name) mod 8.
+  // Rand und Hintergrund der Chips: color-mix(in srgb, var(--hm-label-n) 45%, transparent).
+  --hm-label-1: #7ee787;
+  --hm-label-2: #79c0ff;
+  --hm-label-3: #d2a8ff;
+  --hm-label-4: #ffa657;
+  --hm-label-5: #ff7b72;
+  --hm-label-6: #f2cc60;
+  --hm-label-7: #f778ba;
+  --hm-label-8: #8b949e; // Fallback für namenlose/ungültige Labels
+
   // --- Typografie ----------------------------------------------------------
   --hm-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --hm-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -130,6 +143,16 @@
   --hm-accent-glow: rgba(0, 135, 90, 0.22);
   --hm-danger-soft: rgba(207, 34, 46, 0.1);
   --hm-warning-soft: rgba(154, 103, 0, 0.12);
+
+  // Label-Farben der hellen Variante (gleiche Indizes wie oben).
+  --hm-label-1: #1a7f37;
+  --hm-label-2: #0969da;
+  --hm-label-3: #8250df;
+  --hm-label-4: #bc4c00;
+  --hm-label-5: #cf222e;
+  --hm-label-6: #7d4e00;
+  --hm-label-7: #bf3989;
+  --hm-label-8: #57606a;
 
   --hm-shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.08);
   --hm-shadow: 0 4px 16px rgba(31, 35, 40, 0.1);

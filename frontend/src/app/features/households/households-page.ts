@@ -1,24 +1,135 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormField, form, maxLength, required, submit } from '@angular/forms/signals';
 
+import { WorkspaceService } from '../../core/workspace/workspace-service';
 import { PageHeader } from '../../shared/components/page-header/page-header';
+import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
 import { HouseholdsData } from './data/households-data';
+import { Household } from './model/household.model';
+import { Member } from './model/member.model';
 import { HouseholdItem } from './ui/household-item';
+import { MemberSection } from './ui/member-section';
 
 /**
  * Smart Component (Feature-Schicht) des Features „Haushalte".
  *
  * Holt die Daten über den Data-Service und verteilt sie an die dumb
- * Components der UI-Schicht.
+ * Components der UI-Schicht. Der Mitglieder-Abschnitt (AC11) klappt inline
+ * im Eintrag auf und ist nur für die Haushaltsleitung sichtbar — die
+ * Leitung ist die Person, die den Haushalt angelegt hat (`createdBy`).
+ *
+ * Haushalte lassen sich hier anlegen; die anlegende Person ist danach
+ * Leitung und Mitglied und der neue Haushalt wird sofort zum Workspace.
  */
 @Component({
   selector: 'app-households-page',
-  imports: [HouseholdItem, PageHeader],
+  imports: [FormField, HouseholdItem, MemberSection, PageHeader, ConfirmDialog],
   templateUrl: './households-page.html',
   styleUrl: './households-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HouseholdsPage {
-  private readonly householdsData = inject(HouseholdsData);
+  protected readonly householdsData = inject(HouseholdsData);
+  protected readonly workspace = inject(WorkspaceService);
 
-  protected readonly households = this.householdsData.households;
+  protected readonly expandedHouseholdId = signal<number | null>(null);
+  protected readonly pendingMemberRemove = signal<{ member: Member; householdId: number } | null>(null);
+  protected readonly removing = signal(false);
+  protected readonly toast = signal<string | null>(null);
+
+  // Anlegen
+  protected readonly createOpen = signal(false);
+  protected readonly creating = signal(false);
+  protected readonly createError = signal<string | null>(null);
+  protected readonly nameModel = signal({ name: '' });
+  protected readonly nameForm = form(this.nameModel, (schema) => {
+    required(schema.name, { message: 'Der Name fehlt.' });
+    maxLength(schema.name, 120, { message: 'Der Name ist zu lang.' });
+  });
+
+  protected readonly members = this.householdsData.members;
+
+  protected readonly removeDescription = computed(() => {
+    const pending = this.pendingMemberRemove();
+    if (pending === null) {
+      return '';
+    }
+    const { member } = pending;
+    return `${member.displayName ?? member.userId} wird aus diesem Haushalt entfernt. Der Zugang zu den Aufgaben endet; Aufgaben und Zuweisungen bleiben erhalten.`;
+  });
+
+  protected isHouseholdAdmin(household: Household): boolean {
+    const user = this.workspace.currentUser();
+    return user !== null && user.id === household.createdBy;
+  }
+
+  protected toggleMembers(householdId: number): void {
+    if (this.expandedHouseholdId() === householdId) {
+      this.expandedHouseholdId.set(null);
+      this.householdsData.showMembers(null);
+    } else {
+      this.expandedHouseholdId.set(householdId);
+      this.householdsData.showMembers(householdId);
+    }
+  }
+
+  /** Öffnet (bzw. schließt) das Formular zum Anlegen. */
+  protected toggleCreate(): void {
+    this.createError.set(null);
+    this.createOpen.update((open) => !open);
+  }
+
+  /**
+   * Legt den Haushalt an und übernimmt ihn als Workspace: die anlegende
+   * Person ist danach Leitung und Mitglied, die Tafel ist sofort erreichbar.
+   */
+  protected saveHousehold(): void {
+    submit(this.nameForm, async () => {
+      this.creating.set(true);
+      this.createError.set(null);
+      try {
+        const household = await this.householdsData.create(this.nameModel().name.trim());
+        await this.workspace.adoptHousehold({ id: household.id, name: household.name });
+        this.nameModel.set({ name: '' });
+        this.createOpen.set(false);
+        this.showToast('Haushalt angelegt.');
+      } catch {
+        this.createError.set(
+          'Der Haushalt konnte nicht angelegt werden. Bitte später erneut versuchen.',
+        );
+      } finally {
+        this.creating.set(false);
+      }
+    });
+  }
+
+  protected async addMember(householdId: number, userId: string): Promise<void> {
+    try {
+      await this.householdsData.addMember(householdId, userId);
+      this.showToast('Person ernannt.');
+    } catch {
+      this.showToast('Die Person konnte nicht ernannt werden.');
+    }
+  }
+
+  protected async confirmMemberRemove(): Promise<void> {
+    const pending = this.pendingMemberRemove();
+    if (pending === null) {
+      return;
+    }
+    this.removing.set(true);
+    try {
+      await this.householdsData.removeMember(pending.householdId, pending.member.userId);
+      this.pendingMemberRemove.set(null);
+    } catch {
+      this.showToast('Die Person konnte nicht entfernt werden.');
+    } finally {
+      this.removing.set(false);
+    }
+  }
+
+  private showToast(message: string): void {
+    this.toast.set(message);
+    setTimeout(() => this.toast.set(null), 4000);
+  }
 }

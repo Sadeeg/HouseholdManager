@@ -1,19 +1,111 @@
 <section class="households">
-  <app-page-header title="Haushalte" subtitle="Alle Haushalte auf einen Blick." />
+  <app-page-header title="Haushalte" subtitle="Alle Haushalte auf einen Blick.">
+    <div actions>
+      <button type="button" class="hm-button hm-button--primary" (click)="toggleCreate()">
+        Haushalt anlegen
+      </button>
+    </div>
+  </app-page-header>
 
-  @if (households.isLoading()) {
+  @if (createOpen()) {
+    <div class="households__create">
+      <div class="households__create-field">
+        <label for="household-name">Name des Haushalts</label>
+        <input
+          id="household-name"
+          class="hm-input"
+          [class.hm-input--invalid]="nameForm.name().invalid() && nameForm.name().touched()"
+          [formField]="nameForm.name"
+          aria-describedby="household-name-error"
+          (keydown.enter)="$event.preventDefault(); saveHousehold()"
+        />
+        @if (nameForm.name().invalid() && nameForm.name().touched()) {
+          <p id="household-name-error" class="households__create-error" role="alert">
+            {{ nameForm.name().errors()[0]?.message }}
+          </p>
+        }
+      </div>
+      @if (createError(); as error) {
+        <p class="households__create-error" role="alert">{{ error }}</p>
+      }
+      <div class="households__create-actions">
+        <button
+          type="button"
+          class="hm-button hm-button--primary"
+          [disabled]="creating()"
+          (click)="saveHousehold()"
+        >
+          @if (creating()) {
+            Wird angelegt …
+          } @else {
+            Anlegen
+          }
+        </button>
+        <button type="button" class="hm-button hm-button--secondary" [disabled]="creating()" (click)="toggleCreate()">
+          Abbrechen
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (householdsData.households.isLoading()) {
     <p class="state">Haushalte werden geladen …</p>
-  } @else if (households.error()) {
+  } @else if (householdsData.households.error()) {
     <p class="state state--error">
       Die Haushalte konnten nicht geladen werden. Bitte später erneut versuchen.
     </p>
-  } @else if (households.hasValue()) {
+  } @else if (householdsData.households.hasValue()) {
     <ul class="households__items">
-      @for (household of households.value(); track household.id) {
-        <app-household-item [household]="household" />
+      @for (household of householdsData.households.value(); track household.id) {
+        <li class="households__row">
+          <app-household-item [household]="household" />
+
+          @if (isHouseholdAdmin(household)) {
+            <button
+              type="button"
+              class="hm-link-action households__members-action"
+              aria-expanded="{{ expandedHouseholdId() === household.id }}"
+              (click)="toggleMembers(household.id)"
+            >
+              MITGLIEDER
+            </button>
+          }
+
+          @if (expandedHouseholdId() === household.id) {
+            <app-member-section
+              [members]="members.value() ?? null"
+              [loading]="members.isLoading()"
+              [failed]="!!members.error()"
+              [currentUserId]="workspace.currentUser()?.id ?? null"
+              (addMember)="addMember(household.id, $event)"
+              (removeRequested)="pendingMemberRemove.set({ member: $event, householdId: household.id })"
+              (retry)="householdsData.reloadMembers()"
+            />
+          }
+        </li>
       } @empty {
-        <li class="state">Es ist noch kein Haushalt angelegt.</li>
+        <li class="state">
+          Es ist noch kein Haushalt angelegt.
+          <button type="button" class="hm-link-action households__empty-action" (click)="toggleCreate()">
+            HAUSHALT ANLEGEN
+          </button>
+        </li>
       }
     </ul>
+  }
+
+  @if (pendingMemberRemove()) {
+    <app-confirm-dialog
+      title="Mitglied entfernen"
+      [description]="removeDescription()"
+      actionLabel="Entfernen"
+      [busy]="removing()"
+      (confirmed)="confirmMemberRemove()"
+      (cancelled)="pendingMemberRemove.set(null)"
+    />
+  }
+
+  @if (toast(); as message) {
+    <div class="toast" role="status">{{ message }}</div>
   }
 </section>
