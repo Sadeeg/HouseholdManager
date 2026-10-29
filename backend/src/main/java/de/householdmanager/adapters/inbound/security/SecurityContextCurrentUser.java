@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,20 +28,28 @@ public class SecurityContextCurrentUser implements CurrentUserPort {
         }
         // Der OIDC-Principal steckt im Principal der Authentication
         Object principal = authentication.getPrincipal();
+        if (principal instanceof Jwt jwt) {
+            // JWT-Access-Token (RFC 9068) — der Weg des Nextcloud-OIDC-Clients
+            return Optional.of(toUserAccount(
+                    jwt.getSubject(),
+                    firstNonBlank(jwt.getClaimAsString("name"), jwt.getClaimAsString("preferred_username")),
+                    jwt.getClaimAsString("email")));
+        }
         if (principal instanceof OAuth2User oauth2User) {
-            return Optional.of(toUserAccount(oauth2User));
+            // OAuth2-Login (Authorization Code mit UserInfo)
+            return Optional.of(toUserAccount(
+                    oauth2User.getAttribute("sub"),
+                    firstNonBlank(
+                            oauth2User.getAttribute("name"),
+                            oauth2User.getAttribute("preferred_username"),
+                            oauth2User.getAttribute("email")),
+                    oauth2User.getAttribute("email")));
         }
         // Authentifiziert, aber ohne OIDC-Claims (z. B. anonymer Aufruf)
         return Optional.empty();
     }
 
-    private UserAccount toUserAccount(OAuth2User oauth2User) {
-        String id = oauth2User.getAttribute("sub");
-        String displayName = firstNonBlank(
-                oauth2User.getAttribute("name"),
-                oauth2User.getAttribute("preferred_username"),
-                oauth2User.getAttribute("email"));
-        String email = oauth2User.getAttribute("email");
+    private UserAccount toUserAccount(String id, String displayName, String email) {
         return new UserAccount(id, displayName, email);
     }
 

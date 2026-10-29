@@ -173,13 +173,13 @@ Constructly.
 
 | Thema | Festlegung |
 |-------|-----------|
-| Protokoll | OAuth2/OIDC, **opake Tokens** + Introspection (`/apps/oidc/introspect`) |
-| Backend | Resource Server (`spring-boot-starter-oauth2-resource-server`), Client **confidential** — die OIDC-App ab 2.6.0 lässt Public Clients nicht zur Introspection zu |
+| Protokoll | OAuth2/OIDC, **JWT-Access-Tokens** (RFC 9068) — Signaturprüfung über den JWKS des Issuers (`nextcloud.oidc.issuer-uri`) |
+| Backend | Resource Server (`spring-boot-starter-oauth2-resource-server`), **kein Client-Secret** nötig |
 | Frontend | `angular-oauth2-oidc`, Code-Flow, **public** Client (nur Client-ID, kein Secret) |
 | Konfiguration | `.env` (Properties-Format, in `.gitignore`). **Niemals** Secrets committen — `.env.example` ist die Vorlage |
 | Nutzerverzeichnis | Nextcloud OCS-API, Service-User + App-Password (`householdmanager-svc`) |
 
-**Ohne konfigurierte Credentials startet die API ohne Authentifizierung** —
+**Ohne konfigurierten Issuer startet die API ohne Authentifizierung** —
 mit lauter Warnung im Log. Das ist der Zustand eines frischen Setups, kein
 Produktivbetrieb.
 
@@ -366,8 +366,9 @@ Ablauf hier: Versions-Bump, Tag, Deploy, Rollback.
   Migration, sonst startet die App nicht.
 - **Boot 4 modularisiert die Starter**: `RestClient.Builder` ist ein Bean des
   Starters `spring-boot-starter-restclient` — ohne ihn startet die App nicht.
-- **Boot 4 + Security 7.1**: Die Introspection-API ist neu
-  (`opaqueToken(opaque -> opaque.introspectionUri(...).clientId(...))`);
+- **Boot 4 + Security 7.1**: Für JWT-Access-Tokens `JwtDecoders.fromIssuerLocation(...)`
+  (Discovery + JWKS); die Introspection-API ist neu
+  (`opaqueToken(opaque -> opaque.introspectionUri(...).clientId(...))`),
   `OAuth2TokenIntrospectionClient` gibt es nicht mehr.
 - **Jackson 3 ist strikt**: unbekannte Felder lassen die Deserialisierung
   scheitern (`@JsonIgnoreProperties(ignoreUnknown = true)`); Annotationen

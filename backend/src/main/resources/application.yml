@@ -48,6 +48,10 @@ nextcloud:
   base-url: ${NEXTCLOUD_BASE_URL:}
   admin-user: ${NEXTCLOUD_ADMIN_USER:}
   admin-app-password: ${NEXTCLOUD_ADMIN_APP_PASSWORD:}
+  oidc:
+    # Issuer des Nextcloud-OIDC: das Backend validiert die JWT-Access-Tokens
+    # über dessen JWKS. Kein Client-Secret nötig.
+    issuer-uri: ${NEXTCLOUD_OIDC_ISSUER:}
 
 householdmanager:
   security:

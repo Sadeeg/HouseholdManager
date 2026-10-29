@@ -58,8 +58,8 @@ selbst (Dev Services) — der Datenbank-Schritt entfällt dann.
 
 Nextcloud ist Identity Provider und Nutzerverzeichnis (wie in Constructly):
 
-- **Backend**: OAuth2 Resource Server, opake Tokens + Introspection
-  (`/apps/oidc/introspect`), confidential Client
+- **Backend**: OAuth2 Resource Server, **JWT-Access-Tokens** (RFC 9068) —
+  Signaturprüfung über den JWKS des Issuers, **kein Client-Secret** nötig
 - **Frontend**: `angular-oauth2-oidc`, Code-Flow, public Client
 - **Konfiguration**: `.env` (Properties-Format) — **enthält Secrets, wird
   nie committet**. Vorlage: `.env.example`
@@ -67,9 +67,9 @@ Nextcloud ist Identity Provider und Nutzerverzeichnis (wie in Constructly):
 Einrichtung (Nextcloud-Host `docker-extern`):
 
 ```bash
-# Clients anlegen (Details in .env.example)
-docker exec -u www-data nextcloud php occ oidc:create "HouseholdManagerBackend" \
-  "http://localhost:4200" --type=confidential --client_id="…" --client_secret="…" \
+# Ein public Client genügt (Details in .env.example)
+docker exec -u www-data nextcloud php occ oidc:create "HouseholdManagerFrontend" \
+  "http://localhost:4200" --type=public --client_id="…" \
   --resource_url="http://localhost:8080/api"
 
 # Service-User für das Nutzerverzeichnis

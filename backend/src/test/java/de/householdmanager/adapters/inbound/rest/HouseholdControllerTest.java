@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * und eingehendem Port — nicht die Fachlogik.
  */
 @WebMvcTest(HouseholdController.class)
+@AutoConfigureMockMvc(addFilters = false) // Security wird separat getestet
 class HouseholdControllerTest {
 
     @Autowired
