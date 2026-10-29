@@ -1,0 +1,33 @@
+# Session-Handover (Template)
+
+> Wird nach `.opencode/state.md` kopiert, wenn der Context nicht mehr reicht
+> (Regel 12 in `AGENTS.md`). Maximal 40 Zeilen — diese Datei ersetzt den
+> Chat-Verlauf, sie ergänzt ihn nicht.
+
+## Auftrag
+
+<In einem Satz: was gebaut werden soll.>
+
+## Stand
+
+- [ ] Schritt 1 …
+- [ ] Schritt 2 …
+- [x] Schritt 3 (erledigt: <kurz was>)
+
+## Dateien (nur die geänderten, mit Pfad)
+
+- `backend/src/…/X.java` — <was geändert>
+
+## Entscheidungen
+
+- <Entscheidung + Kurzbegründung> (ADR/Issue: <Verweis>)
+
+## Offen / nächster Schritt
+
+<Exakt der nächste Befehl bzw. die nächste Datei, die angefasst wird.>
+
+## Verify
+
+```bash
+<die Kommandos, die am Ende laufen müssen>
+```

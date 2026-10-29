@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: householdmanager-postgres
+    environment:
+      POSTGRES_DB: householdmanager
+      POSTGRES_USER: household
+      POSTGRES_PASSWORD: household
+    ports:
+      # Host-Port ist überschreibbar, falls 5432 lokal belegt ist:
+      #   POSTGRES_PORT=15432 docker compose -f compose.yml up -d postgres
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - household-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U household -d householdmanager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  household-db:

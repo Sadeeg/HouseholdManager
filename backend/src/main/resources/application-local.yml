@@ -1,0 +1,15 @@
+# Lokale Entwicklung (Profil "local")
+#
+# Start:  cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+# Die Dev-Services starten dabei automatisch die compose.yml aus dem Repo-Root.
+spring:
+  docker:
+    compose:
+      enabled: true
+      file: ../compose.yml
+      lifecycle-management: none
+
+logging:
+  level:
+    de.householdmanager: DEBUG
+    org.flywaydb: INFO

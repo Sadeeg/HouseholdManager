@@ -1,0 +1,29 @@
+# Java / Maven
+backend/target/
+*.class
+
+# Node / Angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+npm-debug.log*
+sheriff.log
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+
+# Secrets und lokale Overrides
+.env
+.env.local
+*.local.yml
+
+# Session-Handover (wird bei Bedarf erzeugt, nicht versioniert)
+.opencode/state.md

@@ -1,0 +1,108 @@
+# HouseholdManager
+
+Haushaltsverwaltung: Mitglieder, Aufgaben, Ausgaben und Termine in einem
+Haushalt.
+
+| Teil | Stack | Pfad |
+|------|-------|------|
+| Backend | Spring Boot 4.1 (Spring Framework 7), Java 25, JPA, Flyway, PostgreSQL 17 | `backend/` |
+| Frontend | Angular 22 (zoneless, Signals, Vitest) | `frontend/` |
+| Infrastruktur | Docker Compose, nginx, Dockerfiles | `compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile` |
+
+## Voraussetzungen
+
+- **Backend:** Java 25 + Maven 3.9 (oder Docker). Kein lokales JDK nötig,
+  wenn mit Docker gebaut wird.
+- **Frontend:** Node ≥ 22.22.3 (Angular CLI 22 verlangt Node 22.22.3+ /
+  24.15+ / 26+).
+- **Datenbank:** Docker (Postgres 17) oder eine eigene PostgreSQL-Instanz.
+
+## Schnellstart
+
+```bash
+# 1. Datenbank
+docker compose -f compose.yml up -d postgres
+
+# 2. Backend (http://localhost:8080, Health: /actuator/health)
+cd backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+
+# 3. Frontend (http://localhost:4200, /api wird auf das Backend geproxyt)
+cd frontend
+npm install
+npm start
+```
+
+Im Profil `local` startet Spring Boot die Compose-Datei aus dem Repo-Root
+selbst (Dev Services) — Schritt 1 entfällt dann.
+
+## Architektur
+
+| Bereich | Muster | Entscheid |
+|---------|--------|-----------|
+| Backend | **Ports & Adapters** (hexagonal): `domain` → `application` (Ports, Use Cases) → `adapters` (REST, JPA) | [ADR 0001](docs/adr/0001-backend-ports-and-adapters.md) |
+| Frontend | **Feature-basiert** (Manfred Steyer): Feature-Ordner mit `routes.ts`, smart Component, `model/`, `data/`, `ui/`; Grenzen per Sheriff erzwungen | [ADR 0002](docs/adr/0002-frontend-feature-architecture.md) |
+
+## Struktur
+
+```text
+backend/                       Spring-Boot-Service (Ports & Adapters)
+  src/main/java/de/householdmanager/
+    domain/model/              Fachkern, ohne Framework-Imports
+    application/
+      port/in|out/             Inbound-/Outbound-Ports
+      usecase/                 Use Cases
+    adapters/
+      inbound/rest/            Controller, DTOs, Fehlerübersetzung
+      outbound/persistence/    JPA-Entity, Repository, Mapping
+    config/                    Composition Root
+  src/main/resources/
+    db/migration/              Flyway-Migrationen (V<n>__…)
+  src/test/java/               Tests je Schicht (JUnit 5, Mockito, Testcontainers)
+
+frontend/                      Angular-22-App (Feature-Architektur)
+  src/app/
+    core/                      App-weit (Konfiguration, HTTP-Basis)
+    shared/                    Von mehreren Features benutzt, fachneutral
+    features/<feature>/
+      routes.ts                Feature-Routen (lazy)
+      <feature>-page.ts        Smart Component
+      model/ data/ ui/         Modell, Datenzugriff, dumb Components
+  sheriff.config.ts            Modulgrenzen (Steyer)
+  eslint.config.js             Lint-Regeln inkl. Sheriff-Plugin
+
+docs/adr/                      Architekturentscheidungen
+.opencode/                     Skills und Commands für OpenCode
+  skills/                      Anforderungs-Loop, Architektur-, Angular- und Spring-Skills
+  commands/                    /anforderung, /issue-check, /issue-github
+
+AGENTS.md                      Projektkonventionen (Quelle der Wahrheit)
+```
+
+## Prüfen
+
+```bash
+# Backend: Kompilieren + Tests (Adapter-Test braucht Docker für Testcontainers)
+cd backend && ./mvnw -B test
+
+# Frontend: Type-Check, Tests, Lint, Modulgrenzen, Production-Build
+cd frontend
+npx tsc --noEmit -p tsconfig.app.json
+npx tsc --noEmit -p tsconfig.spec.json
+npm test
+npm run lint
+npm run sheriff
+npm run build
+```
+
+## Anforderungen
+
+Issues sind der Arbeitsstand für Anforderungen. Der Loop aus
+`.opencode/skills/anforderung-loop` führt von der Idee in drei Runden zu
+einem Issue, das ohne Rückfragen umsetzbar ist:
+
+```text
+/anforderung <Rohidee|Issue-Nr>
+```
+
+Details: `.opencode/README.md`.

@@ -1,0 +1,19 @@
+<section class="households">
+  <app-page-header title="Haushalte" subtitle="Alle Haushalte auf einen Blick." />
+
+  @if (households.isLoading()) {
+    <p class="state">Haushalte werden geladen …</p>
+  } @else if (households.error()) {
+    <p class="state state--error">
+      Die Haushalte konnten nicht geladen werden. Bitte später erneut versuchen.
+    </p>
+  } @else if (households.hasValue()) {
+    <ul class="households__items">
+      @for (household of households.value(); track household.id) {
+        <app-household-item [household]="household" />
+      } @empty {
+        <li class="state">Es ist noch kein Haushalt angelegt.</li>
+      }
+    </ul>
+  }
+</section>

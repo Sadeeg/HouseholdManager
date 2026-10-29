@@ -1,0 +1,18 @@
+.households {
+  &__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+.state {
+  color: var(--hm-muted, #57606a);
+
+  &--error {
+    color: var(--hm-error, #cf222e);
+  }
+}

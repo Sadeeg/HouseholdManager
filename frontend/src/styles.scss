@@ -1,0 +1,16 @@
+:root {
+  --hm-border: #d0d7de;
+  --hm-muted: #57606a;
+  --hm-error: #cf222e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #1f2328;
+  background: #fff;
+}

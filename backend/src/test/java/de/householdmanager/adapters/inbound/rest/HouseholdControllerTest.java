@@ -1,0 +1,90 @@
+package de.householdmanager.adapters.inbound.rest;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import de.householdmanager.application.port.in.HouseholdUseCase;
+import de.householdmanager.domain.model.Household;
+import de.householdmanager.domain.model.InvalidHouseholdNameException;
+import java.time.Instant;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+/**
+ * Test des eingehenden Adapters: geprüft wird die Übersetzung zwischen HTTP
+ * und eingehendem Port — nicht die Fachlogik.
+ */
+@WebMvcTest(HouseholdController.class)
+class HouseholdControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private HouseholdUseCase householdUseCase;
+
+    @Test
+    void listHouseholds_returnsHouseholds() throws Exception {
+        when(householdUseCase.listHouseholds()).thenReturn(List.of(Household.builder()
+                .id(1L)
+                .name("Haushalt Müller")
+                .createdAt(Instant.parse("2026-01-01T00:00:00Z"))
+                .build()));
+
+        mockMvc.perform(get("/api/households"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Haushalt Müller"));
+    }
+
+    @Test
+    void createHousehold_rejectsBlankName() throws Exception {
+        mockMvc.perform(post("/api/households")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"  \"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createHousehold_mapsDomainErrorToBadRequest() throws Exception {
+        // Die Längengrenze ist eine Invariante der Anwendung (Use Case) —
+        // der Controller übersetzt nur ihren Fehler. Geprüft wird hier die
+        // Abbildung, nicht die Grenze selbst (siehe HouseholdUseCaseImplTest).
+        when(householdUseCase.createHousehold(anyString()))
+                .thenThrow(new InvalidHouseholdNameException(
+                        "Der Name des Haushalts darf höchstens " + Household.MAX_NAME_LENGTH
+                                + " Zeichen lang sein."));
+
+        mockMvc.perform(post("/api/households")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + "x".repeat(Household.MAX_NAME_LENGTH + 1) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Ungültiger Haushaltsname"))
+                .andExpect(jsonPath("$.detail").value(
+                        org.hamcrest.Matchers.containsString("höchstens " + Household.MAX_NAME_LENGTH + " Zeichen")));
+    }
+
+    @Test
+    void createHousehold_returnsCreatedHousehold() throws Exception {
+        when(householdUseCase.createHousehold(anyString())).thenReturn(Household.builder()
+                .id(7L)
+                .name("Haushalt Müller")
+                .createdAt(Instant.parse("2026-01-01T00:00:00Z"))
+                .build());
+
+        mockMvc.perform(post("/api/households")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Haushalt Müller\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(7));
+    }
+}
