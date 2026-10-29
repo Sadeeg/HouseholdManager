@@ -20,7 +20,6 @@ export const appConfig: ApplicationConfig = {
         clientId: OIDC_CONFIG.clientId,
         redirectUri: OIDC_CONFIG.redirectUri,
         scope: OIDC_CONFIG.scope,
-        resource: OIDC_CONFIG.resource,
         responseType: 'code',
         showDebugInformation: false,
       },
