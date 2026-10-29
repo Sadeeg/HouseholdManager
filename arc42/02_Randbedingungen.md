@@ -22,6 +22,9 @@
   `Sadeeg/HouseholdManager`, nicht als Chat-Durchsage.
 - **Gates**: Ein Feature gilt erst als fertig, wenn Architektur-Review
   (`OK`) **und** Abnahme (`PASS`) vorliegen — siehe `AGENTS.md`.
+- **Branch-Workflow**: Ein Feature = ein Branch = ein Issue = ein PR.
+  Committen erst nach bestandenen Gates, Push nur bei grünem Stand,
+  `main` erhält ausschließlich gemergte PRs.
 - **Sprache**: Issues und Dokumente deutsch, Identifier englisch.
 - **Kontext-Disziplin**: Die Entwicklung läuft mit einem kleinen lokalen
   Modell und 256k Kontext. Kurze, präzise Arbeitsschritte sind Pflicht
@@ -33,7 +36,7 @@
 | Einschränkung | Folge |
 |---------------|-------|
 | Noch kein Spring Security | Keine Authentifizierung/Autorisierung — vor Produktivbetrieb zu klären (siehe 11) |
-| Noch kein CI | Gates laufen lokal (`/review`, `/abnahme`) |
+| CI vorhanden | Gates laufen in GitHub Actions bei jedem PR (`.github/workflows/ci.yml`) — zusätzlich lokal |
 | Noch kein E2E-Setup (Playwright) | Journeys werden über Backend-Integrationstests abgedeckt |
 | `ddl-auto: validate` | Schema-Änderungen brauchen zwingend eine Flyway-Migration |
 

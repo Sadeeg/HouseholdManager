@@ -85,6 +85,8 @@ arc42/                       Architekturdokumentation (12 Kapitel),
 docs/adr/                    Architekturentscheidungen (ADRs)
 docs/design/design-dna.md    Gestaltungssprache (Dark Mode, Tokens, Muster)
 frontend/src/styles/         Design-Tokens (_design-tokens.scss)
+.github/workflows/ci.yml     CI: Build, Tests, Lint, Modulgrenzen, Stack
+.github/pull_request_template.md  PR-Vorlage
 ```
 
 **Backend:** Ports & Adapters, `adapters → application → domain` —
@@ -220,11 +222,69 @@ Issues sind der Arbeitsstand für Anforderungen. Ein Einstieg, kein Command pro
 Runde: `/anforderung <Rohidee|Issue-Nr>` (3 Runden, Grilling, Gate). Details:
 `.opencode/README.md`.
 
-## Branch und Commit
+## Branch, Commit, Push und PR
 
-- Ein Issue = ein Branch. Branch-Name: `feature/<kurzname>`.
-- Commit-Sprache: Englisch. Commit-Format: **noch nicht festgelegt**.
-- Kein Direct-Push auf `main`.
+**Ein Feature = ein Branch = ein Issue = ein PR.**
+
+### Branch
+
+- Für **jedes** Feature wird ein Branch angelegt — Ausnahme sind reine
+  Dokumentations-Änderungen.
+- Name: `feature/<issue-nr>-<kurzname>` (z. B. `feature/12-haushalt-anlegen`),
+  kebab-case, lowercase.
+- Basis ist immer `main`; der Branch wird **frisch aus `main` gezogen**
+  (`git fetch origin && git switch -c feature/… main`).
+- **Kein Direct-Push auf `main`** — `main` erhält nur gemergte PRs.
+
+### Commit
+
+- **Committen wird erst, wenn die Gates bestanden sind** (siehe
+  „Definition of Done"): Implementierung, Tests, Architektur-Review `OK`
+  und Abnahme `PASS`.
+- Commit-Sprache: **Englisch**. Format: Conventional Commits
+  (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`) mit kurzem
+  Imperativ im Betreff, Body mit **Warum**, wenn es nicht offensichtlich ist.
+- Ein Commit = ein zusammenhängender Schritt. Der Branch bleibt lauffähig
+  (siehe unten) — keine halben Stände committen.
+- Vor dem Commit: `git diff` prüfen, keine Debug-Reste, keine Secrets
+  (`.env`, Tokens), keine Build-Artefakte (siehe `.gitignore`).
+
+### Lauffähigkeit (verbindlich)
+
+**Jeder gepushte Stand baut und testet grün.** Ein Branch, der auf `main`
+landet, muss lauffähig sein — im Development-Setup **und** in CI.
+
+```bash
+# Backend
+cd backend && ./mvnw -B test
+# Frontend
+cd frontend
+npx tsc --noEmit -p tsconfig.app.json && npx tsc --noEmit -p tsconfig.spec.json
+npm test && npm run lint && npm run sheriff && npm run build
+```
+
+- **Grün ist die Bedingung für Push und PR.** Ist etwas rot, wird nicht
+  gepusht — erst beheben.
+- Ausnahmen gibt es nur für **reine Doku-Änderungen** (kein Code berührt).
+- Ein Branch mit Zwischenständen, die nicht lauffähig sind, ist verboten:
+  kein „WIP auf main“-Zustand, kein „Fix later“-Push.
+- CI (`.github/workflows/ci.yml`) prüft dasselbe bei jedem PR und bei jedem
+  Push auf `main` — **der PR ist nicht mergebar, solange CI rot ist**.
+
+### Push und PR
+
+1. Nach bestandenen Gates: committen (siehe oben).
+2. Branch pushen: `git push -u origin feature/<issue-nr>-<kurzname>`.
+3. PR gegen `main` eröffnen (Command `/pr` oder GitHub-Tools
+   `create_pull_request`). Der PR enthält:
+   - **Titel**: Conventional-Commit-Art + Titel (`feat: Haushalt im UI anlegen`)
+   - **Beschreibung**: Ziel, was geändert wurde, **Closes #<Issue-Nr>**,
+     Nachweis der Gates (Kommandos + Ergebnis), Screenshots bei UI-Änderungen
+   - **Checkliste**: Gates, alle abgehakt
+4. Der PR bleibt offen, bis die Gates bestanden sind und das Review
+   erfolgt ist. Merge erfolgt durch den Auftraggeber.
+
+**Kein Merge ohne grünes CI und erfüllte Gates.**
 
 ## Verify-Kommandos
 

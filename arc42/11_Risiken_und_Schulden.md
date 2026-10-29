@@ -7,7 +7,7 @@
 | R1 | **Keine Authentifizierung/Autorisierung** — die API ist ungeschützt | Kritisch für den Produktivbetrieb | Security-Konzept entscheiden (ADR), `spring-boot-starter-security` ergänzen | **offen — vorrangig** |
 | R2 | Kein Mandanten-Cut (ein Nutzer sieht alle Haushalte) | Datenleck bei Mehrhaushalten | Context-Schnitt + Autorisierung je Haushalt | offen |
 | R3 | Kleines lokales Modell (27B, 256k) | Fehler in der Umsetzung, vergessene Regeln | Gates (Review + Abnahme), Kontext-Disziplin, Handover-Datei | aktiv |
-| R4 | Keine CI — Gates laufen nur lokal | Ein Feature kann ohne Abnahme gemergt werden | CI mit `mvn test`, `npm test`, `npm run sheriff` | offen |
+| R4 | ~~Keine CI~~ — **gemindert**: CI prüft bei jedem PR Build, Tests, Lint, Modulgrenzen und den Compose-Stack | Ein Feature kann ohne grünes CI nicht gemergt werden; der menschliche Merge bleibt nötig | GitHub Actions (`.github/workflows/ci.yml`), Branch-Schutz auf `main` | **aktiv** |
 | R5 | Kein E2E-Test (Playwright) | Schnittstellenfehler zwischen SPA und API werden spät entdeckt | Integrationstest im Backend ergänzen; E2E mit dem ersten UI-Feature | offen |
 | R6 | `ddl-auto: validate` + manuelle Migrationen | Änderung ohne Migration → Startabbruch (laut, aber unbequem) | Flyway-Regel in AGENTS.md, Reviewer prüft Migrationen | aktiv |
 | R7 | Nur ein Entwickler (mit Agenten) | Wissensverlust bei Context-Verlust | arc42, ADRs, Issues, Skills als Wissensstand | aktiv |

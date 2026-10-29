@@ -1,5 +1,7 @@
 # HouseholdManager
 
+![CI](https://github.com/Sadeeg/HouseholdManager/actions/workflows/ci.yml/badge.svg)
+
 Haushaltsverwaltung: Mitglieder, Aufgaben, Ausgaben und Termine in einem
 Haushalt.
 

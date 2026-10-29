@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Java 25, Spring Boot 4)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Build and test
+        # Testcontainers nutzt den Docker-Socket des Runners
+        run: ./mvnw -B verify
+
+  frontend:
+    name: Frontend (Angular 22)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          # Angular CLI 22 verlangt Node >= 22.22.3
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: |
+          npx tsc --noEmit -p tsconfig.app.json
+          npx tsc --noEmit -p tsconfig.spec.json
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Module boundaries (Sheriff)
+        run: npm run sheriff
+
+      - name: Production build
+        run: npm run build
+
+  stack:
+    name: Compose-Stack baut
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build images
+        run: docker compose -f compose.yml build
+
+      - name: Start stack
+        run: |
+          docker compose -f compose.yml up -d
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null; then
+              echo "Backend healthy"; break
+            fi
+            sleep 5
+          done
+          curl -sf http://localhost:8080/actuator/health
+          curl -sf -o /dev/null -w "frontend HTTP %{http_code}\n" http://localhost:4200/
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f compose.yml logs --tail 100
+
+      - name: Stop stack
+        if: always()
+        run: docker compose -f compose.yml down -v

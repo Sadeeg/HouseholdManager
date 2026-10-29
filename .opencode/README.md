@@ -149,6 +149,9 @@ Methode, Angriffskategorien und Protokollformat:
 
 ```text
 /anforderung <Rohidee|Issue-Nr>  # der Loop: 3 Runden, Grilling, Phasen-Übergänge
+/review <Issue-Nr>               # Architektur-Gate: review → Korrekturen delegieren → review
+/abnahme <Issue-Nr>              # Test-Gate: adversarial Prüfung der Akzeptanzkriterien
+/pr <Issue-Nr>                   # committen, branch pushen, PR gegen main eröffnen
 /issue-check <Issue-Nummer>      # bestehendes Issue prüfen und korrigieren
 /issue-github <Issue-Nummer>     # Issue anlegen, aktualisieren, finalisieren
 ```
@@ -156,6 +159,15 @@ Methode, Angriffskategorien und Protokollformat:
 Ein Einstieg, kein Command pro Runde. `/anforderung` nimmt entweder eine
 **Idee** (neues Issue, Start bei Runde 1) oder eine **Issue-Nummer**
 (Fortsetzen — der Zustandsmarker im Body verrät den Stand).
+
+### Branch, Commit, PR
+
+Ein Feature = ein Branch = ein Issue = ein PR. Der Branch entsteht frisch
+aus `main` (`feature/<issue-nr>-<kurzname>`), committet wird **erst nach
+bestandenen Gates**, gepusht wird nur grün, und der PR entsteht mit
+`.github/pull_request_template.md`. CI (`.github/workflows/ci.yml`) prüft
+dasselbe bei jedem PR — der PR ist bei rotem CI nicht mergebar. Details in
+`AGENTS.md` → „Branch, Commit, Push und PR".
 
 ### Ablauf
 
