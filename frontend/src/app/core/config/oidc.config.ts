@@ -4,7 +4,8 @@
  * Öffentliche Werte — kein Secret. Es gibt nur *einen* Client: den
  * public Frontend-Client auf dem Nextcloud. Das Backend ist reiner
  * Resource Server und prüft die JWT-Access-Tokens über den JWKS des
- * Issuers — es braucht deshalb weder Client-ID noch Client-Secret.
+ * Issuers — es braucht deshalb kein Client-Secret; die Client-ID nutzt es
+ * optional zur Audience-Bindung (`nextcloud.oidc.client-id`).
  *
  * Der Redirect-URI wird aus der Laufzeit-Origin abgeleitet: damit funktioniert
  * die App auf jedem Port (4200 lokal, 4300 im Test-Setup, 80 hinter nginx).
