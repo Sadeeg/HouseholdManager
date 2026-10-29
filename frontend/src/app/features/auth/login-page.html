@@ -11,6 +11,10 @@
       Mit Nextcloud anmelden
     </button>
 
+    @if (error(); as message) {
+      <p class="login__error" role="alert">{{ message }}</p>
+    }
+
     <p class="login__note">
       Noch kein Zugang? Ein Konto wird von der Administration im Nextcloud
       eingerichtet.

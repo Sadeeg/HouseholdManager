@@ -1,5 +1,4 @@
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 
 /**
@@ -14,16 +13,23 @@ import { OAuthService } from 'angular-oauth2-oidc';
 })
 export class LoginPage {
   private readonly oauthService = inject(OAuthService);
-  private readonly router = inject(Router);
 
-  protected login(): void {
-    this.oauthService.initCodeFlow();
-  }
+  /** Fehlertext, wenn der Login nicht starten konnte (sonst passiert nichts). */
+  protected readonly error = signal<string | null>(null);
 
-  protected async continueAfterLogin(): Promise<void> {
-    await this.oauthService.tryLoginCodeFlow();
-    if (this.oauthService.hasValidAccessToken()) {
-      await this.router.navigateByUrl('/');
+  protected async login(): Promise<void> {
+    this.error.set(null);
+    try {
+      // Das Discovery-Dokument wird beim App-Start geladen. Fehlt es noch
+      // (z. B. weil der erste Request fehlschlug), wird es hier nachgeladen.
+      if (!this.oauthService.hasValidAccessToken()) {
+        await this.oauthService.loadDiscoveryDocument();
+      }
+      this.oauthService.initCodeFlow();
+    } catch {
+      this.error.set(
+        'Die Anmeldung konnte nicht gestartet werden. Bitte prüfen, ob der Nextcloud-Server erreichbar ist, und es erneut versuchen.',
+      );
     }
   }
 }

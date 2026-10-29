@@ -54,6 +54,16 @@
     }
   }
 
+  &__error {
+    margin-top: var(--hm-space-3);
+    padding: var(--hm-space-2) var(--hm-space-3);
+    font-size: var(--hm-text-sm);
+    color: var(--hm-danger);
+    background: var(--hm-danger-soft);
+    border-left: 2px solid var(--hm-danger);
+    border-radius: var(--hm-radius);
+  }
+
   &__note {
     margin-top: var(--hm-space-4);
     font-size: var(--hm-text-xs);
