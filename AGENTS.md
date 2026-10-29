@@ -286,6 +286,11 @@ npm test && npm run lint && npm run sheriff && npm run build
 
 **Kein Merge ohne grünes CI und erfüllte Gates.**
 
+> **Einmalige Repo-Einstellung:** Branch-Schutz für `main` aktivieren
+> (Settings → Branches → Rule: „Require a pull request" + „Require status
+> checks" auf `CI / backend`, `CI / frontend`, `CI / stack`). Damit ist ein
+> Direct-Push technisch unmöglich und ein PR ohne grünes CI nicht mergebar.
+
 ## Verify-Kommandos
 
 ```bash
