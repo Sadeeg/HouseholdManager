@@ -87,10 +87,13 @@ find frontend/src/app/shared/components -maxdepth 1 -type d     # wiederverwendb
 - **Ein vorhandenes Muster wird kopiert, nicht erfunden.** Braucht das
   Feature einen Dialog, Bestätigungsdialog oder Seitenkopf, wird das Muster
   benutzt — auch wenn das eigene „einfacher" wirkt.
-- **Ein Overlay ist ein Muster mit drei Teilen:** Backdrop, Panel,
-  Fokusfalle. Das Overlay gehört auf den **Wrapper** (nicht auf den
+- **Ein Overlay ist ein Muster mit drei Teilen:** Backdrop, Panel
+  (`role="alertdialog"`, `aria-modal="true"`, Fokus auf dem Panel, `Esc`
+  schließt). Das Overlay gehört auf den **Wrapper** (nicht auf den
   Backdrop-Knopf), Backdrop und Panel liegen in derselben Gitterzelle
   (`grid-area: 1 / 1`), das Panel bekommt `max-height: 100%; overflow-y: auto`.
+  Offen: eine **Fokusfalle** (Tab bleibt im Dialog) ist im Muster noch nicht
+  umgesetzt — bis dahin wird sie nicht behauptet.
 - **Ein neues Muster wird in die Design-DNA aufgenommen** (Schritt 7), sonst
   fehlt es beim nächsten Feature wieder.
 

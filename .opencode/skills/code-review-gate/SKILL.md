@@ -31,12 +31,13 @@ Die Gates laufen zusätzlich: `npm run lint`, `npm run sheriff`,
 
 ### Proben für Kategorie 8
 
-Diese Klasse von Fehlern fiel in der Abnahme zu Issue #1 durch beide Gates —
-sie sind billig zu prüfen:
+Diese Klasse von Fehlern fiel in der **Umsetzung** zu Issue #1 auf
+(Erkenntnisse 1.1–1.3) — die Gates finden sie nicht, weil nichts nach ihnen
+gefragt hat. Deshalb stehen sie hier als Probe — billig zu prüfen:
 
 ```bash
 # Einstieg: gibt es überhaupt ein UI für das AC?
-grep -rn "api/" frontend/src/app/features | grep -v spec   # Endpunkte, die das Frontend kennt
+grep -rn "basePath" frontend/src/app/features --include=*.ts
 grep -rln "create\|anlegen\|ernennen" frontend/src/app/features --include=*.html
 
 # Aktionen: wird eine Aktion erst nach einer Auswahl gerendert?

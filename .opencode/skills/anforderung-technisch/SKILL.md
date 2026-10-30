@@ -158,7 +158,9 @@ Der Stack des Projekts ist Angular 22 (zoneless, Signals, Signal Forms,
 Vitest). **Keine andere Annahme treffen** — es gibt kein Bootstrap, keine
 Icon-Bibliothek und keine `.component.ts`-Namenskonvention.
 
-- Route in `app.routes.ts`, lazy via `loadComponent`, Pfad kebab-case.
+- Feature-Route in `features/<feature>/routes.ts`, in `app.routes.ts` per
+  `loadChildren` lazy eingehängt; eine Komponente ohne Feature-Route (z. B.
+  Login) per `loadComponent`. Pfad kebab-case.
 - Feature-Ordner `src/app/features/<feature>/` mit `routes.ts`,
   `<feature>-page.ts|html|scss`, `model/`, `data/`, `ui/` (siehe Skill
   `frontend-feature-architecture`).
@@ -314,8 +316,11 @@ Beispiel:
 ```bash
 cd backend && ./mvnw -B test
 cd frontend && npm test && npm run lint && npm run sheriff
-docker compose up -d --build          # Postgres 5432, Backend 8081, Frontend 4200
+docker compose up -d --build          # Postgres 5432, Backend 8080, Frontend 4200
 ```
+
+Bei belegtem Port: `BACKEND_PORT=8081` in `.env` setzen und den Dev-Proxy mit
+`BACKEND_URL=http://localhost:8081` darauf richten.
 
 Manuell: Haushalt in der Verwaltung anlegen, Person suchen und „Ernennen"
 klicken, Aufgabe anlegen und in eine andere Spalte ziehen.

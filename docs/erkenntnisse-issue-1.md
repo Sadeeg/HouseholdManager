@@ -220,7 +220,7 @@ der Code. Sonst entsteht eine zusätzliche Review-Runde — hier Runde 1 → Kor
 | Issue #3 | Start-Route-Guard ohne Test (Scoping, Umleitung auf die Tafel des zuletzt gewählten Haushalts) | `frontend/src/app/core/auth/start-route.guard.ts` |
 | Issue #4 | Instanz-Strategie der Nutzersuche klären (`core`-Position, nicht root-provided → eine Instanz je Komponente) | `frontend/src/app/core/users/user-search.ts` |
 | Issue #5 | `UserRefResponse` nach `adapters/inbound/rest/dto/` verschieben | `UserSearchController.java:31` |
-| offen | Stille Verwerfung von Labels > 60 Zeichen sichtbar machen (Hinweis im Formular, Test) | `TaskUseCaseImpl.java:186` |
+| Issue #8 | Stille Verwerfung von Labels > 60 Zeichen sichtbar machen (Hinweis im Formular, Test) | `TaskUseCaseImpl.java:186` |
 | offen | Branch-Schutz für `main` (PR-Pflicht + Status-Checks) nachweislich nicht gesetzt: PR #2 eröffnete mit `mergeable_state: clean` | GitHub → Settings → Branches |
 | offen | Kein E2E-Setup (Playwright) — UI-Layout bleibt bis dahin manuell geprüft | `.github/workflows/ci.yml` |
 
@@ -259,13 +259,14 @@ verankert, an der sie beim Bauen gebraucht wird:
 | 1.2 Vorschlagsliste überlagerte Nachbarinhalt | `ux-design` §3 „Anordnung"; `code-review-gate` Proben (`position: absolute`) |
 | 1.3 CDK verschiebt kein Modell | `frontend-feature-architecture` „Zwischenstände gehören in die Datenschicht" |
 | 1.3 Rückfall beim Ziehen | `feature-testing` „Zwischenstand vor der Antwort prüfen" (Anti-Pattern: erst nach dem Reload prüfen) |
-| 1.4 Stack startete nicht | `anforderung-technisch` §7/§9 (compose.yml, Healthcheck, Port-Overrides im Verify-Block); `code-review-gate` Kategorie 8 |
-| 1.5 Endpunkt vorhanden, UI fehlte | `anforderung-fachlich` §4 („Einstieg und Voraussetzung"); `anforderung-technisch` §5a; `anforderung-gate` Runde 2 |
+| 1.4 Endpunkt vorhanden, UI fehlte | `anforderung-fachlich` §4 („Einstieg und Voraussetzung"); `anforderung-technisch` §5a; `anforderung-gate` Runde 2 |
+| 1.5 Stack startete nicht | `anforderung-technisch` §7/§9 (compose.yml, Healthcheck, Port-Overrides im Verify-Block); `code-review-gate` Kategorie 8 |
 | 1.6 Migration ohne Backfill | `backend-ports-adapters` „Fallen"; `anforderung-technisch` §9 (Datenbank-Zustand) |
 | 1.7 Vertragslücke | `issue-formulierung` § „Abweichungen" (neu, optional) — Abweichungen gehören ins Issue |
 | 2 arc42 nachgetragen (MAJOR) | `anforderung-technisch` §7 („im selben Commit wie der Code"); `anforderung-gate` Runde 3 |
 | 2 Labels > 60 Zeichen still verworfen | `backend-ports-adapters` Regel 9 („Kein stilles Verwerfen"); `feature-testing` „Stilles Verwerfen ist ein Fehlerfall"; `anforderung-fachlich` §7 |
 | 2 Start-Route-Guard ohne Test | `feature-testing` Testorte (Navigation/Guards) — Issue #3 |
+| 2 `core`-Dienst wird pro Komponente erzeugt (`UserSearch`) | `frontend-feature-architecture` „`core` heißt: genau eine Instanz" — die Ausnahme `core/users/user-search.ts` ist kommentiert und als Issue #4 geführt |
 | 3 Angular-22-Testfallen | `feature-testing` „Die Angular-22-Fallen" (Tabelle) |
 | 4 „Muster nicht nachbauen" | `frontend-feature-architecture` „Fallen"; `ux-design` §3a |
 | 5 Erkenntnisse festhalten | `AGENTS.md` Definition of Done Punkt 6 „Nachbereitung"; `anforderung-loop` „Erkenntnisse werden zu Regeln, nicht nur zu Text" |

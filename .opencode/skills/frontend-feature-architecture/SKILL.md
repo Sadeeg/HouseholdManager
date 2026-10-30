@@ -153,7 +153,9 @@ in die Ausgangsbahn zurückfallen.
 in `core/` wird deshalb `providedIn: 'root'` gestellt. Wird er in einer
 Komponente per `providers: [...]` erzeugt, ist er faktisch ein `shared`-Dienst
 mit eigenem Zustand — dann gehört er nach `shared/` (oder der Grund für den
-geteilten Zustand steht als Kommentar an der Datei).
+geteilten Zustand steht als Kommentar an der Datei). Für
+`core/users/user-search.ts` ist genau das der Fall: eigener Query-Zustand pro
+Verwender, begründet an der Datei — siehe Issue #4.
 
 ## Naming (Angular 22)
 

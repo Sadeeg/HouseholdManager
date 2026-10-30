@@ -148,8 +148,9 @@ braucht deshalb zusätzlich den Socket:
 - **Eine Migration mit `NOT NULL` ohne Backfill setzt einen frischen
   Datenbestand voraus.** Das ist keine Fußnote, sondern eine
   Startvoraussetzung: ohne neues DB-Volume startet die App nicht. Der
-  Neuaufbau steht im Issue (Verify-Block) und in der Betriebsanleitung —
-  und die Entscheidung „Bestand wird neu aufgebaut" ist dort festgehalten.
+  Neuaufbau steht im Issue (Verify-Block) und in `README.md`
+  (Abschnitt „Schnellstart") — die Entscheidung „Bestand wird neu
+  aufgebaut" steht dort.
 - **Datenbank-Zustand:** `ddl-auto: validate` kennt keine
   nachgelagerte Migration — jede Entity-Änderung braucht ihre `V`-Datei
   im selben Commit.
