@@ -59,6 +59,7 @@ adapters ──► application ──► domain
 | Was die Anwendung kann | `application/port/in` | — |
 | Was die Anwendung braucht | `application/port/out` | `adapters` |
 | HTTP-Pfad, Statuscodes, JSON | `adapters/inbound/rest` | `application`, `domain` |
+| Request-/Response-DTOs | `adapters/inbound/rest/dto/` (Records) | verschachtelt im Controller |
 | Fehlerübersetzung in HTTP | `adapters/inbound/rest/GlobalExceptionHandler` | `domain` |
 | Tabellen, Spalten, JPA-Mapping | `adapters/outbound/persistence` | `domain` |
 | Übersetzung Persistenz ↔ Fachmodell | `adapters/outbound/persistence/*Adapter` | — |
@@ -88,6 +89,14 @@ adapters ──► application ──► domain
 8. **Keine Änderung bestehender Flyway-Migrationen.** Neue Migration,
    neue V-Nummer. Bei `ddl-auto: validate` muss die Entity zur Migration
    passen, sonst startet die App nicht.
+9. **Kein stilles Verwerfen.** Fällt ein Wert außerhalb einer Grenze weg,
+   muss der Nutzer das erfahren: die Grenze wird **validiert** (mit
+   Meldung), nicht stillschweigend angewendet. „Label länger als 60 Zeichen
+   wird ignoriert" ist ein Fehlerfall, keine Normalisierung — der Wert
+   verschwindet sonst ohne jede Spur.
+10. **DTOs sind Records in `adapters/inbound/rest/dto/`.** Kein DTO als
+    verschachteltes Record im Controller, kein DTO im Controller-Ordner
+    ohne `dto/`.
 
 ## Beispiel: ein Feature durch die Schichten
 
@@ -136,3 +145,11 @@ braucht deshalb zusätzlich den Socket:
   Use Case ist die Transaktionsgrenze.
 - **`open-in-view: false`** — die Entity darf den Adapter nicht verlassen;
   der Adapter liefert das Fachmodell zurück.
+- **Eine Migration mit `NOT NULL` ohne Backfill setzt einen frischen
+  Datenbestand voraus.** Das ist keine Fußnote, sondern eine
+  Startvoraussetzung: ohne neues DB-Volume startet die App nicht. Der
+  Neuaufbau steht im Issue (Verify-Block) und in der Betriebsanleitung —
+  und die Entscheidung „Bestand wird neu aufgebaut" ist dort festgehalten.
+- **Datenbank-Zustand:** `ddl-auto: validate` kennt keine
+  nachgelagerte Migration — jede Entity-Änderung braucht ihre `V`-Datei
+  im selben Commit.

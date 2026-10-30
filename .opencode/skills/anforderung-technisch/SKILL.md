@@ -60,9 +60,14 @@ Für jeden Teil der Umsetzung: welche Schicht, welche Klasse, neu oder
 erweiterte? Mit konkreten Namen:
 
 ```text
-Neu:      endpoint/<Ressource>Controller.java
-Neu:      service/<Ressource>Service.java
-Erweitert: endpoint/model/<Ressource>Dto.java (Feld <feld> ergänzen)
+Neu:       domain/model/<Entity>.java
+Neu:       application/port/in/<Entity>UseCase.java
+Neu:       application/usecase/<Entity>UseCaseImpl.java
+Neu:       adapters/inbound/rest/<Entity>Controller.java
+Neu:       adapters/inbound/rest/dto/<Entity>Request.java, <Entity>Response.java
+Neu:       adapters/outbound/persistence/<Entity>JpaEntity.java, <Entity>JpaRepository.java, <Entity>RepositoryAdapter.java
+Neu:       frontend/src/app/features/<feature>/<feature>-page.ts, data/<thing>-data.ts, ui/<thing>.ts
+Erweitert: adapters/inbound/rest/dto/<Entity>Response.java (Feld <feld> ergänzen)
 ```
 
 Klassenname, Paket und Verantwortlichkeit benennen. Kein „irgendwo im
@@ -121,7 +126,7 @@ Je Endpunkt:
 
 | Methode | Pfad | Request | Response | Fehler |
 |---------|------|---------|----------|--------|
-| `GET` | `api/<ressource>` | – | `<Ressource>Dto[]` | 401, 403 |
+| `GET` | `api/<ressource>` | – | `<Ressource>Response[]` | 401, 403 |
 
 Regeln:
 
@@ -129,13 +134,14 @@ Regeln:
   sie mit diesem Issue festgelegt (z. B. `@RestController
   @RequestMapping("api/<resource>")` — **ohne führenden Slash**).
 - Pfadvariablen: `@PathVariable("name")`.
-- DTOs liegen in `endpoint/model/`, Lombok `@Builder @Data @NoArgsConstructor
-  @AllArgsConstructor`. `@JsonProperty` nur, wenn der JSON-Key vom
-  Feldnamen abweicht.
-- Fehler über eine zentrale Fehlerbehandlung (z. B. `GlobalExceptionHandler`):
+- DTOs liegen in `adapters/inbound/rest/dto/` und sind **Records** (kein
+  Lombok `@Data`, kein verschachteltes Record im Controller).
+  `@JsonProperty` nur, wenn der JSON-Key vom Feldnamen abweicht
+  (Jackson 3: Annotation-Package `com.fasterxml.jackson.annotation`).
+- Fehler über eine zentrale Fehlerbehandlung (`GlobalExceptionHandler`):
   `IllegalArgumentException` → 400, „not found" → 404,
   `MembershipRequiredException` → 403, `ConflictException` → 409.
-  Services werfen, keine `ResponseEntity` zurückgeben.
+  Use Cases werfen, Controller geben kein `ResponseEntity` zurück.
 - Bezug zum Kontext: Dienste holen sich den aktuellen Kontext (z. B. den
   aktiven Haushalt) aus dem Request; vor jedem `save()` wird die Zuordnung
   gesetzt (`entity.setHousehold(currentHousehold())`).
@@ -148,15 +154,42 @@ Regeln:
 
 ### 5. Frontend-Design
 
+Der Stack des Projekts ist Angular 22 (zoneless, Signals, Signal Forms,
+Vitest). **Keine andere Annahme treffen** — es gibt kein Bootstrap, keine
+Icon-Bibliothek und keine `.component.ts`-Namenskonvention.
+
 - Route in `app.routes.ts`, lazy via `loadComponent`, Pfad kebab-case.
-- Komponente unter `src/app/domain/<feature>/features/<name>/`.
-- Daten-Service unter `src/app/domain/<feature>/data/<thing>-data.service.ts`.
-- Standalone, `ChangeDetectionStrategy.OnPush`, `inject()` statt
-  Konstruktor-DI.
-- State als `signal()`, abgeleitet als `computed()`.
-- Template: `@if` / `@for` / `@empty`, Bootstrap 5, FontAwesome.
+- Feature-Ordner `src/app/features/<feature>/` mit `routes.ts`,
+  `<feature>-page.ts|html|scss`, `model/`, `data/`, `ui/` (siehe Skill
+  `frontend-feature-architecture`).
+- Daten-Service `src/app/features/<feature>/data/<thing>-data.ts`, API-Client
+  daneben (`<thing>-api.ts`). Feature-Services werden route-scoped providet.
+- Standalone, zoneless, `inject()` statt Konstruktor-DI.
+- State als `signal()`, abgeleitet als `computed()`; Lesen per `httpResource`
+  im Data-Service, Schreiben per `HttpClient` im API-Client.
+- Formulare als **Signal Forms**; Pflicht und Länge als Validator
+  (`required()`, `maxLength()`) — **nicht** als `required`/`maxlength`-Attribut
+  im Template (dort greifen sie nicht).
+- Gestaltung nach Design-DNA: Tokens (`var(--hm-…)`), **keine Hex-Literale**,
+  1px-Linien statt Schatten, Monospace für Daten.
 - Das Issue nennt Komponentenname, Route und die Signale, nicht das
   vollständige Template.
+
+### 5a. Einstieg und manueller Testpfad
+
+Jedes AC, das ein „kann …" formuliert, braucht im Issue einen **Einstieg in
+der Oberfläche** und eine **Datenvoraussetzung**:
+
+```text
+AC11 — Die Leitung kann ein Mitglied ernennen.
+  Einstieg:      Haushaltsverwaltung → Zeile des Haushalts → Aktion
+                 „Mitglieder" → Feld „Person suchen".
+  Voraussetzung: Der Haushalt existiert, die angemeldete Person ist Leitung.
+```
+
+Ein Endpunkt allein erfüllt kein AC: ohne Einstieg in der UI ist das Feature
+für den Auftraggeber nicht prüfbar. Fehlt der Einstieg, ist das eine Lücke
+der Art `TECH` → runde=3.
 
 ### 6. Konventionen
 
@@ -197,8 +230,25 @@ Namenskonvention des Repos, und der Pfad wird als **Neu** markiert:
 | Frontend-Datenschicht | `features/<feature>/data/<thing>-api.ts`, `features/<feature>/data/<feature>-data.ts` |
 | Frontend-UI-Schicht | `features/<feature>/ui/<thing>.ts` |
 | Frontend-Route | `features/<feature>/routes.ts` (eingehängt in `app.routes.ts`) |
+| Dev-Proxy | `frontend/proxy.conf.js` (Ziel über `BACKEND_URL`) |
+| Compose-Stack | `compose.yml` (Ports, Healthchecks, `depends_on`) |
+| Architektur-Doku | `arc42/<NN>_<Titel>.md`, `docs/adr/<n>-<slug>.md` |
+| Design-DNA | `docs/design/design-dna.md`, `frontend/src/styles/_design-tokens.scss` |
 
 Die Muster gelten, solange `AGENTS.md` nichts anderes festlegt.
+
+**Gehört in die Dateiliste, sobald das Feature sie berührt** (nicht erst,
+wenn es auffällt):
+
+- `compose.yml` — wenn sich Ports, Healthchecks oder die Startreihenfolge
+  ändern. Ohne Healthcheck und `depends_on: service_healthy` startet nginx
+  nicht, wenn das Backend noch bootet.
+- `frontend/proxy.conf.js` — wenn der Dev-Server auf ein anderes Backend
+  zeigen soll (`BACKEND_URL`).
+- `arc42/` und `docs/adr/` — wenn die Architektur sich ändert. **Im selben
+  Commit wie der Code**, nicht danach: eine nachträglich ergänzte Doku wird
+  im Review zum MAJOR-Befund und kostet eine zusätzliche Runde.
+- `docs/design/design-dna.md` — wenn ein neues UI-Muster entsteht.
 
 Ein als „Neu" markierter Pfad trägt im Issue den Zusatz: „Pfad nach
 Namenskonvention, beim Bauen anpassen falls die Konvention nicht greift".
@@ -211,16 +261,23 @@ Format im Issue: Pfad + Klammer + was dort passiert.
 
 | AC | Ebene | Wo | Was |
 |----|--------|-----|-----|
-| AC1 | Backend | `.../service/XServiceTest.java` | <Fälle> |
-| AC2 | Controller | `.../endpoint/XControllerTest.java` | <Fälle> |
-| AC3 | Frontend | `.../x.component.spec.ts` | <Fälle> |
-| AC4 | E2E | `e2e/x.spec.ts` | <Fälle> |
+| AC1 | Use Case | `backend/src/test/java/de/householdmanager/application/usecase/XUseCaseImplTest.java` | <Fälle> |
+| AC2 | Controller | `backend/src/test/java/de/householdmanager/adapters/inbound/rest/XControllerTest.java` | <Fälle> |
+| AC3 | Persistenz | `backend/src/test/java/de/householdmanager/adapters/outbound/persistence/XRepositoryAdapterTest.java` | <Fälle> |
+| AC4 | Frontend | `frontend/src/app/features/<f>/<f>-page.spec.ts`, `…/ui/<thing>.spec.ts` | <Fälle> |
+| AC5 | manuell | — (Sichtprüfung, Export, Gerät) | <Prüfschritt> |
 
 Konventionen: JUnit 5 + Mockito, Testklasse je Produktionsklasse, gleiches
-Package. Kein `@MockBean`.
-Controller-Tests: `MockMvcBuilders.standaloneSetup(new XController(service)).build()`.
-Frontend: Jasmine + TestBed, `jasmine.createSpyObj`, `provideHttpClient()`,
-`provideRouter([])`.
+Package. **Kein `@MockBean`** — Boot 4 nutzt `@MockitoBean`.
+Controller-Tests: `@WebMvcTest` (Paket `org.springframework.boot.webmvc.test.autoconfigure`)
+mit `@MockitoBean` auf dem **Port**; kein `MockMvcBuilders.standaloneSetup`.
+Persistenz-Tests: `@DataJpaTest` (Paket `org.springframework.boot.data.jpa.test.autoconfigure`)
+mit Testcontainers (`org.testcontainers:testcontainers-postgresql`).
+Frontend: **Vitest** + TestBed, `vi.fn()`, `provideHttpClientTesting()`,
+`provideRouter([])`. Zoneless: `fixture.detectChanges()` **vor**
+`httpMock.expectOne(...)`; nach einem `flush()` einen Makrotask abwarten
+(`await new Promise(r => setTimeout(r, 0))`), **nicht** `whenStable()` —
+das wartet auf den noch nicht geflushzten Request und hängt.
 
 **Jedes fachliche Akzeptanzkriterium hat hier seinen Testfall.** Kein AC
 ohne Zeile in dieser Tabelle — und keine Zeile ohne AC. Ein AC, das nur
@@ -239,6 +296,30 @@ Solange `AGENTS.md` keine Verify-Kommandos kennt, werden hier diejenigen
 genannt, die für dieses Issue entstehen — sie sind dann mit dem Issue neu zu
 validieren.
 
+Für ein Feature mit UI-Anteil nennt der Verify-Block **drei Dinge**, sonst
+ist das Feature für den Auftraggeber nicht prüfbar:
+
+1. **Stack starten** — welcher Befehl bringt Postgres, Backend und Frontend
+   hoch, auf welchen Ports (`.env`, Compose-Overrides), und zeigt der
+   Dev-Server über `BACKEND_URL` auf dieses Backend.
+2. **Datenbank-Zustand** — braucht das Feature eine frische Datenbank
+   (Migration mit `NOT NULL` ohne Backfill)? Dann steht der Neuaufbau als
+   Kommando dabei, sonst startet das Backend nicht.
+3. **Manueller Pfad** — die Handlung, die der Auftraggeber im Browser macht:
+   nicht „Funktion prüfen“, sondern „Haushalt anlegen, Person suchen und
+   ernennen, Aufgabe in DOING ziehen“.
+
+Beispiel:
+
+```bash
+cd backend && ./mvnw -B test
+cd frontend && npm test && npm run lint && npm run sheriff
+docker compose up -d --build          # Postgres 5432, Backend 8081, Frontend 4200
+```
+
+Manuell: Haushalt in der Verwaltung anlegen, Person suchen und „Ernennen"
+klicken, Aufgabe anlegen und in eine andere Spalte ziehen.
+
 ### 10. Risiken und Gotchas
 
 Bereiche prüfen, die laut `AGENTS.md` § Gotchas historisch Fehler gemacht
@@ -248,6 +329,17 @@ nachgezogen.
 
 Tatsächlich einschlägige Gotchas in `## Gotchas` nennen — mit dem
 Hinweis, das Issue vor dem Bauen zu lesen. Kein Copy-Paste der ganzen Skill.
+
+Zusätzlich zu den Gotchas nennt der Abschnitt die **Fehlerquellen, die in
+diesem Projekt schon zugeschlagen haben** (Stand: Erkenntnisse aus Issue #1):
+
+| Fehlerquelle | Was in der Runde 3 festzulegen ist |
+|--------------|------------------------------------|
+| **Stille Verwerfung** — ein Wert außerhalb einer Grenze fällt weg, ohne Meldung an den Nutzer | Der Fehlerfall gehört als AC: „Ein Label mit 61 Zeichen wird abgelehnt und benannt.“ |
+| **Migration ohne Backfill** — `NOT NULL` auf einer bestehenden Tabelle | „Die Entwicklungsdatenbank wird neu aufgebaut" als Voraussetzung im Issue + Verify-Kommando |
+| **Overlay-Muster** — ein Dialog wird als eigenes Overlay gebaut statt nach dem vorhandenen Muster | Verweis auf das vorhandene Muster (`shared/components/confirm-dialog`) in der Dateiliste |
+| **Nur-Endpunkt-Feature** — der Endpunkt existiert, die UI nicht | Einstieg und Datenvoraussetzung je AC (siehe §5a) |
+| **Nicht startender Stack** — nginx findet das Backend nicht | Healthcheck + `depends_on: service_healthy` + Port-Overrides in der Dateiliste |
 
 ### 11. Grilling — technische Entscheidungen attackieren
 

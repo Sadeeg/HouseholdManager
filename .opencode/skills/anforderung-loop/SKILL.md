@@ -244,6 +244,14 @@ Epic-Nummer-Präfix `[Epic N]` und der Phasen-Title `[N.M]` sind fix, siehe
   `AGENTS.md` beschrieben — das Issue beschreibt das Feature. Das finale
   Gate prüft, ob dieser Schritt dort abgedeckt ist; fehlt er, ist das eine
   Lücke der Art `FORMAT` → runde=1.
+- **Erkenntnisse werden zu Regeln, nicht nur zu Text.** Nach den Gates
+  (Umsetzung, Review, Abnahme) schreibt die Nachbereitung die Erfahrungen
+  nach `docs/erkenntnisse-issue-<n>.md` — und **überführt** die
+  wiederkehrenden Fehler in Regeln: Prozesswissen nach `AGENTS.md`,
+  Umsetzungswissen in den zuständigen Skill (z. B. Layout-Fehler →
+  `ux-design`, Testfallen → `feature-testing`, Grenzwerte ohne Meldung →
+  `backend-ports-adapters`). Ein Erkenntnis-Dokument ohne überführte Regel
+  ändert an der nächsten Runde nichts.
 
 ## Skill-Ladereihenfolge
 

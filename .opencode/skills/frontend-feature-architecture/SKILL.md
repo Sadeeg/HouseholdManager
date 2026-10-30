@@ -121,6 +121,40 @@ der häufigste Architekturbruch und wird von Sheriff verhindert.
   smart Component — nie in einem dumb Component.
 - Formulare: **Signal Forms** (Angular 22).
 
+### Zwischenstände gehören in die Datenschicht
+
+Ein UI-Interaktionsschritt, der eine Serverantwort abwartet (Verschieben,
+Sortieren, Umschalten), zeigt **sofort** den neuen Zustand an und speichert
+danach. Dieser Zwischenstand liegt im **Data-Service**, nicht in der Seite:
+
+```text
+Data-Service:  pendingMove (Signal) → board (computed) → applyMove(tasks, move)
+Seite:         onDrop meldet nur den Zug — sie verschiebt nichts selbst.
+```
+
+Regeln:
+
+- Die lokale Normalisierung **spiegelt die des Servers** (Zielspalte ohne
+  das Element, Position begrenzt auf die Länge der Zielspalte, beide
+  betroffenen Spalten neu nummerieren). Sonst weicht die Anzeige bis zur
+  Antwort von der Wahrheit ab.
+- Der Zwischenstand gilt, solange die geladenen Daten unverändert sind; die
+  Serverantwort macht ihn wirkungslos, der **Fehlerpfad verwirft** ihn.
+- Der zugehörige Test prüft den Zustand **vor** der Antwort. Ein Test, der
+  erst nach dem Reload zählt, ist blind für genau diesen Fehler.
+
+**CDK verschiebt kein Modell.** `CdkDragDrop` meldet den Zug; das Verschieben
+des Eintrags macht die Anwendung. Wer das dem CDK überlässt, sieht die Karte
+in die Ausgangsbahn zurückfallen.
+
+### `core` heißt: genau eine Instanz
+
+`core/` ist für app-weite Angelegenheiten mit **einer** Instanz. Ein Dienst
+in `core/` wird deshalb `providedIn: 'root'` gestellt. Wird er in einer
+Komponente per `providers: [...]` erzeugt, ist er faktisch ein `shared`-Dienst
+mit eigenem Zustand — dann gehört er nach `shared/` (oder der Grund für den
+geteilten Zustand steht als Kommentar an der Datei).
+
 ## Naming (Angular 22)
 
 - Dateien **ohne** Rollen-Suffix: `households-page.ts` → `class HouseholdsPage`.
@@ -175,3 +209,10 @@ repariert, nicht die Regel aufgeweicht.
 - **Kein `any` an der Feature-Grenze:** Das Model im `data/`-Ordner ist die
   clientseitige Sicht — sie darf bewusst schmaler sein als das
   Backend-Modell.
+- **Ein bestehendes UI-Muster wird nicht nachgebaut.** Overlay, Liste,
+  Bestätigungsdialog, Seitenkopf: erst `shared/components/` und die
+  vorhandenen Features prüfen, dann bauen. Zwei Varianten desselben Musters
+  sind zwei Fehlerquellen (siehe Skill `ux-design`, „Muster zuerst suchen").
+- **Layout ist nicht testbar.** jsdom sieht keine Geometrie — Position,
+  Überlappung und Verdeckung brauchen eine Sichtprüfung (Screenshot), keinen
+  Unit-Test.

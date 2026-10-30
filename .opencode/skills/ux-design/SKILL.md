@@ -66,6 +66,52 @@ Für jedes interaktive Element:
 - **Fehlerzustand:** Text + Grund + nächste Handlung; `role="alert"`.
 - **Ladezustand:** nie nur Spinner — was passiert, steht daneben.
 - **Mehrfachauslösen:** Button während des Requests deaktiviert.
+- **Sichtbarkeit:** Jede Aktion ist im **Default-Zustand vorhanden** — nicht
+  erst nach einer Auswahl. Ein `disabled`-Zustand bedeutet „sichtbar, aber
+  gesperrt". Fehlt eine Aktion im Default-Zustand, ist das ein Entwurfsfehler.
+- **Anordnung:** Was steht nebeneinander, was ist rechtsbündig, was
+  verdeckt nichts. Eine Trefferliste gehört in den Dokumentfluss, nicht als
+  Overlay über den Nachbarinhalt — ein Overlay (Dialog, Menü) verdeckt dann
+  bewusst und nur im eigenen Zustand.
+
+### 3a. Muster zuerst suchen
+
+Vor dem ersten eigenen UI-Code wird das Repo nach einem vorhandenen Muster
+durchsucht:
+
+```bash
+grep -rl "position: fixed" frontend/src/app --include=*.scss   # Overlays
+find frontend/src/app/shared/components -maxdepth 1 -type d     # wiederverwendbar
+```
+
+- **Ein vorhandenes Muster wird kopiert, nicht erfunden.** Braucht das
+  Feature einen Dialog, Bestätigungsdialog oder Seitenkopf, wird das Muster
+  benutzt — auch wenn das eigene „einfacher" wirkt.
+- **Ein Overlay ist ein Muster mit drei Teilen:** Backdrop, Panel,
+  Fokusfalle. Das Overlay gehört auf den **Wrapper** (nicht auf den
+  Backdrop-Knopf), Backdrop und Panel liegen in derselben Gitterzelle
+  (`grid-area: 1 / 1`), das Panel bekommt `max-height: 100%; overflow-y: auto`.
+- **Ein neues Muster wird in die Design-DNA aufgenommen** (Schritt 7), sonst
+  fehlt es beim nächsten Feature wieder.
+
+### 3b. Sichtprüfung — Layout ist kein Testfall
+
+jsdom kennt keine Geometrie: Position, Überlappung, Verdeckung und
+Ausrichtung sind in Unit-Tests **nicht** sichtbar. Solche Fehler sind der
+teuersten Fund: Die Tests sind grün, das Feature ist unbedienbar.
+
+Zu jedem Feature mit UI-Anteil gehört deshalb **eine Sichtprüfung** vor der
+Abnahme:
+
+1. Echtes SCSS der Komponente kompilieren
+   (`frontend/node_modules/.bin/sass --load-path=frontend/src/styles`).
+2. Markup aus dem echten Template in einen kleinen Harness übernehmen.
+3. `google-chrome --headless=new --screenshot=…` rendern lassen.
+4. Vorher/Nachher vergleichen und die Sichtprüfung im PR-Protokoll benennen.
+
+Typische Befunde, die **nur** die Sichtprüfung findet: Overlay am falschen
+Element, Aktion absolut positioniert über dem Text daneben, Vorschlagsliste
+als Overlay über dem Nachbarinhalt, Element außerhalb des Viewports.
 
 ### 4. Inhalt und Sprache
 
@@ -128,7 +174,12 @@ Der Entwurf wird als **eigener Issue-Abschnitt** `## UX` geschrieben (siehe
 - Formular inline, kein Dialog (Begründung)
 - Abbruch behält Eingaben
 - Button ist während des Requests deaktiviert
+- Anordnung: <was steht nebeneinander, was ist rechtsbündig, was verdeckt nichts>
 ```
+
+Der Entwurf endet mit dem Satz **„Sichtprüfung: <was wird angesehen und was
+dabei erwartet wird>"** — das ist der Schritt, den kein Unit-Test ersetzen
+kann.
 
 ### 7. Design-DNA pflegen
 

@@ -24,16 +24,47 @@ Reviewer prüft erneut. Der Reviewer ist read-only für Produktionscode.
 | 5 | **Fehlerbehandlung & Daten** | Fachfehler → HTTP-Status, `ProblemDetail`, Validierung an der Grenze **und** als Invariante, Flyway-Migration nötig und korrekt, keine Änderung bestehender `V`-Dateien |
 | 6 | **Sicherheit** | Eingaben unvalidiert?, Secrets im Code, fehlende Autorisierung, Injection (SQL/Pfad/Template), Daten im Log |
 | 7 | **Konventionen & Doku** | `AGENTS.md`, Issue-Hausstil, ADR-Pflicht bei Architekturänderungen, keine toten Codes, keine Debug-Reste |
+| 8 | **Sichtbarkeit, Erreichbarkeit, Prüfbarkeit** | Einstieg in der UI je „kann …"-AC, Stack startbar, Aktionen im Default-Zustand sichtbar, nichts verdeckt den Nachbarinhalt, Sichtprüfung erfolgt |
 
 Die Gates laufen zusätzlich: `npm run lint`, `npm run sheriff`,
 `./mvnw -B test`, `npm test`.
+
+### Proben für Kategorie 8
+
+Diese Klasse von Fehlern fiel in der Abnahme zu Issue #1 durch beide Gates —
+sie sind billig zu prüfen:
+
+```bash
+# Einstieg: gibt es überhaupt ein UI für das AC?
+grep -rn "api/" frontend/src/app/features | grep -v spec   # Endpunkte, die das Frontend kennt
+grep -rln "create\|anlegen\|ernennen" frontend/src/app/features --include=*.html
+
+# Aktionen: wird eine Aktion erst nach einer Auswahl gerendert?
+grep -rn "@if" -A5 frontend/src/app/features --include=*.html | grep -n "button"
+
+# Überlappung: absolute Positionierung über fremdem Inhalt
+grep -rn "position: absolute" frontend/src/app --include=*.scss
+
+# Stack: Healthcheck und Startreihenfolge
+grep -n "healthcheck\|depends_on\|service_healthy" compose.yml
+```
+
+Was der Reviewer daraus ableitet:
+
+- **Fehlender Einstieg** (AC nur über einen Endpunkt erfüllt) → **MAJOR**:
+  das Feature ist für den Auftraggeber nicht prüfbar.
+- **Aktion nur nach Auswahl sichtbar**, obwohl die Spec sie dauerhaft vorsieht →
+  **MAJOR**.
+- **Stack startet nicht** (kein Healthcheck, kein `service_healthy`) → **MAJOR**.
+- **Nichts überlagert** ist kein Fehler, wenn die Sichtprüfung das belegt —
+  der Reviewer prüft die CSS-Stelle, nicht das Ergebnis.
 
 ## Severity
 
 | Level | Bedeutung | Folge |
 |-------|-----------|--------|
 | **BLOCKER** | Verletzt eine verbindliche Regel (Architektur, Sicherheit, Korrektheit, fehlende Migration) oder das Feature ist falsch | muss korrigiert werden, Gate bleibt KORREKTUREN |
-| **MAJOR** | Deutliche Abweichung von Konvention oder Lücke (unvollständige Fehlerbehandlung, fehlender Test für ein AC, Doku fehlt) | muss korrigiert werden |
+| **MAJOR** | Deutliche Abweichung von Konvention oder Lücke (unvollständige Fehlerbehandlung, fehlender Test für ein AC, Doku fehlt, fehlender Einstieg in der UI, stilles Verwerfen eines Werts ohne Meldung) | muss korrigiert werden |
 | **MINOR** | Kleiner Verstoß ohne Verhaltensfolge (Namenskonvention, Struktur, Kommentar) | Korrektur empfohlen, blockiert das Gate nicht |
 | **NIT** | Geschmack, Optimierung, Idee | nur nennen, wenn es den Code klarer macht; blockiert nie |
 
@@ -48,6 +79,7 @@ REVIEW: OK | KORREKTUREN
 Scope: <Dateien/Feature, geprüft gegen Issue #N>
 Befunde: <n> (BLOCKER <n> · MAJOR <n> · MINOR <n> · NIT <n>)
 Geprüfte Gates: <mvn test | npm test | npm run lint | npm run sheriff> → <Ergebnis>
+Sichtbarkeit: <manueller Pfad | Sichtprüfung | entfällt (kein UI-Anteil)> → <Ergebnis>
 ```
 
 - `OK` → keine BLOCKER/MAJOR-Befunde, alle Gates grün.

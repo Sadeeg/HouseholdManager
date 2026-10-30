@@ -68,6 +68,8 @@ Regeln:
 
 ## Implementation
 
+## Abweichungen
+
 ## Acceptance Criteria
 
 ## Tests
@@ -83,7 +85,21 @@ Regeln:
 
 Pflicht: `Goal`, `Scope`, `Out of Scope`, `Files`, `Acceptance Criteria`,
 `Tests`, `Verify`. Optional: `Context`, `UX` (bei UI-Anteil), `Implementation`,
-`Begriffe`, `Referenz`, `Depends on`, `Offene Punkte`, `Gotchas`.
+`Abweichungen`, `Begriffe`, `Referenz`, `Depends on`, `Offene Punkte`,
+`Gotchas`.
+
+`## Abweichungen` steht nach `## Implementation` und hält fest, was der
+Umsetzungsweg vom Issue-Text abweicht — jede Abweichung mit Begründung und
+Fundstelle:
+
+```text
+| Abweichung | Begründung | Fundstelle |
+|------------|------------|------------|
+| Zusätzlicher Endpunkt `GET api/users/search?q=` | von AC8/AC11 gefordert: Zuständige und Mitglieder dürfen nur Personen aus dem Nutzerverzeichnis sein | arc42/03, `UserSearchController` |
+```
+
+Ohne Abweichung entfällt der Abschnitt. Eine **unbenannte** Abweichung wird
+im Review zum Befund — benennen gehört zum Issue, nicht erst zum PR.
 
 `## UX` steht nach `## Out of Scope` und vor `## Begriffe`: Erst das Was und
 Wofür, dann die Oberfläche, dann die Begriffe und die Dateien.
