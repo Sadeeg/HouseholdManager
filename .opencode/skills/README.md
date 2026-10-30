@@ -26,9 +26,9 @@ Diese Skills sind **projektspezifisch** und werden hier gepflegt:
 |-------|--------|
 | `backend-ports-adapters/` | Ports-&-Adapters-Aufbau des Backends (Schichten, Ports, Mapping, Transaktionen, Tests je Schicht) — Entscheid: [ADR 0001](../../docs/adr/0001-backend-ports-and-adapters.md) |
 | `frontend-feature-architecture/` | Feature-Architektur nach Manfred Steyer (Architektur-Matrix, Ordnerregeln, Smart/Dumb, Sheriff-Tags) — Entscheid: [ADR 0002](../../docs/adr/0002-frontend-feature-architecture.md) |
-| `feature-testing/` | Teststrategie: Testebene je Fehler, AC-Abdeckung, Definition von „vollständig getestet", Anti-Patterns |
-| `code-review-gate/` | Review-Doktrin: 7 Kategorien, Severity, OK/KORREKTUREN, Format des Korrekturauftrags |
-| `ux-design/` | UX-Methode: Ablauf, Screens, Zustände, Issue-Abschnitt `## UX`, Design-DNA |
+| `feature-testing/` | Teststrategie: Testebene je Fehler, AC-Abdeckung, Definition von „vollständig getestet", Anti-Patterns, Angular-22-Testfallen |
+| `code-review-gate/` | Review-Doktrin: 8 Kategorien, Severity, OK/KORREKTUREN, Format des Korrekturauftrags, Proben für Sichtbarkeit/Erreichbarkeit |
+| `ux-design/` | UX-Methode: Ablauf, Screens, Zustände, Sichtprüfung (Layout ist nicht testbar), Issue-Abschnitt `## UX`, Design-DNA |
 | `anforderung-*`, `issue-formulierung`, `issue-github` | Anforderungs-Loop und GitHub-Schreibvorgänge (siehe `.opencode/README.md`) |
 
 ## Agenten

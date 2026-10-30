@@ -108,6 +108,9 @@ Grilling da, nicht das Gate.
 - [ ] **Jede sichtbare Eingabe hat einen Pflegeschritt im Nutzerfluss und einen benannten Ort.** Keine Eingabe, die nur im Ergebnis erscheint und für die der Nutzer keinen Ort kennt
 - [ ] **Der UX-Abschnitt ist vorhanden und umsetzbar** (bei Features mit UI-Anteil): Screens mit Rolle und Zweck, Ablauf inkl. Rückwegen, Elemente mit Zuständen, Leer-/Lade-/Fehlerzustand, Formulare mit Label und Fehlerzuordnung. **Gestaltungsentscheidungen nennen Token-Namen aus der Design-DNA**, keine Beschreibung wie „wirkt modern". Fehlt der Abschnitt bei einem Feature mit UI-Anteil, ist das eine Lücke der Art `FACH` → runde=2.
 - [ ] **Jeder Platzhalter hat eine Rückmeldung.** Überall dort, wo ein leerer Wert als Platzhalter, Auslassung oder leere Liste erscheint, steht, wie der Nutzer es erfährt (Hinweisliste, Hinweisfeld, Fehlermeldung)
+- [ ] **Jedes „kann …"-Kriterium nennt Einstieg und Voraussetzung.** Wo startet der Nutzer die Handlung (Screen, Aktion), und was muss vorhanden sein (Haushalt, Rolle, Datensatz)? Ein Endpunkt allein erfüllt kein Kriterium — ohne Einstieg in der UI ist das Feature nicht prüfbar
+- [ ] **Aktionen sind im Default-Zustand sichtbar.** Steht im UX-Abschnitt eine Aktion, die erst nach einer Auswahl erscheint, ist das eine Lücke der Art `FACH` → runde=2: eine Aktion mit `disabled`-Zustand ist dauerhaft sichtbar, nicht nachgelagert
+- [ ] **Grenzwerte haben ein Verhalten.** Ein Wert außerhalb einer Grenze wird abgelehnt **und benannt** — nicht kommentarlos verworfen. Steht dazu keine Regel, ist das eine Lücke der Art `FACH` → runde=2
 - [ ] **Eigenschaften eines Vorbilds sind entschieden.** Gibt es ein Referenzdokument, einen Screenshot oder eine Vorgängerfunktion, trägt `## Referenz` jede beobachtbare Eigenschaft mit „übernommen als AC<n>" oder „Abweichung". Eine Eigenschaft ohne beide ist eine Lücke der Art `FACH` → runde=2
 
 ## Checkliste Runde 3 — Technisches Refinement
@@ -120,6 +123,8 @@ Grilling da, nicht das Gate.
 - [ ] Konkrete Dateiliste mit echten Pfaden — jeder Pfad ist im Repo verifiziert
 - [ ] Teststrategie: Testart, Testfälle, Ort der Tests
 - [ ] Verify-Block mit kopierfertigen Kommandos (siehe `issue-formulierung`)
+- [ ] **Der Verify-Block macht das Feature prüfbar:** Stack-Start (welcher Befehl, welche Ports), Datenbank-Zustand (frisch nötig?), manueller Pfad als konkrete Handlung im Browser — nicht „Funktion prüfen"
+- [ ] **Die Doku-Files stehen in der Dateiliste:** `arc42/` und `docs/adr/` bei Architekturänderungen, `docs/design/design-dna.md` bei neuen UI-Mustern, `compose.yml` bei Ports/Healthchecks/Startreihenfolge — mit dem Hinweis „im selben Commit wie der Code"
 - [ ] Risiken und bekannte Gotchas benannt
 - [ ] Fachliche Akzeptanzkriterien sind technisch prüfbar (jedes Kriterium hat einen Testfall oder ein Kommando)
 - [ ] **Die arc42-Dokumentation ist aktualisiert.** Die vom ARC-Agenten berührten Dokumente unter `arc42/` beschreiben das Feature (Bausteine, Abläufe, Daten, Entscheidungen); offene Punkte sind als `> **Offen:** …` markiert, nicht geraten.
@@ -134,7 +139,7 @@ Grilling da, nicht das Gate.
 - [ ] Alle Abschnitte der Hausstruktur vorhanden und in Reihenfolge
 - [ ] Keine Platzhalter: kein `TODO`, kein `TBD`, kein `...`, keine leeren Code-Blöcke, kein "etc."
 - [ ] Jeder referenzierte Pfad existiert im Repo (mit `find`/`grep` prüfen, nicht raten)
-- [ ] Jeder Pfad, der neu ist, folgt exakt der Namenskonvention des Repos (`endpoint/model/<Entity>Dto.java`, `domain/<feature>/features/<name>/<name>.component.ts`, `service/<Entity>Service.java`) — und ist als „Neu" markiert, mit dem Hinweis, dass der Pfad beim Bauen anzupassen ist, falls die Konvention nicht greift
+- [ ] Jeder Pfad, der neu ist, folgt exakt der Namenskonvention des Repos (`domain/model/<Entity>.java`, `application/port/in/<Entity>UseCase.java`, `application/usecase/<Entity>UseCaseImpl.java`, `adapters/inbound/rest/dto/<Entity>Request.java` bzw. `<Entity>Response.java`, `adapters/inbound/rest/<Entity>Controller.java`, `adapters/outbound/persistence/<Entity>JpaEntity.java`, `db/migration/V<n>__<snake_case>.sql`, `features/<feature>/<feature>-page.ts`, `features/<feature>/data/<thing>-data.ts`, `features/<feature>/ui/<thing>.ts`) — und ist als „Neu" markiert, mit dem Hinweis, dass der Pfad beim Bauen anzupassen ist, falls die Konvention nicht greift
 - [ ] Verwendete Endpunkte existieren oder sind als neu markiert
 - [ ] Labels und Title folgen dem Format aus `issue-formulierung`
 - [ ] `depends_on` verweist auf existierende Phasen bzw. Issues

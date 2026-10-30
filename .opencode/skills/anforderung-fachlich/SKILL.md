@@ -88,6 +88,16 @@ Regeln:
   `references/grilling.md`.
 - Gruppierung nach Themen ist erlaubt (`**Deckblatt**`, `**Fotos**`), die
   IDs laufen durch.
+- **Jedes „kann …" nennt Einstieg und Voraussetzung**: wo startet der Nutzer
+  die Handlung (Screen, Aktion) und was muss vorhanden sein (Haushalt, Rolle,
+  Datensatz)? Ein Endpunkt genügt nicht — ohne Einstieg in der Oberfläche ist
+  das Kriterium für den Auftraggeber nicht prüfbar.
+- **Sichtbare Aktionen existieren im Default-Zustand.** Formuliert die
+  Anforderung einen `disabled`-Zustand einer Aktion, ist diese dauerhaft
+  sichtbar — nicht erst nach einer Auswahl.
+- **Grenzwerte werden benannt, nicht verworfen.** „Wird abgelehnt" ohne
+  Meldung an den Nutzer ist keine fertige Regel, sondern eine offene Lücke
+  (der Wert verschwindet sonst unbemerkt).
 
 ### 5. Eingaben, Pflegeorte und Leerfälle
 
@@ -143,6 +153,7 @@ Das Ergebnis steht im Issue unter `## Referenz`.
 |------|---------------------|
 | leere Eingabe | Verhalten festlegen |
 | ungültiger Wert | Verhalten festlegen |
+| Wert außerhalb der Grenze (Länge, Anzahl) | Verhalten festlegen — **mit Meldung an den Nutzer**, nicht stilles Verwerfen |
 | Berechtigung fehlt | Verhalten festlegen |
 | Aktion doppelt ausgelöst | Verhalten festlegen |
 | Unterbrechung/Abbruch | Verhalten festlegen |

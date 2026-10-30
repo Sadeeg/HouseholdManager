@@ -125,13 +125,14 @@ Konventionstabellen: `.opencode/skills/anforderung-technisch/references/technik-
 
 ## Definition of Done (Feature)
 
-Ein Feature ist **erst fertig**, wenn **alle fünf** Punkte erfüllt sind:
+Ein Feature ist **erst fertig**, wenn **alle sechs** Punkte erfüllt sind:
 
 1. **Implementiert** — alle Akzeptanzkriterien des Issues sind umgesetzt,
    in der Schicht, in der sie hingehören (Ports & Adapters, Feature-Architektur).
 2. **Vollständig getestet** — **jedes** `AC<n>` hat einen Test, der es
-   belegt; Fehlerpfade und Grenzwerte sind getestet. Definition und
-   Testebenen: Skill `feature-testing`.
+   belegt; Fehlerpfade und Grenzwerte sind getestet. Bei UI-Anteil kommen
+   **Sichtprüfung** (Layout ist im Test nicht sichtbar) und der **manuelle
+   Pfad im Browser** dazu. Definition und Testebenen: Skill `feature-testing`.
 3. **Grün** — `./mvnw -B test` und `npm test` laufen grün; zusätzlich
    `npm run lint` und `npm run sheriff` (Architektur-Grenzen).
 4. **Architektur-Review OK** — der Subagent `architektur-reviewer` hat
@@ -142,6 +143,10 @@ Ein Feature ist **erst fertig**, wenn **alle fünf** Punkte erfüllt sind:
    geprüft und `PASS` gemeldet. Er hat **andere Augen** als der
    Implementierer: er urteilt adversarial gegen die Akzeptanzkriterien,
    schreibt fehlende Tests (nur Testdateien) und meldet `PASS` oder `FAIL`.
+6. **Nachbereitung** — die Erfahrungen aus dem Feature stehen in
+   `docs/erkenntnisse-issue-<n>.md`, und die wiederkehrenden Fehler sind als
+   Regel in `AGENTS.md` oder im zuständigen Skill **überführt**; offene
+   Kleinbefunde liegen als Follow-up-Issues vor.
 
 ```text
 /review <Issue-Nr>       # Architektur-Gate: review → Korrekturen delegieren → review

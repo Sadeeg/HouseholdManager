@@ -35,6 +35,7 @@ Verwandte Skills: `spring-testing` (Backend-Test-Slices), `vitest`
 | Protokoll | `adapters/inbound/rest` | `@WebMvcTest` + `@MockitoBean` | Mapping, Statuscodes, Validierung |
 | Persistenz | `adapters/outbound/persistence` | `@DataJpaTest` + Testcontainers-Postgres | Queries, Mapping, Migration |
 | UI | `features/<f>/ui`, `<f>-page` | Vitest + TestBed + `provideHttpClientTesting()` | Rendering, Reactiveität, Events |
+| Navigation | `core/**/*guard.spec.ts` | Vitest + `provideRouter([])` | Weiterleitung, Scoping, Start-Route |
 | Journey | Ende zu Ende | `@SpringBootTest` / Playwright (noch nicht eingerichtet) | Schnittstellen-Fehler |
 
 Faustregel: **ein Fehler wird auf der tiefsten Ebene gesucht, die ihn
@@ -53,6 +54,7 @@ backend/src/test/java/de/householdmanager/
 frontend/src/app/
   features/<f>/ui/*.spec.ts                     dumb Component: Inputs → Output
   features/<f>/*.spec.ts                        smart Component: Datenfluss
+  core/**/*.guard.spec.ts                       Route-Guards: Weiterleitung
 ```
 
 Package-Pfade in Boot 4: `@WebMvcTest` → `org.springframework.boot.webmvc.test.autoconfigure`,
@@ -146,6 +148,36 @@ TestBed.configureTestingModule({
   sonst wird der Request nie erwartbar.
 - Route-scoped Services (z. B. `HouseholdsData`) gehören in `providers`.
 
+## Die Angular-22-Fallen (zoneless, Signals, Vitest)
+
+Diese Fallen kosten bei jedem neuen Frontend-Test Zeit. Sie sind hier
+gesammelt, damit der Test nicht daran scheitert:
+
+| Falle | Folge | Richtig |
+|-------|-------|---------|
+| Effekte laufen erst nach `detectChanges()` | `expectOne` findet keinen Request | erst rendern, **dann** erwarten |
+| Nach `flush()` folgt ein Reload | `whenStable()` wartet auf den **nicht** geflushzten Request und hängt | Makrotask: `await new Promise(r => setTimeout(r, 0)); fixture.detectChanges()` |
+| `httpResource` dedupliziert | der zweite GET geht nie raus | `.reload()` — es gibt **kein** `.refresh()` |
+| `error()` liefert `undefined` | `!== null` ist immer wahr | `!!x.error()` prüfen |
+| Signal-Forms-Knoten | `required`/`maxlength` im Template greifen nicht | Validatoren `required()`, `maxLength()` im Code |
+| `type="submit"` | löst im Test kein Submit aus | Handler über `type="button"` aufrufen |
+| `TestBed.configureTestingModule` | zweiter Aufruf wirft | einmal pro Test konfigurieren |
+
+## Drei Regeln, die in diesem Projekt Fehler gefunden haben
+
+1. **Zwischenstand vor der Antwort prüfen.** Bei Interaktionen, die eine
+   Serverantwort abwarten (Verschieben, Sortieren), prüft der Test den
+   neuen Zustand **vor** dem Flush. Ein Test, der erst nach dem Reload
+   zählt, ist blind für genau den Fehler, den er verhindern soll.
+2. **Layout ist kein Testfall.** jsdom kennt keine Geometrie — Position,
+   Überlappung, Verdeckung, Ausrichtung sind nur per **Sichtprüfung**
+   (Screenshot des echten SCSS) zu prüfen. Siehe Skill `ux-design`,
+   „Sichtprüfung".
+3. **Stilles Verwerfen ist ein Fehlerfall.** Wird ein Wert außerhalb einer
+   Grenze ohne Meldung an den Nutzer fallengelassen, ist das ein Defekt:
+   Der Grenzwert braucht einen Test auf der Ebene, die die Grenze setzt
+   (Fachmodell oder Use Case), und die Oberfläche braucht eine Rückmeldung.
+
 ## Anti-Patterns
 
 | Anti-Pattern | Warum schlecht | stattdessen |
@@ -158,6 +190,9 @@ TestBed.configureTestingModule({
 | Test-Hook im Produktionscode (z. B. `if (test) …`) | Produktionscode verändert sich für Tests | Testdaten über den Port steuern |
 | Test ohne AC-Bezug | unklar, wofür er da ist | AC nennen oder Zweck im Kommentar |
 | Mock, der echte Validierung ersetzt | Fehler bleibt unentdeckt | echte Validierung testen |
+| Test prüft erst **nach** dem Reload | blind für Flackern und Rückfall | Zwischenstand vor der Antwort prüfen |
+| Wert wird still verworfen (Grenzwert) | Nutzer merkt nichts, Daten fehlen | ablehnen **und** melden, Grenzwert testen |
+| Layout per Unit-Test „geprüft" | jsdom sieht keine Geometrie | Sichtprüfung (Screenshot) |
 
 ## Grenzen (bewusst)
 
@@ -174,5 +209,11 @@ TestBed.configureTestingModule({
 1. Matrix bauen (AC → Test).
 2. Lücken mit Tests schließen (nur Testdateien).
 3. Alle Tests + Lint + Sheriff laufen lassen.
-4. **Den kritischen Tester laufen lassen** (`@kritischer-tester` oder
+4. **Bei UI-Anteil: den manuellen Pfad einmal im Browser durchspielen.**
+   Gibt es einen Einstieg? Ist der Stack erreichbar? Sind Daten vorhanden?
+   Sind alle Aktionen sichtbar? Ein AC ohne Einstieg ist nicht erfüllt,
+   nur behauptet.
+5. **Bei UI-Anteil: Sichtprüfung** (Screenshot des echten SCSS) für die
+   Ansichten, die geändert wurden — Layout ist nicht testbar.
+6. **Den kritischen Tester laufen lassen** (`@kritischer-tester` oder
    `/abnahme`) — er urteilt, nicht du.

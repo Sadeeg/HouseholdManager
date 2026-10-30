@@ -27,10 +27,12 @@ Abschnitt oder ein konkretes Beispiel gebraucht wird.
 ## Context
 ## Scope
 ## Out of Scope
+## UX
 ## Begriffe
 ## Referenz
 ## Files
 ## Implementation
+## Abweichungen
 ## Acceptance Criteria
 ## Tests
 ## Verify
@@ -39,9 +41,14 @@ Abschnitt oder ein konkretes Beispiel gebraucht wird.
 ## Gotchas
 ```
 
-`Context`, `Implementation`, `Begriffe`, `Referenz`, `Depends on`,
-`Offene Punkte` und `Gotchas` sind optional. Alle anderen Abschnitte sind
-Pflicht — `Depends on` nur, wenn es Abhängigkeiten gibt.
+`Context`, `Implementation`, `Abweichungen`, `UX`, `Begriffe`, `Referenz`,
+`Depends on`, `Offene Punkte` und `Gotchas` sind optional. Alle anderen
+Abschnitte sind Pflicht — `Depends on` nur, wenn es Abhängigkeiten gibt.
+
+`## Abweichungen` hält fest, was die Umsetzung vom Issue-Text abweicht —
+je Zeile Abweichung, Begründung, Fundstelle (Format in
+`references/hausstil.md`). Eine unbenannte Abweichung wird im Review zum
+Befund; sie gehört ins Issue, nicht erst in die PR-Beschreibung.
 
 `## Offene Punkte` enthält zwei getrennte Listen:
 
