@@ -88,12 +88,15 @@ find frontend/src/app/shared/components -maxdepth 1 -type d     # wiederverwendb
   Feature einen Dialog, Bestätigungsdialog oder Seitenkopf, wird das Muster
   benutzt — auch wenn das eigene „einfacher" wirkt.
 - **Ein Overlay ist ein Muster mit drei Teilen:** Backdrop, Panel
-  (`role="alertdialog"`, `aria-modal="true"`, Fokus auf dem Panel, `Esc`
-  schließt). Das Overlay gehört auf den **Wrapper** (nicht auf den
-  Backdrop-Knopf), Backdrop und Panel liegen in derselben Gitterzelle
-  (`grid-area: 1 / 1`), das Panel bekommt `max-height: 100%; overflow-y: auto`.
-  Offen: eine **Fokusfalle** (Tab bleibt im Dialog) ist im Muster noch nicht
-  umgesetzt — bis dahin wird sie nicht behauptet.
+  (`role="alertdialog"`, `aria-modal="true"`, `Esc` schließt) und Fokus auf
+  dem Panel — Letzteres ist im Muster `confirm-dialog` **noch nicht
+  umgesetzt** (kein `cdkFocusInitial`), §5 fordert es aber; die Abweichung
+  wird nicht behauptet, sondern benannt. Das Overlay gehört auf den
+  **Wrapper** (nicht auf den Backdrop-Knopf), Backdrop und Panel liegen in
+  derselben Gitterzelle (`grid-area: 1 / 1`), das Panel bekommt
+  `max-height: 100%; overflow-y: auto`. Offen ist außerdem eine **Fokusfalle**
+  (Tab bleibt im Dialog) — beides gehört als Folge-Issue notiert
+  (Issue #9: „Fokusverhalten der Overlays").
 - **Ein neues Muster wird in die Design-DNA aufgenommen** (Schritt 7), sonst
   fehlt es beim nächsten Feature wieder.
 
