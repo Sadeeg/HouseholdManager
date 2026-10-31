@@ -25,5 +25,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadChildren: () => import('./features/tasks/routes').then((m) => m.TASK_ROUTES),
   },
+  {
+    path: 'muelltermine',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/waste/routes').then((m) => m.WASTE_ROUTES),
+  },
   { path: '**', redirectTo: '' },
 ];

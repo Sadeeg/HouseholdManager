@@ -3,6 +3,7 @@ package de.householdmanager.adapters.inbound.rest;
 import de.householdmanager.domain.model.HouseholdNotFoundException;
 import de.householdmanager.domain.model.InvalidHouseholdNameException;
 import de.householdmanager.domain.model.InvalidTaskTitleException;
+import de.householdmanager.domain.model.InvalidWasteCalendarUrlException;
 import de.householdmanager.domain.model.MembershipRequiredException;
 import de.householdmanager.domain.model.NotHouseholdAdminException;
 import de.householdmanager.domain.model.TaskNotFoundException;
@@ -38,6 +39,14 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, exception.getMessage());
         problem.setTitle("Ungültiger Aufgabentitel");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidWasteCalendarUrlException.class)
+    public ProblemDetail handleInvalidWasteCalendarUrl(InvalidWasteCalendarUrlException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Ungültige ICS-Adresse");
         return problem;
     }
 

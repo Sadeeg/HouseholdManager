@@ -198,4 +198,68 @@ describe('HouseholdsPage', () => {
     expect(compiled.querySelector('#household-name')).not.toBeNull();
     httpMock.expectNone('/api/households', 'POST');
   });
+
+  /**
+   * AC1: die Quelle ist über die Oberfläche einstellbar. Das Segment selbst redet
+   * nicht mit dem Backend — hier zählt die Verbindung vom „Speichern“ im Segment
+   * zur API und dass die gespeicherte Adresse danach gezeigt wird.
+   */
+  it('sends the entered address to the API (AC1)', async () => {
+    const workspace = TestBed.inject(WorkspaceService);
+    workspace.currentUser.set({ id: 'alice', displayName: 'Alice Admin' });
+
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      {
+        id: 1,
+        name: 'Haushalt Müller',
+        createdAt: '2026-01-01T00:00:00Z',
+        createdBy: 'alice',
+        wasteCalendarUrl: 'https://entsorger.example/kalender.ics',
+      },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'MÜLLKALENDER')
+      ?.click();
+    fixture.detectChanges();
+
+    const section = compiled.querySelector('app-waste-calendar-section') as HTMLElement;
+    expect(section).not.toBeNull();
+
+    const field = section.querySelector('input') as HTMLInputElement;
+    expect(field.value).toBe('https://entsorger.example/kalender.ics');
+    field.value = 'https://entsorger.example/anderer.ics';
+    field.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const saveButton = section.querySelector('.hm-button--primary') as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(false);
+    saveButton.click();
+
+    const request = httpMock.expectOne('/api/households/1/waste/source');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ url: 'https://entsorger.example/anderer.ics' });
+    request.flush({ url: 'https://entsorger.example/anderer.ics' });
+    await tick(fixture);
+
+    // Nach dem Speichern lädt die Seite neu, damit die Adresse sichtbar bleibt.
+    httpMock.expectOne('/api/households').flush([
+      {
+        id: 1,
+        name: 'Haushalt Müller',
+        createdAt: '2026-01-01T00:00:00Z',
+        createdBy: 'alice',
+        wasteCalendarUrl: 'https://entsorger.example/anderer.ics',
+      },
+    ]);
+    await tick(fixture);
+
+    expect(compiled.textContent).toContain('Müllkalender gespeichert');
+    expect(section.querySelector('input')!.value).toBe('https://entsorger.example/anderer.ics');
+  });
 });

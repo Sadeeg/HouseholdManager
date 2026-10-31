@@ -60,15 +60,38 @@
         <li class="households__row">
           <app-household-item [household]="household" />
 
-          @if (isHouseholdAdmin(household)) {
+          <div class="households__actions">
+            @if (isHouseholdAdmin(household)) {
+              <button
+                type="button"
+                class="hm-link-action households__members-action"
+                aria-expanded="{{ expandedHouseholdId() === household.id }}"
+                (click)="toggleMembers(household.id)"
+              >
+                MITGLIEDER
+              </button>
+            }
+
             <button
               type="button"
-              class="hm-link-action households__members-action"
-              aria-expanded="{{ expandedHouseholdId() === household.id }}"
-              (click)="toggleMembers(household.id)"
+              class="hm-link-action households__waste-action"
+              aria-expanded="{{ expandedWasteHouseholdId() === household.id }}"
+              (click)="toggleWasteCalendar(household.id)"
             >
-              MITGLIEDER
+              MÜLLKALENDER
             </button>
+          </div>
+
+          @if (expandedWasteHouseholdId() === household.id) {
+            <app-waste-calendar-section
+              [householdId]="household.id"
+              [householdName]="household.name"
+              [storedUrl]="household.wasteCalendarUrl"
+              [saving]="savingSource()"
+              [saveError]="sourceError()"
+              (saveRequested)="saveSource(household.id, $event)"
+              (removeRequested)="pendingWasteRemove.set(household.id)"
+            />
           }
 
           @if (expandedHouseholdId() === household.id) {
@@ -102,6 +125,18 @@
       [busy]="removing()"
       (confirmed)="confirmMemberRemove()"
       (cancelled)="pendingMemberRemove.set(null)"
+    />
+  }
+
+  @if (pendingWasteRemove() !== null) {
+    <app-confirm-dialog
+      title="Müllkalender entfernen"
+      [description]="sourceRemoveDescription()"
+      actionLabel="Entfernen"
+      busyLabel="Wird entfernt …"
+      [busy]="savingSource()"
+      (confirmed)="confirmSourceRemove()"
+      (cancelled)="pendingWasteRemove.set(null)"
     />
   }
 

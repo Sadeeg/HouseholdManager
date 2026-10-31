@@ -12,4 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface HouseholdJpaRepository extends JpaRepository<HouseholdJpaEntity, Long> {
 
     List<HouseholdJpaEntity> findByCreatedBy(String createdBy);
+
+    /** Haushalte mit hinterlegter ICS-Quelle — die Grundlage des Tageslaufs. */
+    List<HouseholdJpaEntity> findByWasteCalendarUrlIsNotNull();
 }

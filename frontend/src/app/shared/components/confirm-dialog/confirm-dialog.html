@@ -28,7 +28,7 @@
         (click)="confirmed.emit()"
       >
         @if (busy()) {
-          Wird gelöscht …
+          {{ busyLabel() }}
         } @else {
           {{ actionLabel() }}
         }

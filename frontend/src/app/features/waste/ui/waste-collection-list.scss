@@ -1,0 +1,46 @@
+.waste-list__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hm-space-3);
+  padding: var(--hm-space-2) 0;
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.waste-list__head-title,
+.waste-list__head-date {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hm-text-muted);
+}
+
+.waste-list__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.waste-list__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hm-space-3);
+  min-height: 40px;
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.waste-list__type {
+  font-size: var(--hm-text-md);
+  overflow-wrap: anywhere;
+}
+
+// Daten in Monospace mit tabellarischen Ziffern — die Spalte bleibt ruhig.
+.waste-list__date {
+  font-family: var(--hm-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
