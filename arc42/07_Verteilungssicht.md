@@ -51,8 +51,9 @@
 | `DB_URL` | `jdbc:postgresql://localhost:5432/householdmanager` | Datenbankverbindung |
 | `DB_USER` / `DB_PASSWORD` | `household` / `household` | Zugangsdaten (Dev) |
 | `SPRING_PROFILES_ACTIVE` | — | `local` schaltet Dev Services frei |
-| `HOUSEHOLDMANAGER_WASTE_SYNC_CRON` | `0 0 3 * * *` | Tageslauf des Müllkalenders (Zeitzone `Europe/Berlin`) — ADR 0005 |
-| `HOUSEHOLDMANAGER_WASTE_FEED_TIMEOUT` | 5 s | Zeitlimit für den Abruf einer ICS-Quelle (auch im Sofort-Sync, ADR 0005) |
+| `HOUSEHOLDMANAGER_WASTE_SYNC_CRON` | `0 0 3 * * *` | Tageslauf des Müllkalenders — ADR 0005 |
+| `HOUSEHOLDMANAGER_WASTE_SYNC_ZONE` | `Europe/Berlin` | Zeitzone des Tageslaufs (`householdmanager.waste.sync-zone`) — ADR 0005 |
+| `HOUSEHOLDMANAGER_WASTE_TIMEOUT` | 5 s | Zeitlimit für den Abruf einer ICS-Quelle (`householdmanager.waste.timeout`, auch im Sofort-Sync, ADR 0005) |
 
 ## Ausgehende Verbindungen (Egress)
 
