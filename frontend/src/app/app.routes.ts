@@ -10,10 +10,16 @@ export const routes: Routes = [
   },
   // Start: löst über den Workspace auf — mit gewähltem Haushalt zur Tafel,
   // ohne zur Haushaltsverwaltung.
+  //
+  // Der Guard liefert immer einen UrlTree, das Kind erreicht nie ein Match:
+  // `children: []` ist nur die Bestätigung, dass diese Route in Dev-Modus
+  // überhaupt gültig ist — reine Guard-Routen ohne Ziel verbietet der
+  // Router (NG04014).
   {
     path: '',
     pathMatch: 'full',
     canActivate: [authGuard, startRouteGuard],
+    children: [],
   },
   {
     path: 'haushalte',
