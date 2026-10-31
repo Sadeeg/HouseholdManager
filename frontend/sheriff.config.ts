@@ -31,6 +31,10 @@ export const config: SheriffConfig = {
     'src/app/features/tasks/model': ['domain:tasks', 'type:model'],
     'src/app/features/tasks/data': ['domain:tasks', 'type:data'],
     'src/app/features/tasks/ui': ['domain:tasks', 'type:ui'],
+    'src/app/features/waste': ['domain:waste', 'type:feature'],
+    'src/app/features/waste/model': ['domain:waste', 'type:model'],
+    'src/app/features/waste/data': ['domain:waste', 'type:data'],
+    'src/app/features/waste/ui': ['domain:waste', 'type:ui'],
   },
 
   depRules: {
