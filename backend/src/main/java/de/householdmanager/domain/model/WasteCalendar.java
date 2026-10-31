@@ -113,7 +113,8 @@ public class WasteCalendar {
      *
      * <p>Als intern gelten: 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10,
      * 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, dazu ::,
-     * ::1, fc00::/7, fe80::/10 und der IPv4-mapped-Bereich ::ffff:0:0/96.
+     * ::1, fc00::/7, fe80::/10, der IPv4-kompatible Bereich ::/96 und der
+     * IPv4-mapped-Bereich ::ffff:0:0/96.
      */
     public static boolean isInternalTarget(String host) {
         if (host == null) {
