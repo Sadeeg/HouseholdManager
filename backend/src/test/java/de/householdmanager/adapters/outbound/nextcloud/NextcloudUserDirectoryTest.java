@@ -6,10 +6,12 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import de.householdmanager.domain.model.UserAccount;
 import de.householdmanager.domain.model.UserDirectoryUnavailableException;
+import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,6 +112,18 @@ class NextcloudUserDirectoryTest {
         assertThatThrownBy(() -> directory.search("sascha", 10))
                 .isInstanceOf(UserDirectoryUnavailableException.class)
                 .hasMessageContaining("401")
+                .hasMessageNotContaining("cloud.example.org");
+    }
+
+    @Test
+    void search_namesAFailedConnection_asTheReason() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=sas")))
+                .andRespond(withException(new IOException("Verbindung abgelehnt")));
+
+        assertThatThrownBy(() -> directory.search("sascha", 10))
+                .isInstanceOf(UserDirectoryUnavailableException.class)
+                .hasMessageContaining("Verbindung ist fehlgeschlagen")
                 .hasMessageNotContaining("cloud.example.org");
     }
 

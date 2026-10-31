@@ -42,6 +42,9 @@ Issue #18 festhalten und die Lehre als Regel überführen.
 |---|---|
 | Technischer Ausfall ≠ fachlich leeres Ergebnis | `backend-ports-adapters` Regel 9 (ergänzt um den Ausfall einer externen Quelle: Fachfehler im ausgehenden Adapter, eigener Status im eingehenden) |
 
+
+
+
 ## 3. Abhängigkeit zu Issue #18
 
 Die sichtbare Meldung „Nutzerverzeichnis nicht erreichbar." im Suchfeld
