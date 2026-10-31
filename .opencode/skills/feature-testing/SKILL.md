@@ -162,6 +162,8 @@ gesammelt, damit der Test nicht daran scheitert:
 | Signal-Forms-Knoten | `required`/`maxlength` im Template greifen nicht | Validatoren `required()`, `maxLength()` im Code |
 | `type="submit"` | löst im Test kein Submit aus | Handler über `type="button"` aufrufen |
 | `TestBed.configureTestingModule` | zweiter Aufruf wirft | einmal pro Test konfigurieren |
+| Formularmeldung hängt an `touched()` | im Test fehlt die Fehlermeldung, obwohl das Feld ungültig ist | nach der Eingabe `input.dispatchEvent(new Event('blur'))`, dann erst die Assertion |
+| Datumsanzeige hängt von der Zeitzone ab | derselbe Test schlägt auf einer anderen Maschine fehl | Ganztagsdaten aus dem ISO-Wert lesen (kein `DatePipe`-Parse); ein Test leitet sein erwartetes Bild aus demselben Zeitpunkt ab, nicht aus einem festen Zeichenstring |
 
 ## Drei Regeln, die in diesem Projekt Fehler gefunden haben
 
