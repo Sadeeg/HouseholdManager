@@ -43,7 +43,12 @@ die alle dasselbe Muster haben — **ein Test behauptet mehr, als er beweist**.
 - Befund 5 war im Arbeitsstand nur noch zur Hälfte vorhanden: drei von fünf
   Bezeichnungen waren durch das Bündeln (Issue #15) bereits richtig; es fehlte
   die Korrektur des No-Household-Tests, der als AC14 geführt wurde, obwohl der
-  Fall ein UX-Zustand ohne Akzeptanzkriterium ist.
+  Fall ein UX-Zustand ohne Akzeptanzkriterium ist. Die Abnahme von #15 zeigte
+  dieselbe Klasse von Fehlern in `waste-calendar-section.spec.ts` (Pflegen war
+  als AC23, der Zähler als AC18 bezeichnet) und im Confirm-Fall von
+  `households-page.spec.ts` (entfernt-erst-nach-Bestätigung ist AC9 +
+  UX-Schritt 7, nicht AC23) — alle Labels stehen jetzt auf der Nummerierung
+  von Issue #10.
 
 ## Nicht durchgeführt
 

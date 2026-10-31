@@ -6,11 +6,12 @@ import { WasteCalendarSection } from './waste-calendar-section';
 /**
  * Der Abschnitt „Müllkalender" — alle Fälle an einer Stelle (Issue #15).
  *
- * <p>AC23: jedes Mitglied darf die ICS-Adresse pflegen. Das Component redet
- * nicht mit dem Backend — es zeigt die gespeicherte Adresse, meldet jede
- * Änderung, zeigt die Zeichenlänge (AC18), stellt die gespeicherte Adresse bei
- * „Abbrechen" wieder her (R19) und erlaubt das Entfernen nur, wenn eine
- * Adresse gespeichert ist.
+ * <p>AC9 (Issue #10): jedes Mitglied darf die ICS-Adresse pflegen. Das Component
+ * redet nicht mit dem Backend — es zeigt die gespeicherte Adresse, meldet jede
+ * Änderung, zeigt die Zeichenlänge (AC22), stellt die gespeicherte Adresse bei
+ * „Abbrechen" wieder her (R19; der Beleg, dass dabei kein Schreibpfad läuft —
+ * AC23 — ist auf Seitenebene in `households-page-abort.spec.ts` geführt) und
+ * erlaubt das Entfernen nur, wenn eine Adresse gespeichert ist.
  *
  * <p>AC22 (R18): die Grenze der ICS-Adresse — die Oberfläche nennt sie,
  * speichert eine zu lange Adresse nicht und kappt sie nicht stillschweigend;
@@ -69,7 +70,7 @@ describe('WasteCalendarSection', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  // --- Anzeige und Pflege (AC23, AC18, R19) ---------------------------------
+  // --- Anzeige und Pflege (AC9, AC22, R19) ---------------------------------
 
   it('prefills the field with the stored address', () => {
     const fixture = open('https://entsorger.example/kalender.ics');
@@ -78,7 +79,7 @@ describe('WasteCalendarSection', () => {
     expect(compiled(fixture).textContent).toContain('38 / 500');
   });
 
-  /** AC18: die Grenze wird genannt und der Zähler wechselt die Farbe. */
+  /** AC22: die Grenze wird genannt und der Zähler wechselt die Farbe. */
   it('counts characters and names the limit', () => {
     const fixture = open('https://entsorger.example/kalender.ics');
     const counter = compiled(fixture).querySelector('.waste-calendar__counter') as HTMLElement;
