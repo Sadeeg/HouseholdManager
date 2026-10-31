@@ -60,6 +60,17 @@ Browserpfad — die UI-Anteile sind nur durch Tests belegt, jsdom kennt keine Ge
 - **Lehre:** Konfiguration ist Verhalten. Wenn eine Anforderung „täglich um X in Zone Y“
   sagt, gehört die Prüfung an den Composition Root — nicht an den Adapter, der nur ausführt.
 
+### 1.5 Das neue Feature war nicht gekennzeichnet
+
+- **Symptom:** `npm run sheriff` war grün, obwohl die Modulgrenzen des neuen Features
+  gar nicht geprüft wurden.
+- **Ursache:** `frontend/sheriff.config.ts` trägt seine Module einzeln (`autoTagging: false`).
+  Ein neues Feature ist erst geschützt, wenn es dort steht — grün ist dann keine Aussage.
+- **Nachbesserung:** `domain:waste` mit `feature`/`model`/`data`/`ui` eingetragen; die
+  Prüfung bleibt grün.
+- **Lehre:** Ein neues Feature gehört in die Sheriff-Konfiguration, sonst ist die
+  Architekturprüfung für es wirkungslos.
+
 ---
 
 ## 2. Werkzeug und Umgebung

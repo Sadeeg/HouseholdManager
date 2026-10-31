@@ -198,7 +198,10 @@ npm run lint           # ESLint inkl. Sheriff-Plugin
 ```
 
 Nach jeder neuen Datei: `npm run sheriff` — bei Verstoß wird die Struktur
-repariert, nicht die Regel aufgeweicht.
+repariert, nicht die Regel aufgeweicht. Ein **neues Feature** muss in
+`sheriff.config.ts` eingetragen werden (`domain:<feature>` plus `feature`, `model`,
+`data`, `ui`): mit `autoTagging: false` wird ein Feature ohne Eintrag nicht geprüft,
+und ein grüner Lauf bedeutet dann nichts.
 
 ## Fallen
 
