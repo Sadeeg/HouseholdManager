@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_CONFIG } from '../../../core/config/api.config';
-import { Household } from '../model/household.model';
+import { Household, WasteSourceResponse } from '../model/household.model';
 import { Member } from '../model/member.model';
 
 const HOUSEHOLDS_URL = `${API_CONFIG.basePath}/households`;
@@ -42,5 +42,15 @@ export class HouseholdApi {
 
   removeMember(householdId: number, userId: string): Observable<void> {
     return this.http.delete<void>(`${HOUSEHOLDS_URL}/${householdId}/members/${userId}`);
+  }
+
+  /** Quelle setzen: das Backend synchronisiert danach sofort (AC11, R6). */
+  saveWasteSource(householdId: number, url: string): Observable<WasteSourceResponse> {
+    return this.http.put<WasteSourceResponse>(`${HOUSEHOLDS_URL}/${householdId}/waste/source`, { url });
+  }
+
+  /** Quelle entfernen; die gespeicherten Termine bleiben (Annahme 5). */
+  removeWasteSource(householdId: number): Observable<void> {
+    return this.http.delete<void>(`${HOUSEHOLDS_URL}/${householdId}/waste/source`);
   }
 }

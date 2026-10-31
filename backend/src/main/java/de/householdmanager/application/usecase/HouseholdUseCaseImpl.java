@@ -1,11 +1,14 @@
 package de.householdmanager.application.usecase;
 
 import de.householdmanager.application.port.in.HouseholdUseCase;
+import de.householdmanager.application.port.in.MembershipUseCase;
 import de.householdmanager.application.port.out.HouseholdMemberRepository;
 import de.householdmanager.application.port.out.HouseholdRepository;
 import de.householdmanager.domain.model.Household;
 import de.householdmanager.domain.model.HouseholdMember;
+import de.householdmanager.domain.model.HouseholdNotFoundException;
 import de.householdmanager.domain.model.InvalidHouseholdNameException;
+import de.householdmanager.domain.model.WasteCalendar;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Comparator;
@@ -33,6 +36,7 @@ public class HouseholdUseCaseImpl implements HouseholdUseCase {
 
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository householdMemberRepository;
+    private final MembershipUseCase membershipUseCase;
     private final Clock clock;
 
     @Override
@@ -72,5 +76,40 @@ public class HouseholdUseCaseImpl implements HouseholdUseCase {
         householdMemberRepository.save(new HouseholdMember(
                 null, saved.getId(), userId, Instant.now(clock)));
         return saved;
+    }
+
+    /**
+     * Müllkalender (Issue #10): jedes Mitglied darf die Quelle pflegen (R2,
+     * AC9) — anders als der Mitgliederbereich, der der Haushaltsleitung
+     * vorbehalten ist. Die Fachgrenze der Adresse wacht im Fachmodell
+     * ({@link WasteCalendar#validatedSourceUrl}).
+     */
+    @Override
+    @Transactional
+    public Household setWasteSource(String userId, long householdId, String url) {
+        membershipUseCase.requireMembership(householdId, userId);
+        Household household = requireHousehold(householdId);
+        return householdRepository.save(household.withWasteCalendarUrl(WasteCalendar.validatedSourceUrl(url)));
+    }
+
+    /** Entfernt die Quelle; die gespeicherten Termine bleiben (Annahme 5). */
+    @Override
+    @Transactional
+    public void removeWasteSource(String userId, long householdId) {
+        membershipUseCase.requireMembership(householdId, userId);
+        Household household = requireHousehold(householdId);
+        householdRepository.save(household.withWasteCalendarUrl(null));
+    }
+
+    /** Haushalte mit hinterlegter Quelle — die Grundlage des Tageslaufs (R4). */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Household> listHouseholdsWithSource() {
+        return householdRepository.findWithSource();
+    }
+
+    private Household requireHousehold(long householdId) {
+        return householdRepository.findById(householdId)
+                .orElseThrow(() -> new HouseholdNotFoundException("Der Haushalt existiert nicht."));
     }
 }

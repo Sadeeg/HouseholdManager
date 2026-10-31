@@ -1,6 +1,7 @@
 package de.householdmanager.adapters.outbound.persistence;
 
 import de.householdmanager.domain.model.Household;
+import de.householdmanager.domain.model.WasteCalendar;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -44,4 +45,8 @@ public class HouseholdJpaEntity {
     /** Kennung der Erstellerin/des Erstellers — die Haushaltsleitung. */
     @Column(name = "created_by", nullable = false)
     private String createdBy;
+
+    /** ICS-Adresse des Entsorgers; null, wenn kein Müllkalender hinterlegt ist. */
+    @Column(name = "waste_calendar_url", length = WasteCalendar.MAX_URL_LENGTH)
+    private String wasteCalendarUrl;
 }

@@ -61,6 +61,14 @@ householdmanager:
   security:
     # Origin des Frontends (CORS). Weitere Origins per Komma trennen.
     allowed-origins: ${HOUSEHOLDMANAGER_ALLOWED_ORIGINS:http://localhost:4200}
+  waste:
+    # Tageslauf über alle Haushalte mit Quelle (R4, ADR 0005). Der Zeitpunkt
+    # ist für den Nutzer nicht einstellbar (Annahme 1).
+    sync-cron: ${HOUSEHOLDMANAGER_WASTE_SYNC_CRON:0 0 3 * * *}
+    sync-zone: ${HOUSEHOLDMANAGER_WASTE_SYNC_ZONE:Europe/Berlin}
+    # Abruf der öffentlichen Quelle; ein hängender Entsorger darf den Lauf und
+    # das Speichern nicht blockieren (Annahme 7).
+    timeout: ${HOUSEHOLDMANAGER_WASTE_TIMEOUT:5s}
 
 management:
   endpoints:

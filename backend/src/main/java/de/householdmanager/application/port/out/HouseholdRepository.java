@@ -19,5 +19,8 @@ public interface HouseholdRepository {
     /** Haushalte, die die Person angelegt hat (Ersteller = Haushaltsleitung). */
     List<Household> findByCreatedBy(String userId);
 
+    /** Haushalte mit hinterlegter ICS-Quelle — die Grundlage des Tageslaufs (R4). */
+    List<Household> findWithSource();
+
     Household save(Household household);
 }

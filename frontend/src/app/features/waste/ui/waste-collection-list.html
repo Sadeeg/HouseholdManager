@@ -1,0 +1,19 @@
+<section class="waste-list" aria-label="Termine">
+  <div class="waste-list__head">
+    <span class="waste-list__head-title">Termine</span>
+    <span class="waste-list__head-date">Datum</span>
+  </div>
+
+  @if (terms().length > 0) {
+    <ul class="waste-list__items">
+      @for (term of terms(); track term.date + term.wasteType) {
+        <li class="waste-list__row">
+          <span class="waste-list__type">{{ term.wasteType }}</span>
+          <time class="waste-list__date" [attr.datetime]="term.date">
+            {{ dayLabel(term.date) }}
+          </time>
+        </li>
+      }
+    </ul>
+  }
+</section>

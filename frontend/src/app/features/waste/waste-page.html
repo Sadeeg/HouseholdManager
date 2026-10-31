@@ -1,0 +1,37 @@
+<section class="waste">
+  <app-page-header
+    title="Mülltermine"
+    subtitle="Die Termine der nächsten sechs Wochen aus dem hinterlegten Müllkalender."
+  />
+
+  @if (showNoHousehold()) {
+    <p class="state">
+      Kein Haushalt gewählt.
+      <a class="hm-link-action" routerLink="/haushalte">HAUSHALT WÄHLEN</a>
+    </p>
+  } @else if (loading()) {
+    <p class="state">Mülltermine werden geladen …</p>
+  } @else if (failed()) {
+    <p class="state state--error" role="alert">
+      Die Termine konnten nicht geladen werden: Der Dienst ist nicht erreichbar.
+      <button type="button" class="hm-link-action" (click)="retry()">ERNEUT VERSUCHEN</button>
+    </p>
+  } @else if (showNoSource()) {
+    <p class="state" role="status">
+      Kein Müllkalender hinterlegt. Jedes Mitglied kann die ICS-Adresse des Entsorgers
+      eintragen — im Abschnitt „MÜLLKALENDER" des Haushalts (max. 500 Zeichen).
+    </p>
+  } @else {
+    <app-waste-source-panel
+      [sourceUrl]="overview.value()?.sourceUrl ?? null"
+      [lastSyncedAt]="overview.value()?.lastSyncedAt ?? null"
+      [stale]="overview.value()?.stale ?? false"
+    />
+
+    @if (showNoTerms()) {
+      <p class="state" role="status">Für die nächsten sechs Wochen liegen keine Termine vor.</p>
+    } @else {
+      <app-waste-collection-list [terms]="terms()" />
+    }
+  }
+</section>

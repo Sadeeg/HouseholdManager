@@ -68,4 +68,19 @@ export class HouseholdsData {
     await firstValueFrom(this.householdApi.removeMember(householdId, userId));
     this.members.reload();
   }
+
+  /**
+   * Speichert die ICS-Adresse. Das Backend synchronisiert danach sofort — die
+   * Antwort wartet auf den Lauf (AC11, R6), deshalb wird die Liste der
+   * Haushalte danach neu geladen.
+   */
+  async saveWasteSource(householdId: number, url: string): Promise<void> {
+    await firstValueFrom(this.householdApi.saveWasteSource(householdId, url));
+    this.households.reload();
+  }
+
+  async removeWasteSource(householdId: number): Promise<void> {
+    await firstValueFrom(this.householdApi.removeWasteSource(householdId));
+    this.households.reload();
+  }
 }

@@ -1,0 +1,28 @@
+<section class="waste-source-panel" aria-label="Quelle und Stand">
+  <h2 class="waste-source-panel__title">Quelle und Stand</h2>
+
+  <dl class="waste-source-panel__rows">
+    <div class="waste-source-panel__row">
+      <dt class="waste-source-panel__label">ICS-Adresse</dt>
+      <dd class="waste-source-panel__value">{{ sourceUrl() }}</dd>
+    </div>
+
+    <div class="waste-source-panel__row">
+      <dt class="waste-source-panel__label">Stand</dt>
+      <dd class="waste-source-panel__value">
+        @if (lastSyncedAt()) {
+          <span class="waste-source-panel__stand">
+            {{ lastSyncedAt() | date: 'dd.MM.y HH:mm' }}
+          </span>
+        } @else {
+          <span class="waste-source-panel__stand waste-source-panel__stand--none">
+            Noch keine Synchronisation
+          </span>
+        }
+        @if (stale()) {
+          <span class="hm-badge hm-badge--warning">STAND VERALTET</span>
+        }
+      </dd>
+    </div>
+  </dl>
+</section>

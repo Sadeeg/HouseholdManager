@@ -12,7 +12,7 @@ import lombok.Getter;
  * ({@code adapters.outbound.persistence.HouseholdRepositoryAdapter}).
  */
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class Household {
 
     /**
@@ -30,7 +30,15 @@ public class Household {
     /** Kennung der Person, die den Haushalt angelegt hat — die Haushaltsleitung. */
     private final String createdBy;
 
+    /** ICS-Adresse des Entsorgers; null, wenn kein Müllkalender hinterlegt ist (R3). */
+    private final String wasteCalendarUrl;
+
     public Household withId(Long id) {
-        return new Household(id, name, createdAt, createdBy);
+        return toBuilder().id(id).build();
+    }
+
+    /** Quelle setzen oder ändern; das Entfernen ist null. */
+    public Household withWasteCalendarUrl(String url) {
+        return toBuilder().wasteCalendarUrl(url).build();
     }
 }

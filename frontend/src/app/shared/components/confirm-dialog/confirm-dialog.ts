@@ -21,6 +21,8 @@ export class ConfirmDialog {
   readonly actionLabel = input<string>('Endgültig löschen');
   /** True, solange die Aktion läuft („Wird gelöscht …“, Aktionen deaktiviert). */
   readonly busy = input<boolean>(false);
+  /** Text während der Aktion — zur Aktion passend benennen (z. B. „Wird entfernt …“). */
+  readonly busyLabel = input<string>('Wird gelöscht …');
 
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();

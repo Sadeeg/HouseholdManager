@@ -3,14 +3,19 @@ package de.householdmanager.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.householdmanager.application.port.in.MembershipUseCase;
 import de.householdmanager.application.port.out.HouseholdMemberRepository;
 import de.householdmanager.application.port.out.HouseholdRepository;
 import de.householdmanager.domain.model.Household;
 import de.householdmanager.domain.model.HouseholdMember;
 import de.householdmanager.domain.model.InvalidHouseholdNameException;
+import de.householdmanager.domain.model.InvalidWasteCalendarUrlException;
+import de.householdmanager.domain.model.MembershipRequiredException;
+import de.householdmanager.domain.model.WasteCalendar;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -19,6 +24,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,12 +45,16 @@ class HouseholdUseCaseImplTest {
     @Mock
     private HouseholdMemberRepository householdMemberRepository;
 
+    @Mock
+    private MembershipUseCase membership;
+
     private HouseholdUseCaseImpl useCase;
 
     @BeforeEach
     void setUp() {
         useCase = new HouseholdUseCaseImpl(
-                householdRepository, householdMemberRepository, Clock.fixed(FIXED_NOW, ZoneOffset.UTC));
+                householdRepository, householdMemberRepository, membership,
+                Clock.fixed(FIXED_NOW, ZoneOffset.UTC));
     }
 
     @Test
@@ -130,6 +140,71 @@ class HouseholdUseCaseImplTest {
         Household result = useCase.createHousehold(ALICE, padded);
 
         assertThat(result.getName()).hasSize(Household.MAX_NAME_LENGTH);
+    }
+
+    // --- Müllkalender: Quelle setzen und entfernen (AC1, AC9, AC22) ---------
+
+    /** AC1, R2: jedes Mitglied darf die Quelle pflegen — nicht nur die Leitung. */
+    @Test
+    void setWasteSource_forMemberStoresTheUrl() {
+        Household household = household(1L, "Haushalt Müller");
+        when(householdRepository.findById(1L)).thenReturn(Optional.of(household));
+        when(householdRepository.save(any(Household.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Household result = useCase.setWasteSource(ALICE, 1L, "  https://entsorger.example/ics  ");
+
+        assertThat(result.getWasteCalendarUrl()).isEqualTo("https://entsorger.example/ics");
+    }
+
+    @Test
+    void setWasteSource_forNonMemberThrowsMembershipRequired() {
+        doThrow(new MembershipRequiredException("Die Person ist nicht Mitglied dieses Haushalts."))
+                .when(membership).requireMembership(1L, ALICE);
+
+        assertThatThrownBy(() -> useCase.setWasteSource(ALICE, 1L, "https://entsorger.example/ics"))
+                .isInstanceOf(MembershipRequiredException.class);
+    }
+
+    /** AC22, R18: die Länge wird geprüft und die Grenze benannt. */
+    @Test
+    void setWasteSource_rejectsUrlLongerThanColumnLimit() {
+        when(householdRepository.findById(1L)).thenReturn(Optional.of(household(1L, "Haushalt Müller")));
+        String tooLong = "https://entsorger.example/ics" + "x".repeat(WasteCalendar.MAX_URL_LENGTH);
+
+        assertThatThrownBy(() -> useCase.setWasteSource(ALICE, 1L, tooLong))
+                .isInstanceOf(InvalidWasteCalendarUrlException.class)
+                .hasMessageContaining("höchstens " + WasteCalendar.MAX_URL_LENGTH + " Zeichen");
+    }
+
+    @Test
+    void setWasteSource_requiresHttpOrHttps() {
+        when(householdRepository.findById(1L)).thenReturn(Optional.of(household(1L, "Haushalt Müller")));
+
+        assertThatThrownBy(() -> useCase.setWasteSource(ALICE, 1L, "ftp://entsorger.example/ics"))
+                .isInstanceOf(InvalidWasteCalendarUrlException.class)
+                .hasMessageContaining("http");
+    }
+
+    /** Annahme 5: das Entfernen der Quelle lässt die gespeicherten Termine unberührt — hier wird nur das Feld geleert. */
+    @Test
+    void removeWasteSource_clearsTheFieldOnly() {
+        Household household = household(1L, "Haushalt Müller").withWasteCalendarUrl("https://entsorger.example/ics");
+        when(householdRepository.findById(1L)).thenReturn(Optional.of(household));
+        ArgumentCaptor<Household> saved = ArgumentCaptor.forClass(Household.class);
+
+        useCase.removeWasteSource(ALICE, 1L);
+
+        verify(householdRepository).save(saved.capture());
+        assertThat(saved.getValue().getWasteCalendarUrl()).isNull();
+    }
+
+    /** R4: der Tageslauf braucht die Haushalte mit Quelle. */
+    @Test
+    void listHouseholdsWithSource_returnsHouseholdsHavingASource() {
+        Household withSource = household(2L, "Haus B").withWasteCalendarUrl("https://entsorger.example/ics");
+        when(householdRepository.findWithSource()).thenReturn(List.of(withSource));
+
+        assertThat(useCase.listHouseholdsWithSource()).containsExactly(withSource);
     }
 
     private static Household household(Long id, String name) {
