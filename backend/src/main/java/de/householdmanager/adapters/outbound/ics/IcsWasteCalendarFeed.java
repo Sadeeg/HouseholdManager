@@ -27,7 +27,6 @@ import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.RRule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -48,7 +47,6 @@ import org.springframework.web.client.RestClientException;
  * Entsorger den Tageslauf nicht blockiert.
  */
 @Slf4j
-@Component
 public class IcsWasteCalendarFeed implements WasteCalendarFeed {
 
     /** Kalendertag-Zeitzone für Termine, die mit Uhrzeit geliefert werden (ADR 0006). */
@@ -66,13 +64,11 @@ public class IcsWasteCalendarFeed implements WasteCalendarFeed {
      * Der RestClient kommt aus dem Composition Root, wo die Abrufzeit
      * ({@code householdmanager.waste.timeout}, Annahme 7) gesetzt wird. Der
      * Adapter nimmt den fertigen Client — dadurch ist er im Test über
-     * {@code MockRestServiceServer} prüfbar.
+     * {@code MockRestServiceServer} prüfbar. Die Verdrahtung des Adapters
+     * (RestClient + Auflösung) liegt ebenfalls im Composition Root
+     * (`config/IcsClientConfig`).
      */
-    public IcsWasteCalendarFeed(RestClient http) {
-        this(http, InetAddress::getAllByName);
-    }
-
-    IcsWasteCalendarFeed(RestClient http, HostResolver hostResolver) {
+    public IcsWasteCalendarFeed(RestClient http, HostResolver hostResolver) {
         this.http = http;
         this.hostResolver = hostResolver;
     }

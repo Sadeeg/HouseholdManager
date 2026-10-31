@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import de.householdmanager.application.port.out.WasteCalendarFeed.FeedTerm;
 import de.householdmanager.domain.model.WasteFeedUnavailableException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -168,7 +169,8 @@ class IcsWasteCalendarFeedTest {
         server.expect(requestTo(URL)).andRespond(withServerError());
 
         assertThatThrownBy(() -> feed.fetch(URL, FROM, TO))
-                .isInstanceOf(WasteFeedUnavailableException.class);
+                .isInstanceOf(WasteFeedUnavailableException.class)
+                .hasMessageContaining("nicht erreichbar");
     }
 
     @Test
@@ -176,7 +178,28 @@ class IcsWasteCalendarFeedTest {
         given("<html>kein Kalender</html>");
 
         assertThatThrownBy(() -> feed.fetch(URL, FROM, TO))
-                .isInstanceOf(WasteFeedUnavailableException.class);
+                .isInstanceOf(WasteFeedUnavailableException.class)
+                .hasMessageContaining("nicht als Kalender lesbar");
+    }
+
+    /**
+     * Der Host ist nicht auflösbar — die Quelle ist unerreichbar, kein
+     * internes Ziel (AC-s2: eine öffentliche, nicht erreichbare Adresse bleibt
+     * ein fehlgeschlagener Lauf).
+     */
+    @Test
+    void fetch_whenTheHostCannotBeResolved_throwsFeedUnavailable_withoutARequest() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer unresolvedServer = MockRestServiceServer.bindTo(builder).build();
+        IcsWasteCalendarFeed unresolved = new IcsWasteCalendarFeed(builder.build(), host -> {
+            throw new UnknownHostException(host);
+        });
+
+        assertThatThrownBy(() -> unresolved.fetch(URL, FROM, TO))
+                .isInstanceOf(WasteFeedUnavailableException.class)
+                .hasMessageContaining("nicht erreichbar")
+                .hasMessageNotContaining("internes Ziel");
+        unresolvedServer.verify(); // es ging kein Request raus
     }
 
     private void given(String body) {

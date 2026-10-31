@@ -8,9 +8,10 @@ import java.net.UnknownHostException;
  *
  * <p>Eigene kleine Schnittstelle, damit der Adapter im Test keine echte
  * Namensauflösung braucht: der Test setzt eine bekannte Adresse (Issue #16).
+ * Die Verdrahtung liegt im Composition Root (`config/IcsClientConfig`).
  */
 @FunctionalInterface
-interface HostResolver {
+public interface HostResolver {
 
     /** Die Adressen des Hostnamens; wirft {@link UnknownHostException}, wenn es keine gibt. */
     InetAddress[] resolve(String host) throws UnknownHostException;

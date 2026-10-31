@@ -52,6 +52,35 @@ class WasteCalendarInternalTargetTest {
     }
 
     /**
+     * Die aufgelöste Form einer öffentlichen Adresse bleibt öffentlich — auch
+     * mit Scope-Anteil.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "0:0:0:0:0:0:101:101", // 1.1.1.1
+        "2001:db8:0:0:0:0:0:1%2",
+    })
+    void aResolvedPublicAddressIsNotBlocked(String host) {
+        assertThat(WasteCalendar.isInternalTarget(host)).isFalse();
+    }
+
+    /**
+     * Die aufgelöste Form einer IPv4-kompatiblen Adresse (::127.0.0.1) ist
+     * intern — das JDK liefert sie ausgeschrieben.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "0:0:0:0:0:0:7f00:1", // ::127.0.0.1
+        "0:0:0:0:0:0:a00:1", // ::10.0.0.1
+        "0:0:0:0:0:0:0:1", // ::1
+        "0:0:0:0:0:0:0:0", // ::
+        "fe80:0:0:0:0:0:0:1%2", // Link-Local mit Scope
+    })
+    void aResolvedInternalAddressIsRecognised(String host) {
+        assertThat(WasteCalendar.isInternalTarget(host)).isTrue();
+    }
+
+    /**
      * Ein Hostname ist kein Literal: er wird beim Abruf geprüft (der Adapter
      * löst ihn auf). Deshalb bleibt er beim Speichern zulässig.
      */

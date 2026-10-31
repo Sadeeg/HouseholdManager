@@ -1,5 +1,8 @@
 package de.householdmanager.config;
 
+import de.householdmanager.adapters.outbound.ics.HostResolver;
+import de.householdmanager.adapters.outbound.ics.IcsWasteCalendarFeed;
+import java.net.InetAddress;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,5 +30,21 @@ public class IcsClientConfig {
         requestFactory.setConnectTimeout((int) timeout.toMillis());
         requestFactory.setReadTimeout((int) timeout.toMillis());
         return restClientBuilder.requestFactory(requestFactory).build();
+    }
+
+    /**
+     * Die Auflösung des Hostnamens — die echte des Betriebssystems. Hinter der
+     * Schnittstelle, damit der Adapter im Test keine echte Namensauflösung
+     * braucht (Issue #16).
+     */
+    @Bean
+    public HostResolver hostResolver() {
+        return InetAddress::getAllByName;
+    }
+
+    /** Der Adapter hängt an dieser Bean (Issue #16). */
+    @Bean
+    public IcsWasteCalendarFeed icsWasteCalendarFeed(RestClient icsRestClient, HostResolver hostResolver) {
+        return new IcsWasteCalendarFeed(icsRestClient, hostResolver);
     }
 }

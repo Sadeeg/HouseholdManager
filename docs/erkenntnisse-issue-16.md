@@ -28,21 +28,36 @@ behobene Regel begründen und die Lehre in den Skill überführen.
      auf eine interne Adresse zeigt, wird nicht abgerufen — der Lauf schlägt
      mit „Die ICS-Adresse zeigt auf ein internes Ziel und wird nicht
      abgerufen: …" fehl und der Stand wird veraltet.
+- **Die geprüfte Form ist die aufgelöste, nicht die getippte.** Das JDK
+  liefert Adressen ausgeschrieben und mit Scope-Anteil: `::127.0.0.1` wird zu
+  `0:0:0:0:0:0:7f00:1`, `fe80::1` (mit Interface) zu
+  `fe80:0:0:0:0:0:0:1%1`. Die Prüfung liest deshalb genau diese Form: der
+  IPv4-kompatible Bereich `::/96` wird wie `::ffff:0:0/96` gelesen (die
+  letzten 32 Bit sind eine IPv4-Adresse), der Scope-Anteil wird abgeschnitten.
+  Eine Prüfung nur der Textform hätte beide Fälle durchgelassen.
 - **Lehre:** Eine Prüfung des eingetippten Textes ist keine Prüfung des
   Ziels. Wer eine Adresse prüft, muss sie **auflösen** und die Adresse prüfen,
   die tatsächlich erreicht wird.
 
-### 1.2 Der Test muss nicht ins Netz
+### 1.2 Der Test muss nicht ins Netz — und die Anwendung muss starten
 
-- **Problem:** Die Auflösung des Hostnamens im Adapter wäre im Test eine
+- **Problem 1:** Die Auflösung des Hostnamens im Adapter wäre im Test eine
   echte DNS-Abfrage — der Test wäre langsam und von der Umgebung abhängig.
 - **Nachbesserung:** Der Adapter bekommt die Auflösung als kleine
   Schnittstelle (`HostResolver`) übergeben; im Test steht eine bekannte
-  öffentliche Adresse statt einer echten Auflösung.
+  öffentliche Adresse statt einer echten Auflösung. Die Verdrahtung liegt im
+  Composition Root (`config/IcsClientConfig`).
+- **Problem 2 (vom Architektur-Review gefunden):** Mit zwei Konstruktoren
+  konnte Spring die Bean nicht erzeugen — **die Anwendung startete nicht**.
+  Keine Testsuite sah es, weil **kein Test den vollen Kontext lud**.
+- **Nachbesserung:** Der Adapter hat einen Konstruktor und wird im
+  Composition Root verdrahtet; neu gibt es `ApplicationContextTest`
+  (`@SpringBootTest` mit PostgreSQL aus Testcontainers), der den Start der
+  Anwendung beweist.
 - **Lehre:** Jede Technik, die der Adapter für eine *Umgebungsabhängigkeit*
   braucht, gehört hinter eine kleine Schnittstelle — sonst wird der Test
-  unzuverlässig. (Gleiches Muster wie der `RestClient` aus dem Composition
-  Root.)
+  unzuverlässig. Und: **eine verdrahtete Bean braucht einen Test, der sie
+  im Kontext erzeugt** — ein Test der Klassen allein beweist das nicht.
 
 ### 1.3 Der Grund landet beim Mitglied
 
@@ -70,3 +85,4 @@ behobene Regel begründen und die Lehre in den Skill überführen.
 |---|---|
 | Ausgehende Abrufe prüfen ihr Ziel | `backend-ports-adapters` — eine ausgehende HTTP-Quelle prüft vor dem Abruf die **aufgelöste** Adresse; interne Ziele (Loopback, private Netze, Link-Local, unique local) werden nicht abgerufen |
 | Adresse = Fachregel im Kern | `backend-ports-adapters` — die fachliche Grenze einer Adresse (was darf rein) liegt im Fachkern; die Auflösung (was wird erreicht) liegt im Adapter |
+| Verdrahtung braucht einen Kontexttest | `backend-ports-adapters` — eine Bean, die der Composition Root verdrahtet, braucht einen Test, der sie im Spring-Kontext erzeugt (`ApplicationContextTest`); ein Klassen-Test allein beweist das nicht |

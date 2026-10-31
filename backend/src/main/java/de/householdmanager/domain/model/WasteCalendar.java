@@ -123,6 +123,11 @@ public class WasteCalendar {
         if (value.startsWith("[") && value.endsWith("]")) {
             value = value.substring(1, value.length() - 1);
         }
+        // Der Scope-Anteil (fe80::1%2) gehört nicht zur Adresse.
+        int scope = value.indexOf('%');
+        if (scope >= 0) {
+            value = value.substring(0, scope);
+        }
         if (value.isEmpty()) {
             return false;
         }
@@ -191,19 +196,24 @@ public class WasteCalendar {
         if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0
                 && groups[4] == 0 && groups[5] == 0xffff) {
             // ::ffff:a.b.c.d — die eingebettete IPv4-Adresse zählt
-            int high = groups[6] >> 8;
-            int low = groups[6] & 0xff;
-            return isInternalIpv4(high + "." + low + "." + (groups[7] >> 8) + "." + (groups[7] & 0xff));
+            return isInternalIpv4(ipv4Of(groups[6], groups[7]));
         }
         if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0
-                && groups[4] == 0 && groups[5] == 0 && groups[6] == 0) {
-            // :: (ungegeben) und ::1 (Loopback)
-            return true;
+                && groups[4] == 0 && groups[5] == 0) {
+            // ::/96 — IPv4-kompatibel: die letzten 32 Bit sind eine
+            // IPv4-Adresse (::127.0.0.1 wird vom JDK als
+            // 0:0:0:0:0:0:7f00:1 geliefert). :: und ::1 liegen darin.
+            return isInternalIpv4(ipv4Of(groups[6], groups[7]));
         }
         if ((groups[0] & 0xfe00) == 0xfc00) {
             return true; // fc00::/7 — unique local
         }
         return (groups[0] & 0xffc0) == 0xfe80; // fe80::/10 — link local
+    }
+
+    /** Die letzten 32 Bit einer IPv6-Adresse als IPv4-Adresse. */
+    private static String ipv4Of(int high, int low) {
+        return (high >> 8) + "." + (high & 0xff) + "." + (low >> 8) + "." + (low & 0xff);
     }
 
     /** Die acht Gruppen einer IPv6-Adresse; {@code null}, wenn unlesbar. */

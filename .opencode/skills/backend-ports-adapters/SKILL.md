@@ -113,6 +113,11 @@ adapters ──► application ──► domain
     erreicht) im Adapter. Jede Technik, die der Adapter für eine
     Umgebungsabhängigkeit braucht (z. B. die Namensauflösung), kommt hinter
     eine kleine Schnittstelle — sonst wird der Test unzuverlässig.
+12. **Verdrahtung braucht einen Kontexttest.** Eine Bean, die der
+    Composition Root verdrahtet, braucht einen Test, der sie im
+    Spring-Kontext erzeugt (`ApplicationContextTest`) — ein Test der Klasse
+    allein beweist das nicht. Zwei Konstruktoren ohne `@Autowired` sind
+    genau der Fehler, den nur der Kontexttest findet.
 
 ## Beispiel: ein Feature durch die Schichten
 
