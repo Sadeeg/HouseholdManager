@@ -1,6 +1,7 @@
 package de.householdmanager.adapters.outbound.nextcloud;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -8,6 +9,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import de.householdmanager.domain.model.UserAccount;
+import de.householdmanager.domain.model.UserDirectoryUnavailableException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,6 +87,17 @@ class NextcloudUserDirectoryTest {
     void search_isEmpty_forShortQuery() {
         assertThat(directory.search("a", 10)).isEmpty();
         server.verify();
+    }
+
+    @Test
+    void search_reportsUnreachableDirectory_insteadOfAnEmptyResult() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=sas")))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThatThrownBy(() -> directory.search("sascha", 10))
+                .isInstanceOf(UserDirectoryUnavailableException.class)
+                .hasMessageContaining("nicht erreichbar");
     }
 
     @Test

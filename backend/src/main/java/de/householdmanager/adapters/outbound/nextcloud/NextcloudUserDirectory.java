@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.householdmanager.application.port.out.UserDirectory;
 import de.householdmanager.domain.model.UserAccount;
+import de.householdmanager.domain.model.UserDirectoryUnavailableException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -101,7 +102,11 @@ public class NextcloudUserDirectory implements UserDirectory {
             return accounts;
         } catch (RuntimeException exception) {
             log.warn("Nextcloud-User-Suche nach '{}' fehlgeschlagen: {}", query, exception.getMessage());
-            return List.of();
+            // Kein stilles „niemand gefunden": der Client muss den Ausfall des
+            // Verzeichnisses vom Fall „keine Treffer" unterscheiden können
+            // (Issue #21).
+            throw new UserDirectoryUnavailableException(
+                    "Das Nutzerverzeichnis ist nicht erreichbar.", exception);
         }
     }
 
