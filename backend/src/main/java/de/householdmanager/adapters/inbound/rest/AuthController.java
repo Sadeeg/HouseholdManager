@@ -1,5 +1,6 @@
 package de.householdmanager.adapters.inbound.rest;
 
+import de.householdmanager.adapters.inbound.rest.dto.CurrentUserResponse;
 import de.householdmanager.application.port.in.CurrentUserPort;
 import de.householdmanager.domain.model.UserAccount;
 import java.util.Optional;
@@ -31,13 +32,6 @@ public class AuthController {
             throw new NotAuthenticatedException();
         }
         return CurrentUserResponse.from(user.get());
-    }
-
-    public record CurrentUserResponse(String id, String displayName, String email) {
-
-        static CurrentUserResponse from(UserAccount user) {
-            return new CurrentUserResponse(user.id(), user.displayName(), user.email());
-        }
     }
 
     /** Wird vom eingehenden Adapter in 401 übersetzt (siehe SecurityConfig). */

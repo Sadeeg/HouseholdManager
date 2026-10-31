@@ -1,6 +1,7 @@
 package de.householdmanager.adapters.inbound.rest;
 
 import de.householdmanager.application.port.in.UserSearchUseCase;
+import de.householdmanager.adapters.inbound.rest.dto.UserRefResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,12 +27,5 @@ public class UserSearchController {
         return userSearchUseCase.searchUsers(query).stream()
                 .map(UserRefResponse::from)
                 .toList();
-    }
-
-    public record UserRefResponse(String id, String displayName) {
-
-        static UserRefResponse from(UserSearchUseCase.UserRef ref) {
-            return new UserRefResponse(ref.id(), ref.displayName());
-        }
     }
 }
