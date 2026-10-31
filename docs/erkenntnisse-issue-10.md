@@ -87,6 +87,21 @@ Browserpfad — die UI-Anteile sind nur durch Tests belegt, jsdom kennt keine Ge
   kein Test den vollen Kontext aufbaut — er zeigt sich erst beim Start. Regel im AGENTS.md
   (Gotchas) und Guard-Test in `ApplicationConfigTest`.
 
+### 1.7 `webcal://` konnte nicht gespeichert werden
+
+- **Symptom:** `webcal://www.abfalltermine-forchheim.de/…/ics?...` wurde abgelehnt
+  („muss mit http:// oder https:// beginnen“).
+- **Ursache:** `webcal://` ist die Konvention für einen ICS-Link — dieselbe Adresse, nur als
+  Abonnement bezeichnet. Der Abrufadapter kann ein Schema, das er nicht kennt, nicht lesen,
+  und R18 ließ nur http/https zu.
+- **Nachbesserung:** `WasteCalendar.validatedSourceUrl` setzt eine `webcal://`-Adresse auf
+  `https://` und speichert diese Form; andere Schemata bleiben abgelehnt. Test:
+  `HouseholdUseCaseImplTest.setWasteSource_normalizesWebcalToTheRetrievableUrl`. Die
+  Oberfläche zeigt nach dem Speichern die abrufbare Adresse.
+- **Lehre:** Eine Eingabe, die Nutzer aus einem Kalenderprogramm kopieren, ist Teil der
+  Fachregel — nicht nur der Zeichenanzahl. Was gespeichert wird, muss die tatsächlich
+  abrufbare Adresse sein. Regel im Issue #10 nachgetragen (R18).
+
 ---
 
 ## 2. Werkzeug und Umgebung
