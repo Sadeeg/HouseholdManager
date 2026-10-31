@@ -162,6 +162,7 @@ gesammelt, damit der Test nicht daran scheitert:
 | Signal-Forms-Knoten | `required`/`maxlength` im Template greifen nicht | Validatoren `required()`, `maxLength()` im Code |
 | `type="submit"` | löst im Test kein Submit aus | Handler über `type="button"` aufrufen |
 | `TestBed.configureTestingModule` | zweiter Aufruf wirft | einmal pro Test konfigurieren |
+| Test auf der Data-Ebene **ohne Component** | der `httpResource`-Effekt läuft nie, `expectOne` findet keinen Request | Effekt ausdrücklich auslösen: `TestBed.flushEffects()` vor dem `expectOne` |
 | Formularmeldung hängt an `touched()` | im Test fehlt die Fehlermeldung, obwohl das Feld ungültig ist | nach der Eingabe `input.dispatchEvent(new Event('blur'))`, dann erst die Assertion |
 | Datumsanzeige hängt von der Zeitzone ab | derselbe Test schlägt auf einer anderen Maschine fehl | Ganztagsdaten aus dem ISO-Wert lesen (kein `DatePipe`-Parse); ein Test leitet sein erwartetes Bild aus demselben Zeitpunkt ab, nicht aus einem festen Zeichenstring |
 
@@ -187,6 +188,9 @@ gesammelt, damit der Test nicht daran scheitert:
 | Test prüft nur `verify(mock).called()` | beweist nichts über Verhalten | beobachtbares Ergebnis prüfen |
 | Snapshot des kompletten HTML | unlesbar, bricht bei jedem Umbau | gezielte Aussagen auf Elemente |
 | Test prüft die Implementierung | bricht bei Refactoring | Verhalten/Vertrag prüfen |
+| Test prüft nur die Durchgabe (Reihenfolge, Weiterreichung) | grün, obwohl die Entscheidung falsch ist — die Eingabe stand zufällig richtig | Behauptung auf der Ebene, die das Ergebnis **erzeugt** (hier: `terms()`, nicht das DOM) |
+| Strukturtest (Reflexion über Feldtypen) als AC-Beweis | kann eine zur Laufzeit erzeugte Aufgabe nicht widerlegen | Verhaltensbeweis zur Laufzeit (echte DB/HTTP); Strukturtest nur als Guard, ohne AC-Nummer |
+| Negativbeweis über eine einzelne URL (`expectNone`) | „kein Request“ ist eine Aussage über die ganze Fläche | `verify()`: wirft bei **jeder** offenen Anfrage — das ist der Beleg, dass der Schreibpfad nicht lief |
 | Alles über die HTTP-Schicht | langsam, Fehlerpfad unklar | Regel auf Use-Case-Ebene testen |
 | `@Disabled`/`@Ignore` als „später" | verrottet still | Issue anlegen, Test läuft jetzt |
 | Test-Hook im Produktionscode (z. B. `if (test) …`) | Produktionscode verändert sich für Tests | Testdaten über den Port steuern |

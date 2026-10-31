@@ -13,9 +13,11 @@ import { HouseholdsData } from './data/households-data';
  * <p>`waste-calendar-section.spec.ts` belegt die Wirkung im Component: das Feld
  * zeigt nach „Abbrechen" wieder die gespeicherte Adresse. Das ist die halbe
  * Aussage — die Oberfläche könnte trotzdem einen Speichervorgang auslösen, der
- * die Quelle ändert. Dieser Test schließt die Lücke auf der Ebene der Seite:
- * nach „Abbrechen" geht **kein** Schreibvorgang an den Server, und die
- * gespeicherte Quelle steht unverändert in der Anzeige.
+ * die Quelle ändert. Dieser Test schließt die Lücke auf der Ebene der Seite
+ * (Issue #11, Befund 4): der Beleg ist `HttpTestingController.verify()` —
+ * nach „Abbrechen" darf **keine** ungeprüfte Anfrage offen sein, also geht kein
+ * PUT (und kein DELETE) an den Server, und die gespeicherte Quelle steht
+ * unverändert in der Anzeige.
  */
 describe('HouseholdsPage — abgebrochene Pflege der ICS-Adresse', () => {
   const GESPEICHERT = 'https://entsorger.example/kalender.ics';
@@ -84,10 +86,12 @@ describe('HouseholdsPage — abgebrochene Pflege der ICS-Adresse', () => {
     fixture.detectChanges();
     await tick(fixture);
 
-    // Kein Schreibvorgang: die gespeicherte Quelle bleibt unangetastet.
-    httpMock.expectNone('/api/households/1/waste/source');
-    httpMock.expectNone((req) => req.method === 'PUT' && req.url.includes('/waste/source'));
-    httpMock.expectNone((req) => req.method === 'DELETE' && req.url.includes('/waste/source'));
+    // Der Beleg (Issue #11, Befund 4): nach dem Lesen ist nichts offen.
+    // `verify()` wirft, wenn die Oberfläche durch das „Abbrechen" trotzdem
+    // einen Schreibvorgang ausgelöst hat — ein PUT wäre dann eine ungeprüfte,
+    // offene Anfrage. Der Test wäre grün, obwohl der Schreibpfad lief; genau
+    // das schließt `verify()` aus.
+    httpMock.verify();
   });
 
   it('shows the unchanged source after the edit was aborted', async () => {
