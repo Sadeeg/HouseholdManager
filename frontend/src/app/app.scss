@@ -8,28 +8,6 @@
   min-height: 48px;
 }
 
-// Schmale Geräte: der Kopf bricht um, statt seitlich auszulaufen
-// (Issue #14, AC-k1). Die Navigation kommt in eine eigene Zeile —
-// `flex-wrap` allein genügt nicht, weil die Links nicht umbrechen.
-@media (max-width: 767px) {
-  .app-header {
-    flex-wrap: wrap;
-    row-gap: var(--hm-space-2);
-  }
-
-  .app-nav {
-    order: 3;
-    flex-basis: 100%;
-    flex-wrap: wrap;
-    row-gap: var(--hm-space-1);
-  }
-
-  .app-header__workspace {
-    margin-left: auto;
-    max-width: 100%;
-  }
-}
-
 .app-header__title {
   font-family: var(--hm-font-mono);
   font-size: var(--hm-text-lg);
@@ -78,4 +56,29 @@
 .app-main {
   padding: var(--hm-space-6);
   max-width: 72rem;
+}
+
+// Schmale Geräte: der Kopf bricht um, statt seitlich auszulaufen
+// (Issue #14, AC-k1). Die Navigation kommt in eine eigene Zeile —
+// `flex-wrap` allein genügt nicht, weil die Links nicht umbrechen.
+//
+// Die Media Query steht am **Ende** der Datei: sonst gewinnen die
+// Basisregeln (gleiche Spezifität, spätere Regel gewinnt) und
+// `flex: 1` würde das `flex-basis: 100%` wieder überschreiben.
+@media (max-width: 767px) {
+  .app-header {
+    flex-wrap: wrap;
+    row-gap: var(--hm-space-2);
+  }
+
+  .app-nav {
+    order: 3;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    row-gap: var(--hm-space-1);
+  }
+
+  .app-header__workspace {
+    max-width: 100%;
+  }
 }

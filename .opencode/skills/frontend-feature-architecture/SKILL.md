@@ -221,10 +221,11 @@ und ein grüner Lauf bedeutet dann nichts.
 - **Layout ist nicht testbar.** jsdom sieht keine Geometrie — Position,
   Überlappung und Verdeckung brauchen eine Sichtprüfung (Screenshot), keinen
   Unit-Test.
-- **Eine Zeile ohne Umbruchstrategie läuft aus.** Der App-Kopf (und jeder
-  weitere Kopf) bricht unter 768 px um: die Navigation kommt in eine eigene
+- **Eine Zeile ohne Umbruchstrategie läuft aus.** Jede **neue oder geänderte**
+  Kopfzeile bricht unter 768 px um: die Navigation kommt in eine eigene
   Zeile, ein datenabhängiger Anzeigetext (z. B. der Name im Wähler) wird
   gekürzt. Sonst wird die Dokumentbreite größer als der Viewport — die Seite
-  scrollt waagerecht, auf **jeder** Seite. Gemessen wird am laufenden Stack:
-  Dokumentbreite bei 375 px und die Geometrie bei 1280 px (darf sich nicht
-  ändern).
+  scrollt waagerecht, auf **jeder** Seite. Die Umbruchregel steht am **Ende**
+  der SCSS-Datei (sonst gewinnen die Basisregeln). Gemessen wird am laufenden
+  Stack: Dokumentbreite bei 375 px und die Geometrie bei 1280 px (darf sich
+  nicht ändern).
