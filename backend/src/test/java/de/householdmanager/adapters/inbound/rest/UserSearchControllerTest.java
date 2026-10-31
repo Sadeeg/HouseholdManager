@@ -2,6 +2,7 @@ package de.householdmanager.adapters.inbound.rest;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,7 +38,10 @@ class UserSearchControllerTest {
         mockMvc.perform(get("/api/users/search").param("q", "car"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("carl"))
-                .andExpect(jsonPath("$[0].displayName").value("Carl Vogel"));
+                .andExpect(jsonPath("$[0].displayName").value("Carl Vogel"))
+                // Der Vertrag ist genau diese zwei Felder — kein weiteres
+                // (etwa die E-Mail) darf dazukommen (Issue #5, AC2).
+                .andExpect(content().json("[{\"id\":\"carl\",\"displayName\":\"Carl Vogel\"}]", true));
     }
 
     @Test

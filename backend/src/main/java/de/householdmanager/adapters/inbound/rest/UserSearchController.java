@@ -1,7 +1,7 @@
 package de.householdmanager.adapters.inbound.rest;
 
-import de.householdmanager.application.port.in.UserSearchUseCase;
 import de.householdmanager.adapters.inbound.rest.dto.UserRefResponse;
+import de.householdmanager.application.port.in.UserSearchUseCase;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
