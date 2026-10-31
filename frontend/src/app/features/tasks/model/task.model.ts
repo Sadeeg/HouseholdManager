@@ -40,6 +40,13 @@ export function normalizeLabel(label: string): string {
 }
 
 /**
+ * Maximale Länge eines Label-Namens — Grenze der Spalte `label.name`
+ * (`Label.MAX_NAME_LENGTH` im Backend). Ein längerer Name wird abgelehnt und
+ * nicht stillschweigend gekürzt (Issue #8).
+ */
+export const MAX_LABEL_NAME_LENGTH = 60;
+
+/**
  * Deterministische Label-Farbe: Index = Hash(normalisierter Name) mod 8,
  * derselbe Name erhält boardweit dieselbe Farbe (AC17/AC20). Genutzt als
  * `var(--hm-label-<index + 1>)`.

@@ -15,7 +15,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import de.householdmanager.application.port.in.CurrentUserPort;
 import de.householdmanager.application.port.in.TaskUseCase;
 import de.householdmanager.application.port.in.TaskUseCase.TaskView;
+import de.householdmanager.domain.model.InvalidLabelNameException;
 import de.householdmanager.domain.model.MembershipRequiredException;
+import de.householdmanager.domain.model.Label;
 import de.householdmanager.domain.model.TaskNotFoundException;
 import de.householdmanager.domain.model.TaskStatus;
 import de.householdmanager.domain.model.UnknownUserException;
@@ -123,6 +125,20 @@ class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Neu\",\"assigneeUserId\":\"ghost\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createTask_withLabelBeyondColumnLimit_isBadRequest() throws Exception {
+        givenSignedInAs("alice");
+        when(taskUseCase.createTask(anyString(), anyLong(), any()))
+                .thenThrow(new InvalidLabelNameException("Ein Label darf höchstens 60 Zeichen lang sein."));
+
+        mockMvc.perform(post("/api/households/1/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Neu\",\"labels\":[\"zu lang\"]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Ungültiger Labelname"))
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("höchstens " + Label.MAX_NAME_LENGTH)));
     }
 
     @Test

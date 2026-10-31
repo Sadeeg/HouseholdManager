@@ -8,6 +8,7 @@ import de.householdmanager.application.port.in.TaskUseCase.TaskCommand;
 import de.householdmanager.application.port.in.TaskUseCase.TaskView;
 import de.householdmanager.application.port.out.TaskRepository;
 import de.householdmanager.application.port.out.UserDirectory;
+import de.householdmanager.domain.model.InvalidLabelNameException;
 import de.householdmanager.domain.model.InvalidTaskTitleException;
 import de.householdmanager.domain.model.Label;
 import de.householdmanager.domain.model.MembershipRequiredException;
@@ -143,6 +144,48 @@ class TaskUseCaseImplTest {
 
         assertThat(created.labels()).containsExactly("Einkaufen");
         assertThat(updated.labels()).isEmpty();
+    }
+
+    // --- Grenze des Label-Namens (Issue #8) --------------------------------------------------
+
+    @Test
+    void createTask_rejectsLabelBeyondColumnLimit_insteadOfDroppingIt() {
+        String tooLong = "x".repeat(Label.MAX_NAME_LENGTH + 1);
+
+        assertThatThrownBy(() -> useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of(tooLong))))
+                .isInstanceOf(InvalidLabelNameException.class)
+                .hasMessageContaining("höchstens " + Label.MAX_NAME_LENGTH);
+    }
+
+    @Test
+    void createTask_acceptsLabelAtColumnLimit() {
+        String atLimit = "x".repeat(Label.MAX_NAME_LENGTH);
+
+        TaskView created = useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of(atLimit)));
+
+        assertThat(created.labels()).containsExactly(atLimit);
+    }
+
+    @Test
+    void updateTask_rejectsLabelBeyondColumnLimit() {
+        TaskView created = useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of("Kurz")));
+        String tooLong = "y".repeat(Label.MAX_NAME_LENGTH + 1);
+
+        assertThatThrownBy(() -> useCase.updateTask(MEMBER, HOUSEHOLD, created.id(),
+                new TaskCommand("Eine", null, null, null, List.of("Kurz", tooLong))))
+                .isInstanceOf(InvalidLabelNameException.class)
+                .hasMessageContaining("höchstens " + Label.MAX_NAME_LENGTH);
+    }
+
+    @Test
+    void createTask_keepsDroppingEmptyAndDuplicateLabelsWithoutError() {
+        TaskView created = useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of("", "   ", "Bad", "bad")));
+
+        assertThat(created.labels()).containsExactly("Bad");
     }
 
     // --- Bearbeiten (AC5) -------------------------------------------------------------------

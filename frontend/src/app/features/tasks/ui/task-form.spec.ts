@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Task, TaskFormData } from '../model/task.model';
+import { MAX_LABEL_NAME_LENGTH, Task, TaskFormData } from '../model/task.model';
 import { TaskForm } from './task-form';
 
 const INITIAL_TASK: Task = {
@@ -129,6 +129,62 @@ describe('TaskForm', () => {
     clickButton(element, 'Speichern');
     fixture.detectChanges();
     expect(saved[0].labels).toEqual(['Bad']);
+  });
+
+  it('rejects a label beyond the column limit at the label input and keeps the input (AC1, AC3)', async () => {
+    const { fixture } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+
+    fill(element, '#task-title', 'Müll raus');
+    fill(element, '#task-label', 'x'.repeat(MAX_LABEL_NAME_LENGTH + 1));
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    const alert = element.querySelector('#task-label-error');
+    expect(alert?.textContent).toContain(`höchstens ${MAX_LABEL_NAME_LENGTH}`);
+    // Das Label wurde nicht übernommen, die Eingabe steht noch.
+    expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(0);
+    expect((element.querySelector('#task-label') as HTMLInputElement).value)
+      .toHaveLength(MAX_LABEL_NAME_LENGTH + 1);
+    // Die übrige Eingabe bleibt erhalten.
+    expect((element.querySelector('#task-title') as HTMLInputElement).value).toBe('Müll raus');
+  });
+
+  it('accepts a label at the column limit (AC2)', async () => {
+    const { fixture, saved } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+    const atLimit = 'x'.repeat(MAX_LABEL_NAME_LENGTH);
+
+    fill(element, '#task-title', 'X');
+    fill(element, '#task-label', atLimit);
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')).toBeNull();
+    const chips = element.querySelectorAll('.task-form__labels .hm-chip');
+    expect(chips.length).toBe(1);
+    expect(chips[0].textContent).toContain(atLimit);
+
+    clickButton(element, 'Speichern');
+    fixture.detectChanges();
+    expect(saved[0].labels).toEqual([atLimit]);
+  });
+
+  it('drops the label error as soon as the name is corrected (AC4)', async () => {
+    const { fixture } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+
+    fill(element, '#task-label', 'x'.repeat(MAX_LABEL_NAME_LENGTH + 1));
+    fixture.detectChanges();
+    expect(element.querySelector('#task-label-error')).not.toBeNull();
+
+    fill(element, '#task-label', 'Kurz');
+    fixture.detectChanges();
+    expect(element.querySelector('#task-label-error')).toBeNull();
+
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+    expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(1);
   });
 
   it('rejects an invalid due date and hints at overdue dates', async () => {

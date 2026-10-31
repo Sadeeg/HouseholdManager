@@ -4,6 +4,7 @@ import de.householdmanager.application.port.in.MembershipUseCase;
 import de.householdmanager.application.port.in.TaskUseCase;
 import de.householdmanager.application.port.out.TaskRepository;
 import de.householdmanager.application.port.out.UserDirectory;
+import de.householdmanager.domain.model.InvalidLabelNameException;
 import de.householdmanager.domain.model.InvalidTaskTitleException;
 import de.householdmanager.domain.model.Label;
 import de.householdmanager.domain.model.Task;
@@ -174,6 +175,11 @@ public class TaskUseCaseImpl implements TaskUseCase {
      * Labels entstehen durch Gebrauch: gleicher normalisierter Name = gleiches
      * Label (AC20); die zuerst gespeicherte Schreibweise gewinnt. Doppelte
      * normalisierte Namen werden zusammengeführt, leere verworfen.
+     *
+     * <p>Ein Name über der Grenze wird abgelehnt (Issue #8): er wird nicht
+     * stillschweigend verworfen — der Nutzer hat einen Wert eingegeben, der
+     * verloren ginge. Leere Namen und Dubletten bleiben still: dort ist der
+     * Verlust gewollt.
      */
     private List<Label> resolveLabels(long householdId, List<String> names) {
         List<Label> labels = new ArrayList<>();
@@ -183,7 +189,14 @@ public class TaskUseCaseImpl implements TaskUseCase {
         }
         for (String raw : names) {
             String normalized = Label.normalize(raw);
-            if (normalized.isEmpty() || normalized.length() > Label.MAX_NAME_LENGTH || !seen.add(normalized)) {
+            if (normalized.isEmpty()) {
+                continue;
+            }
+            if (normalized.length() > Label.MAX_NAME_LENGTH) {
+                throw new InvalidLabelNameException(
+                        "Ein Label darf höchstens " + Label.MAX_NAME_LENGTH + " Zeichen lang sein.");
+            }
+            if (!seen.add(normalized)) {
                 continue;
             }
             Label existing = taskRepository.findLabel(householdId, normalized).orElse(null);

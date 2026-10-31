@@ -5,7 +5,7 @@ import { FormField, form, maxLength, required, submit, validate } from '@angular
 import { UserRef } from '../../../core/users/user-search';
 import { MarkdownView } from '../../../shared/components/markdown/markdown-view';
 import { UserPicker } from '../../../shared/components/user-picker/user-picker';
-import { Task, TaskFormData, formatDueDate, isoDate, normalizeLabel, parseDueDate } from '../model/task.model';
+import { Task, TaskFormData, formatDueDate, isoDate, normalizeLabel, parseDueDate, MAX_LABEL_NAME_LENGTH } from '../model/task.model';
 
 /**
  * Dialog „Aufgabe anlegen" / „Aufgabe bearbeiten" (UI-Schicht, dumb).
@@ -76,6 +76,22 @@ export class TaskForm {
     return seen;
   });
 
+  /**
+   * Fehler an der Label-Eingabe: ein Name über der Grenze wird abgelehnt,
+   * nicht gekürzt (Issue #8). Die Meldung verschwindet, sobald der Nutzer
+   * den Namen korrigiert — sie hängt am aktuellen Eingabewert.
+   */
+  protected readonly labelError = computed(() => {
+    const raw = this.newLabel().trim();
+    if (raw === '') {
+      return null;
+    }
+    if (normalizeLabel(raw).length > MAX_LABEL_NAME_LENGTH) {
+      return `Ein Label darf höchstens ${MAX_LABEL_NAME_LENGTH} Zeichen lang sein.`;
+    }
+    return null;
+  });
+
   constructor() {
     effect(() => {
       const task = this.initial();
@@ -105,10 +121,14 @@ export class TaskForm {
     this.assignee.set(null);
   }
 
-  /** Fügt ein Label hinzu; existierende Normalisierung führt zum gespeicherten Namen (AC20). */
+  /**
+   * Fügt ein Label hinzu; existierende Normalisierung führt zum gespeicherten
+   * Namen (AC20). Ein Name über der Grenze wird nicht aufgenommen — die
+   * Eingabe bleibt stehen, der Fehler steht an der Eingabe (Issue #8).
+   */
   protected addLabel(): void {
     const raw = this.newLabel().trim();
-    if (raw === '') {
+    if (raw === '' || this.labelError() !== null) {
       return;
     }
     const stored = this.knownLabels().get(normalizeLabel(raw)) ?? raw;
