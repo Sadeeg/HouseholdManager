@@ -82,4 +82,43 @@ describe('UserPicker', () => {
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Keine Person gefunden.');
   });
+
+  it('shares one instance: a second picker sees the same result', async () => {
+    const first = TestBed.createComponent(UserPicker);
+    const second = TestBed.createComponent(UserPicker);
+    first.detectChanges();
+    second.detectChanges();
+
+    await typeQuery(first, 'car');
+    // Genau ein Request — beide Felder hängen an derselben Instanz.
+    httpMock.expectOne('/api/users/search?q=car').flush([
+      { id: 'carl', displayName: 'Carl Vogel' },
+    ]);
+    await second.whenStable();
+    second.detectChanges();
+
+    expect((second.nativeElement as HTMLElement).textContent).toContain('Carl Vogel');
+  });
+
+  it('starts empty even when another picker has searched before', async () => {
+    const first = TestBed.createComponent(UserPicker);
+    first.detectChanges();
+
+    await typeQuery(first, 'car');
+    httpMock.expectOne('/api/users/search?q=car').flush([
+      { id: 'carl', displayName: 'Carl Vogel' },
+    ]);
+    await first.whenStable();
+    first.detectChanges();
+    expect((first.nativeElement as HTMLElement).textContent).toContain('Carl Vogel');
+
+    // Ein weiteres Feld startet frisch: kein Query, keine Treffer, kein Request.
+    const second = TestBed.createComponent(UserPicker);
+    second.detectChanges();
+
+    const input = (second.nativeElement as HTMLElement).querySelector('input[type="search"]') as HTMLInputElement;
+    expect(input.value).toBe('');
+    expect((second.nativeElement as HTMLElement).textContent).not.toContain('Carl Vogel');
+    httpMock.verify();
+  });
 });

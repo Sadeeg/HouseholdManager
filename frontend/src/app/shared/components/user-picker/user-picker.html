@@ -4,7 +4,7 @@
     type="search"
     placeholder="Person suchen"
     aria-label="Person suchen"
-    [value]="query"
+    [value]="query()"
     (input)="searchNow($any($event.target).value)"
   />
 
@@ -28,7 +28,7 @@
         </li>
       }
     </ul>
-  } @else if (searching() === false && query.trim().length >= 2 && !failed()) {
+  } @else if (searching() === false && query().trim().length >= 2 && !failed()) {
     <p class="user-picker__state user-picker__state--empty">Keine Person gefunden.</p>
   }
 </div>
