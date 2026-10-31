@@ -104,7 +104,10 @@ public class WasteCollectionUseCaseImpl implements WasteCollectionUseCase {
     }
 
     /**
-     * Termine im Fenster, unverändert aus der Quelle (AC8). Doppelte
+     * Termine im Fenster, unverändert aus der Quelle (AC8). Das Fenster wird
+     * hier durchgesetzt — der ausgehende Port liefert die Termine der Quelle,
+     * aber die Grenze des Sechs-Wochen-Fensters ist eine Invariante der
+     * Anwendung und darf nicht vom Adapter abhängen (AC3). Doppelte
      * (Haus, Datum, Tonnenart) werden vor dem Speichern zusammengeführt —
      * dieselbe Grenze wie der Unique-Index (AC21). Ereignisse ohne
      * Startdatum oder ohne Tonnenart werden ignoriert: das Modell erfindet
@@ -116,6 +119,9 @@ public class WasteCollectionUseCaseImpl implements WasteCollectionUseCase {
         List<WasteCollection> terms = new ArrayList<>();
         for (WasteCalendarFeed.FeedTerm term : fetched) {
             if (term.date() == null || term.wasteType() == null || term.wasteType().isBlank()) {
+                continue;
+            }
+            if (term.date().isBefore(from) || term.date().isAfter(to)) {
                 continue;
             }
             if (!seen.add(term.date() + "|" + term.wasteType())) {

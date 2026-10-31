@@ -37,13 +37,18 @@ public class WasteCalendar {
     private final Instant lastAttemptAt;
 
     /**
-     * R13 und AC20: der Stand ist veraltet, wenn ein Versuch nach dem letzten
-     * erfolgreichen Lauf liegt. Ohne erfolgreichen Lauf gibt es keinen Stand,
-     * der veraltet sein könnte — die Anzeige nennt dann „Noch keine
+     * R13, R17 und AC6: der Stand ist veraltet, wenn ein Versuch nach dem letzten
+     * erfolgreichen Lauf liegt. Gab es noch keinen erfolgreichen Lauf, ist ein
+     * fehlgeschlagener Versuch bereits veraltet — die Anzeige weist den
+     * Fehlschlag aus, statt eine leere Quelle zu behaupten. Ohne jeden Versuch
+     * gibt es keinen veralteten Stand; die Anzeige nennt dann „Noch keine
      * Synchronisation“ (R16).
      */
     public boolean isStale() {
-        return lastSyncedAt != null && lastAttemptAt != null && lastAttemptAt.isAfter(lastSyncedAt);
+        if (lastAttemptAt == null) {
+            return false;
+        }
+        return lastSyncedAt == null || lastAttemptAt.isAfter(lastSyncedAt);
     }
 
     /** Der Stand eines Haushalts, aus dem noch kein Lauf hervorgegangen ist. */

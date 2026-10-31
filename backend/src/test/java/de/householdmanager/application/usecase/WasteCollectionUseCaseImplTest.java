@@ -80,6 +80,26 @@ class WasteCollectionUseCaseImplTest {
                 .containsExactly(tuple(TODAY.plusDays(3), "Restmüll"));
     }
 
+    /**
+     * AC3: die Grenze des Fensters setzt die Anwendung, nicht der Adapter.
+     * Termine außerhalb werden verworfen, auch wenn die Quelle sie liefert.
+     */
+    @Test
+    void syncHousehold_discardsTermsOutsideTheWindow() {
+        givenHouseholdWithSource();
+        feed.terms = List.of(
+                new FeedTerm(TODAY.minusDays(1), "Restmüll", "uid-vorher"),
+                new FeedTerm(TODAY, "Papier", "uid-heute"),
+                new FeedTerm(TODAY.plusDays(42), "Bio", "uid-letzter-tag"),
+                new FeedTerm(TODAY.plusDays(43), "Glas", "uid-danach"));
+
+        useCase.syncHousehold(HOUSEHOLD);
+
+        assertThat(collections.findByHousehold(HOUSEHOLD))
+                .extracting(WasteCollection::getCollectionDate)
+                .containsExactly(TODAY, TODAY.plusDays(42));
+    }
+
     @Test
     void syncHousehold_keepsTheTonnenartAsTheFeedDeliversIt() {
         givenHouseholdWithSource();
