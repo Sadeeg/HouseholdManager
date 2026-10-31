@@ -137,9 +137,11 @@ Haushalt-Kontexts (`MembershipUseCase`), nicht über dessen Tabellen.
 | Baustein (Ziel) | Schicht | Anmerkung |
 |-----------|-------|-----------|
 | `core/workspace/` — `WorkspaceService` + Workspace-Wähler im App-Rahmen | `core` | app-weit, eine Instanz; hält den gewählten Haushalt, lädt die Haushalte der Person, wählt beim nächsten Besuch wieder |
+| `core/users/` — `UserSearch` (Personensuche im Nutzerverzeichnis) | `core` | app-weit, eine Instanz (`providedIn: 'root'`); Query und Treffer sind geteilt, jedes Suchfeld setzt den Zustand beim Anlegen zurück (Issue #4) |
 | `features/tasks/` — `routes.ts` (auth_guard + Workspace vorausgesetzt), `tasks-page`, `model/`, `data/` (`httpResource` auf die WorkspaceId skoped), `ui/` (board-column, task-card, label-chip, task-dialog, confirm-dialog) | Feature | Reihenfolge je Spalte folgt `position` (A15); „überfällig“ wird im Frontend aus `dueDate` + Status berechnet (lokaler Tag, keine Uhrzeit); Label-Farbe = Hash des normalisierten Namens → `--hm-label-1…8` |
 | Mitglieder-Abschnitt in `features/households/` (inline im Listeneintrag) | Feature | keine neue Route |
 | `shared/components/page-header` — Erweiterung um einen Aktionen-Slot | `shared` | von Tafel und Haushaltsverwaltung genutzt |
+| `shared/components/user-picker` — Suchfeld für Personen | `shared` | dumb Component; spricht den `core`-Dienst `UserSearch` an (kein eigener HTTP-Zugriff) |
 
 **Geplant (Tests):** `TaskUseCaseImplTest` (ohne Spring, `Clock` fest für
 Grenzdaten), `TaskControllerTest` (`@WebMvcTest`),

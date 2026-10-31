@@ -11,9 +11,16 @@ Steyer).
   Features.
 - Was hier liegt, muss von jedem Feature genutzt werden können, ohne dass
   Feature-Kontext mitgeliefert wird.
+- **Ausnahme:** Eine dumb Component darf einen Dienst aus `core/` nutzen, der
+  selbst mit dem Backend spricht — der `UserPicker` greift so auf
+  `core/users/UserSearch` zu. Der Backend-Zugriff bleibt damit in `core/`
+  (app-weit, eine Instanz) und nicht in `shared/`.
 
 Aktuell:
 
 | Ordner | Inhalt |
 |--------|--------|
 | `components/page-header/` | Kopfbereich einer Seite (Titel, optionaler Untertitel) — dumb, ohne Fachwissen |
+| `components/user-picker/` | Suchfeld für Personen im Nutzerverzeichnis — dumb, Auswahl per Output |
+| `components/confirm-dialog/` | Bestätigungsdialog — dumb, zwei Aktionen |
+| `components/markdown/` | Markdown-Ausgabe — dumb, ohne Fachwissen |
