@@ -2,6 +2,9 @@
 :host {
   position: relative;
   display: inline-block;
+  // Der Wähler darf die Kopfzeile nicht breiter machen als der Platz
+  // (Issue #14, AC-k1): ein langer Haushaltsname wird gekürzt.
+  max-width: 100%;
 }
 
 .workspace-switcher__trigger {
@@ -9,6 +12,7 @@
   align-items: center;
   gap: var(--hm-space-2);
   height: 2rem;
+  max-width: 100%;
   padding: 0 var(--hm-space-3);
   background: transparent;
   border: 1px solid var(--hm-border-strong);
@@ -25,6 +29,12 @@
   &--empty {
     color: var(--hm-text-faint);
   }
+}
+
+.workspace-switcher__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workspace-switcher__marker {
