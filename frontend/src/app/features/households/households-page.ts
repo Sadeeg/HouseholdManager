@@ -9,6 +9,7 @@ import { Household } from './model/household.model';
 import { Member } from './model/member.model';
 import { HouseholdItem } from './ui/household-item';
 import { MemberSection } from './ui/member-section';
+import { WasteCalendarSection } from './ui/waste-calendar-section';
 
 /**
  * Smart Component (Feature-Schicht) des Features „Haushalte".
@@ -23,7 +24,7 @@ import { MemberSection } from './ui/member-section';
  */
 @Component({
   selector: 'app-households-page',
-  imports: [FormField, HouseholdItem, MemberSection, PageHeader, ConfirmDialog],
+  imports: [FormField, HouseholdItem, MemberSection, PageHeader, ConfirmDialog, WasteCalendarSection],
   templateUrl: './households-page.html',
   styleUrl: './households-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +37,13 @@ export class HouseholdsPage {
   protected readonly pendingMemberRemove = signal<{ member: Member; householdId: number } | null>(null);
   protected readonly removing = signal(false);
   protected readonly toast = signal<string | null>(null);
+
+  // Müllkalender: jedes Mitglied darf die Quelle pflegen (AC23) — deshalb ist
+  // der Abschnitt für jeden geöffneten Haushalt erreichbar, nicht nur für die Leitung.
+  protected readonly expandedWasteHouseholdId = signal<number | null>(null);
+  protected readonly pendingWasteRemove = signal<number | null>(null);
+  protected readonly savingSource = signal(false);
+  protected readonly sourceError = signal<string | null>(null);
 
   // Anlegen
   protected readonly createOpen = signal(false);
@@ -56,6 +64,14 @@ export class HouseholdsPage {
     }
     const { member } = pending;
     return `${member.displayName ?? member.userId} wird aus diesem Haushalt entfernt. Der Zugang zu den Aufgaben endet; Aufgaben und Zuweisungen bleiben erhalten.`;
+  });
+
+  protected readonly sourceRemoveDescription = computed(() => {
+    const householdId = this.pendingWasteRemove();
+    if (householdId === null) {
+      return '';
+    }
+    return 'Die hinterlegte ICS-Adresse wird entfernt.';
   });
 
   protected isHouseholdAdmin(household: Household): boolean {
@@ -125,6 +141,49 @@ export class HouseholdsPage {
       this.showToast('Die Person konnte nicht entfernt werden.');
     } finally {
       this.removing.set(false);
+    }
+  }
+
+  /** Öffnet (bzw. schließt) den Müllkalender-Abschnitt. */
+  protected toggleWasteCalendar(householdId: number): void {
+    this.sourceError.set(null);
+    this.expandedWasteHouseholdId.update((open) => (open === householdId ? null : householdId));
+  }
+
+  /**
+   * Speichert die ICS-Adresse. Das Backend synchronisiert danach sofort, und
+   * die Antwort wartet auf den Lauf — die Liste der Haushalte wird neu
+   * geladen, damit die geänderte Adresse sichtbar bleibt (AC11).
+   */
+  protected async saveSource(householdId: number, url: string): Promise<void> {
+    this.savingSource.set(true);
+    this.sourceError.set(null);
+    try {
+      await this.householdsData.saveWasteSource(householdId, url);
+      this.showToast('Müllkalender gespeichert.');
+    } catch {
+      this.sourceError.set(
+        'Die ICS-Adresse konnte nicht gespeichert werden: Der Dienst ist nicht erreichbar. Deine Eingabe bleibt erhalten.',
+      );
+    } finally {
+      this.savingSource.set(false);
+    }
+  }
+
+  protected async confirmSourceRemove(): Promise<void> {
+    const householdId = this.pendingWasteRemove();
+    if (householdId === null) {
+      return;
+    }
+    this.savingSource.set(true);
+    try {
+      await this.householdsData.removeWasteSource(householdId);
+      this.pendingWasteRemove.set(null);
+      this.showToast('Müllkalender entfernt.');
+    } catch {
+      this.sourceError.set('Der Müllkalender konnte nicht entfernt werden.');
+    } finally {
+      this.savingSource.set(false);
     }
   }
 

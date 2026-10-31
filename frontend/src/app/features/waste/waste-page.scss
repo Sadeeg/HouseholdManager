@@ -1,0 +1,27 @@
+// Zustände der Seite: kein Haushalt, laden, Fehler, keine Quelle, keine
+// Termine. Das Muster ist das der anderen Seiten — dieselbe Klasse, damit die
+// Anzeige an einer Stelle definiert bleibt.
+.state {
+  margin-top: var(--hm-space-4);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+
+  &--error {
+    padding: var(--hm-space-3) var(--hm-space-4);
+    color: var(--hm-danger);
+    background: var(--hm-danger-soft);
+    border-left: 2px solid var(--hm-danger);
+    border-radius: var(--hm-radius);
+  }
+}
+
+.waste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hm-space-4);
+}
+
+// Die Aktion im Leerzustand steht links und zieht nicht über die Breite.
+.state-action {
+  align-self: flex-start;
+}

@@ -207,6 +207,11 @@ class MembershipUseCaseImplTest {
         }
 
         @Override
+        public List<Household> findWithSource() {
+            return store.values().stream().filter(h -> h.getWasteCalendarUrl() != null).toList();
+        }
+
+        @Override
         public Household save(Household household) {
             store.put(household.getId(), household);
             return household;

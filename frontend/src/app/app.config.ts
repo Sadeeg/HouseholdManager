@@ -1,6 +1,6 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withAutoCleanupInjectors } from '@angular/router';
 import { AuthConfig, OAuthService, provideOAuthClient } from 'angular-oauth2-oidc';
 
 import { routes } from './app.routes';
@@ -10,7 +10,19 @@ import { OIDC_CONFIG } from './core/config/oidc.config';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    /**
+     * `withAutoCleanupInjectors()` zerstört die route-scoped Provider, sobald
+     * ihre Route verlassen wird. Das ist die Voraussetzung dafür, dass ein
+     * Feature beim erneuten Betreten wieder frisch liest: `httpResource` feuert
+     * nur, wenn sich die Request-URL ändert — eine überlebende Instanz zeigte
+     * also den alten Stand („Mülltermine" zeigt den Stand beim nächsten
+     * Aufruf).
+     *
+     * Die Option wirkt auf **alle** Features: Tasks, Haushalte und Mülltermine
+     * legen keinen Zustand über Navigationswechsel hinweg, der das Verhalten
+     * überleben müsste.
+     */
+    provideRouter(routes, withAutoCleanupInjectors()),
 
     // OIDC-Client (Nextcloud als Identity Provider).
     // Achtung: die Library injiziert die Konfiguration über die KLASSE

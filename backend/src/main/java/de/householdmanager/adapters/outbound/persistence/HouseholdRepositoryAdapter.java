@@ -35,12 +35,18 @@ public class HouseholdRepositoryAdapter implements HouseholdRepository {
     }
 
     @Override
+    public List<Household> findWithSource() {
+        return householdJpaRepository.findByWasteCalendarUrlIsNotNull().stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public Household save(Household household) {
         HouseholdJpaEntity entity = household.getId() == null
                 ? toEntity(household)
                 : householdJpaRepository.findById(household.getId())
                         .map(existing -> {
                             existing.setName(household.getName());
+                            existing.setWasteCalendarUrl(household.getWasteCalendarUrl());
                             // createdAt bleibt unangetastet — der Zeitstempel
                             // entsteht beim Anlegen und wird nie überschrieben.
                             return existing;
@@ -55,6 +61,7 @@ public class HouseholdRepositoryAdapter implements HouseholdRepository {
                 .name(entity.getName())
                 .createdAt(entity.getCreatedAt())
                 .createdBy(entity.getCreatedBy())
+                .wasteCalendarUrl(entity.getWasteCalendarUrl())
                 .build();
     }
 
@@ -64,6 +71,7 @@ public class HouseholdRepositoryAdapter implements HouseholdRepository {
                 .name(household.getName())
                 .createdAt(household.getCreatedAt())
                 .createdBy(household.getCreatedBy())
+                .wasteCalendarUrl(household.getWasteCalendarUrl())
                 .build();
     }
 }

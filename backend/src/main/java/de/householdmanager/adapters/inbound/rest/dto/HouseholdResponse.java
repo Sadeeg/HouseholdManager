@@ -7,10 +7,14 @@ import java.time.Instant;
  * Ausgehende DTOs des REST-Adapters. Gehören zum Transport, nicht zur
  * Anwendung.
  */
-public record HouseholdResponse(Long id, String name, Instant createdAt, String createdBy) {
+public record HouseholdResponse(Long id, String name, Instant createdAt, String createdBy, String wasteCalendarUrl) {
 
     public static HouseholdResponse from(Household household) {
         return new HouseholdResponse(
-                household.getId(), household.getName(), household.getCreatedAt(), household.getCreatedBy());
+                household.getId(),
+                household.getName(),
+                household.getCreatedAt(),
+                household.getCreatedBy(),
+                household.getWasteCalendarUrl());
     }
 }

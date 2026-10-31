@@ -22,6 +22,7 @@ Entscheidung — **keine** Dublette.
 | Vitest im Frontend | Angular-22-Standard, schnell | ein anderes Testwerkzeug nötig wird |
 | Docker Compose für Development **und Betrieb** | gleiche Umgebung lokal und im Betrieb; Bau und Deploy laufen über `compose.yml` (`AGENTS.md` → Release) | ein Registry-Publish oder Continuous Deployment eingeführt wird |
 | `open-in-view: false` | verhindert Lazy-Lazy-Lad-Fehler und N+1 | — (dauerhafte Festlegung) |
+| Route-scoped Provider werden beim Verlassen der Route zerstört (`withAutoCleanupInjectors()`) | ein Feature liest beim erneuten Betreten erneut; ohne die Option überlebt die Instanz den Wegwechsel und `httpResource` feuert bei gleicher URL nicht (Anzeige zeigte den alten Stand) | ein Feature Zustand über Navigationswechsel hinweg halten muss |
 
 ## ADR-Vorschläge — entschieden (2026-10-29)
 

@@ -1,0 +1,95 @@
+.waste-calendar {
+  margin-top: var(--hm-space-2);
+  padding: var(--hm-space-3);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+}
+
+// Die gespeicherte Adresse steht über dem Formular — im Monospace wie alle
+// Datenwerte, lange Adressen brechen mit `overflow-wrap: anywhere`.
+.waste-calendar__source {
+  margin: 0 0 var(--hm-space-3);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text);
+  overflow-wrap: anywhere;
+}
+
+.waste-calendar__source-prefix {
+  color: var(--hm-text-muted);
+}
+
+.waste-calendar__source-value--none {
+  color: var(--hm-text-muted);
+}
+
+.waste-calendar__hint {
+  margin: var(--hm-space-1) 0 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
+
+.waste-calendar__field {
+  label {
+    display: block;
+    margin-bottom: var(--hm-space-1);
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-muted);
+  }
+}
+
+// Muster Zeichenlänge: 12px Monospace rechtsbündig unter dem Feld, Zählform
+// „128 / 500" — ab 90 % warnend, darüber fehlerhaft. Die Grenze steht
+// zusätzlich in der Fehlermeldung am Feld.
+.waste-calendar__counter {
+  margin: var(--hm-space-1) 0 0;
+  text-align: right;
+  font-family: var(--hm-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-faint);
+
+  &--warn {
+    color: var(--hm-warning);
+  }
+
+  &--danger {
+    color: var(--hm-danger);
+  }
+}
+
+.waste-calendar__error {
+  margin: var(--hm-space-1) 0 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-danger);
+}
+
+.waste-calendar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hm-space-3);
+  margin-top: var(--hm-space-3);
+}
+
+.waste-calendar__remove {
+  margin-left: auto;
+}
+
+.waste-calendar__remove:hover:not(:disabled) {
+  color: var(--hm-danger);
+}
+
+// Schmal: die Aktionen stehen untereinander — kein rechtsbündiges Verschieben,
+// das den Text verdeckt.
+@media (max-width: 767px) {
+  .waste-calendar__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .waste-calendar__remove {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}

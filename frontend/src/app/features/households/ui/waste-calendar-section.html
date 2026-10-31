@@ -1,0 +1,76 @@
+<section class="waste-calendar" [attr.aria-label]="`Müllkalender von ${householdName()}`">
+  <p class="waste-calendar__source">
+    <span class="waste-calendar__source-prefix">Quelle:</span>
+    @if (storedUrl()) {
+      <span class="waste-calendar__source-value">{{ storedUrl() }}</span>
+    } @else {
+      <span class="waste-calendar__source-value waste-calendar__source-value--none">
+        Kein Müllkalender hinterlegt
+      </span>
+    }
+  </p>
+
+  <div class="waste-calendar__field">
+    <label for="{{ `waste-url-${householdId()}` }}">ICS-Adresse</label>
+    <input
+      [id]="`waste-url-${householdId()}`"
+      class="hm-input"
+      [class.hm-input--invalid]="urlForm.url().invalid() && urlForm.url().touched()"
+      [formField]="urlForm.url"
+      [attr.aria-invalid]="urlForm.url().invalid() && urlForm.url().touched() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      type="text"
+      inputmode="url"
+      spellcheck="false"
+      placeholder="https://entsorger.example/kalender.ics"
+    />
+
+    <p class="waste-calendar__hint" [id]="`waste-url-${householdId()}-hint`">
+      Adresse des ICS-Feeds deines Entsorgers.
+    </p>
+
+    <p class="waste-calendar__counter" [class.waste-calendar__counter--warn]="counterLevel() === 'warn'" [class.waste-calendar__counter--danger]="counterLevel() === 'danger'">
+      {{ length() }} / {{ maxLength }}
+    </p>
+
+    @if (urlForm.url().invalid() && urlForm.url().touched()) {
+      <p [id]="`waste-url-${householdId()}-error`" class="waste-calendar__error" role="alert">
+        {{ urlForm.url().errors()[0]?.message }}
+      </p>
+    }
+    @if (saveError(); as error) {
+      <p class="waste-calendar__error" role="alert">{{ error }}</p>
+    }
+  </div>
+
+  <div class="waste-calendar__actions">
+    <button
+      type="button"
+      class="hm-button hm-button--primary"
+      [disabled]="!canSave()"
+      (click)="save()"
+    >
+      @if (saving()) {
+        Wird gespeichert …
+      } @else {
+        Speichern
+      }
+    </button>
+    <button
+      type="button"
+      class="hm-button hm-button--secondary"
+      [disabled]="saving() || !changed()"
+      (click)="cancel()"
+    >
+      Abbrechen
+    </button>
+    <button
+      type="button"
+      class="hm-link-action waste-calendar__remove"
+      [disabled]="!canRemove() || saving()"
+      (click)="removeRequested.emit()"
+    >
+      ENTFERNEN
+    </button>
+  </div>
+</section>

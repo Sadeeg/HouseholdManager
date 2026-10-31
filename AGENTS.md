@@ -225,17 +225,30 @@ Regeln:
 - `open-in-view: false` — die Entity darf den Adapter nicht verlassen.
 - Schema: Flyway-Migrationen, **keine** Änderung bestehender `V`-Dateien;
   `ddl-auto: validate` verlangt Übereinstimmung von Entity und Migration.
+- **Zustände im Modell getrennt halten:** „veraltet" braucht *letzter Versuch*
+  **und** *letzter erfolgreicher Lauf* getrennt — ein fehlgeschlagener
+  Erstlauf ist bereits veraltet, ein fehlgeschlagener Lauf nach einem
+  erfolgreichen ebenso. „Noch kein Lauf" ist ein eigener Zustand, kein
+  Sonderfall von „erfolgreich".
+- **Anwendung setzt die Invariante:** Zeitfenster, Grenzen und Reihenfolge
+  gehören in die Use Case — der Adapter liefert die Daten der Quelle.
 
 ### Frontend
 
 - Feature = Ordner mit `routes.ts`; Feature-Services **route-scoped**
-  (nicht `root`).
+  (nicht `root`) — und `provideRouter(routes, withAutoCleanupInjectors())`
+  im Composition Root: `httpResource` feuert nur bei **URL-Änderung**, eine
+  überlebende Route-Instanz zeigte beim erneuten Betreten den alten Stand.
 - Angular 22, **zoneless**, Standalone. Dateinamen **ohne** Rollen-Suffix
   (`households-page.ts` → `class HouseholdsPage`), Models behalten
   `.model.ts`; der Ordnungsweg trägt die Rolle (`core/`, `features/`, `shared/`).
 - Reaktivität: `signal()` / `computed()`; Lesen per `httpResource` im
   Data-Service, Schreiben per `HttpClient` im API-Client; Formulare als
   **Signal Forms**.
+- **Signal Forms:** `maxLength()` spiegelt sich als natives `maxlength` ins
+  Feld — der Browser **schneidet beim Paste still ab**, die Grenze bleibt
+  unsichtbar. Eigene `validate()`-Regel mit `maxLengthError()`; die
+  getrimmte Länge messen (so messen Zähler und Knopf).
 - **Design-DNA ist bindend**: Tokens aus
   `frontend/src/styles/_design-tokens.scss`, beschrieben in
   [`docs/design/design-dna.md`](docs/design/design-dna.md). Dark Mode ist
@@ -379,6 +392,9 @@ starten — ohne baut Docker das zuletzt vorhandene Image nicht neu.
 - Angular 22 ist zoneless: Effekte laufen erst nach `detectChanges()` — im Test
   den HTTP-Request erst **danach** erwarten.
 - `npm test` läuft über Vitest (kein Karma).
+- **Geometrie ist in jsdom nicht prüfbar:** Breakpoints und Umbruch
+  („unter 768 px gestapelt“) brauchen die Sichtprüfung am laufenden Stack —
+  ein grüner Test sagt dazu nichts.
 - Maven-Builds im Docker-Container brauchen ein beschreibbares
   `-Dmaven.repo.local`, sonst ist der Cache nach jedem Lauf weg.
 - Testcontainers braucht den Docker-Socket **und** die Docker-Gruppe
@@ -396,3 +412,8 @@ starten — ohne baut Docker das zuletzt vorhandene Image nicht neu.
   kommen weiterhin aus `com.fasterxml.jackson.annotation`.
 - **Der OIDC-Principal steckt in `getPrincipal()`**, nicht in der
   `Authentication` selbst.
+- **Der Composition Root liefert keine Beans.** `ApplicationConfig` hängt am
+  Scheduler-Adapter; eine Bean, die eine Use Case braucht (`Clock`, `RestClient`),
+  schließt daraus einen Bean-Zyklus. Technische Verdrahtung liegt in
+  `config/ClockConfig` und `config/IcsClientConfig`. Ohne Test des vollen
+  Kontexts zeigt sich ein Zyklus erst beim Start.

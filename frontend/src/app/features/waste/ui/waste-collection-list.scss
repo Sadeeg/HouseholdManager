@@ -1,0 +1,63 @@
+.waste-list__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hm-space-3);
+  padding: var(--hm-space-2) var(--hm-space-3);
+  background: var(--hm-surface-2);
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.waste-list__head-title,
+.waste-list__head-date {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hm-text-muted);
+}
+
+.waste-list__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Raster: Tonnenart links, Datum rechtsbündig in eigener Spalte.
+.waste-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--hm-space-3);
+  min-height: 40px;
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.waste-list__type {
+  font-size: var(--hm-text-md);
+  overflow-wrap: anywhere;
+}
+
+// Daten in Monospace mit tabellarischen Ziffern — die Spalte bleibt ruhig.
+.waste-list__date {
+  justify-self: end;
+  font-family: var(--hm-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text);
+}
+
+// Schmal: die Terminzeile stapelt — Tonnenart in Zeile 1, Datum in Zeile 2.
+@media (max-width: 767px) {
+  .waste-list__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hm-space-1);
+    padding: var(--hm-space-2) 0;
+  }
+
+  .waste-list__date {
+    justify-self: start;
+    color: var(--hm-text-muted);
+  }
+}

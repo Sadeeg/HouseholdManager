@@ -50,6 +50,9 @@ class SecurityConfigTest {
     private de.householdmanager.application.port.in.MembershipUseCase membershipUseCase;
 
     @MockitoBean
+    private de.householdmanager.application.port.in.WasteCollectionUseCase wasteCollectionUseCase;
+
+    @MockitoBean
     private de.householdmanager.application.port.in.UserSearchUseCase userSearchUseCase;
 
     @MockitoBean
