@@ -94,6 +94,13 @@ adapters ──► application ──► domain
    Meldung), nicht stillschweigend angewendet. „Label länger als 60 Zeichen
    wird ignoriert" ist ein Fehlerfall, keine Normalisierung — der Wert
    verschwindet sonst ohne jede Spur.
+   **Ebenso: ein technischer Ausfall wird nicht in ein fachlich leeres
+   Ergebnis umgewandelt.** Eine leere Liste bedeutet „es gibt keine
+   Treffer" — sie darf nicht auch „ich konnte niemanden fragen" bedeuten.
+   Der ausgehende Adapter meldet den Ausfall als Fachfehler (mit dem
+   konkreten Grund in der Meldung, ohne interne URLs), der eingehende
+   übersetzt ihn in einen eigenen Status (503 bei Nextcloud, nicht 200 mit
+   leerer Liste).
 10. **DTOs sind Records in `adapters/inbound/rest/dto/`.** Kein DTO als
     verschachteltes Record im Controller, kein DTO im Controller-Ordner
     ohne `dto/`.

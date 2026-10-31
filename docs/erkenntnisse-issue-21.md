@@ -20,7 +20,9 @@ Issue #18 festhalten und die Lehre als Regel überführen.
 - **Nachbesserung:** Der Adapter wirft jetzt `UserDirectoryUnavailableException`
   (Fachfehler im Modell, nach dem Muster von `WasteFeedUnavailableException`),
   der REST-Adapter übersetzt sie in **503** mit dem Titel „Nutzerverzeichnis
-  nicht erreichbar".
+  nicht erreichbar". Die Meldung nennt den konkreten Grund („Nextcloud
+  antwortete mit HTTP 503." bzw. „Die Verbindung ist fehlgeschlagen.") — ohne
+  interne Adresse und ohne Stacktrace.
 - **Lehre:** Ein Adapter darf einen technischen Ausfall nicht in ein
   fachlich gültiges, aber **falsches** Ergebnis umwandeln. „Leere Liste" ist
   eine Aussage über die Welt („es gibt niemanden") — sie darf nicht auch
@@ -34,13 +36,11 @@ Issue #18 festhalten und die Lehre als Regel überführen.
   zu einem Verzeichnisfehler.
 - **Entscheidung:** Für Issue #21 bleibt `findById` unverändert; geändert
   wurde nur der Suchpfad. Der Unterschied ist im Code kommentiert.
-
 ## 2. Überführte Regeln
 
 | Lehre | Regel |
 |---|---|
-| Technischer Ausfall ≠ fachlich leeres Ergebnis | `backend-ports-adapters` — der ausgehende Adapter meldet den Ausfall als Fachfehler; die HTTP-Übersetzung liegt im eingehenden Adapter (hier 503) |
-| Ein Fehler muss benannt werden | `code-review-gate` Kategorie „Fehler/Daten" — der Client muss den Ausfall vom Leerfall unterscheiden können |
+| Technischer Ausfall ≠ fachlich leeres Ergebnis | `backend-ports-adapters` Regel 9 (ergänzt um den Ausfall einer externen Quelle: Fachfehler im ausgehenden Adapter, eigener Status im eingehenden) |
 
 ## 3. Abhängigkeit zu Issue #18
 

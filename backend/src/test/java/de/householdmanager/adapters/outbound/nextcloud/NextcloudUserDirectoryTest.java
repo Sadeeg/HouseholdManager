@@ -97,7 +97,20 @@ class NextcloudUserDirectoryTest {
 
         assertThatThrownBy(() -> directory.search("sascha", 10))
                 .isInstanceOf(UserDirectoryUnavailableException.class)
-                .hasMessageContaining("nicht erreichbar");
+                .hasMessageContaining("nicht erreichbar")
+                .hasMessageContaining("503");
+    }
+
+    @Test
+    void search_namesTheReason_withoutLeakingTheInternalUrl() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=sas")))
+                .andRespond(withStatus(HttpStatus.UNAUTHORIZED));
+
+        assertThatThrownBy(() -> directory.search("sascha", 10))
+                .isInstanceOf(UserDirectoryUnavailableException.class)
+                .hasMessageContaining("401")
+                .hasMessageNotContaining("cloud.example.org");
     }
 
     @Test

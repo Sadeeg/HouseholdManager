@@ -54,11 +54,14 @@ class UserSearchControllerTest {
     @Test
     void search_withUnreachableDirectory_isServiceUnavailable() throws Exception {
         when(userSearchUseCase.searchUsers("car"))
-                .thenThrow(new UserDirectoryUnavailableException("Das Nutzerverzeichnis ist nicht erreichbar."));
+                .thenThrow(new UserDirectoryUnavailableException(
+                        "Das Nutzerverzeichnis ist nicht erreichbar: Nextcloud antwortete mit HTTP 503."));
 
         mockMvc.perform(get("/api/users/search").param("q", "car"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.title").value("Nutzerverzeichnis nicht erreichbar"))
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("nicht erreichbar")));
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("HTTP 503")))
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.is("Nutzerverzeichnis nicht erreichbar"))));
     }
 }
