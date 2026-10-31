@@ -19,6 +19,9 @@ public class WasteCalendar {
     /** Grenze der Spalte {@code household.waste_calendar_url}. */
     public static final int MAX_URL_LENGTH = 500;
 
+    /** Konvention für einen ICS-Link. Sie wird bei der Prüfung auf {@code https://} gesetzt. */
+    private static final String WEBCAL_PREFIX = "webcal://";
+
     /** R5: das Fenster eines Laufs — sechs Wochen ab dem Tag des Laufs. */
     public static final int SYNC_WINDOW_DAYS = 42;
 
@@ -53,20 +56,30 @@ public class WasteCalendar {
      * zulässigen Länge und muss eine http- oder https-Adresse sein. Die
      * Erreichbarkeit wird nicht geprüft (Annahme 4) — ein nicht erreichbarer
      * Entsorger zeigt sich als fehlgeschlagener Lauf.
+     *
+     * <p>{@code webcal://} ist die Konvention für einen ICS-Link: dieselbe Adresse, nur als
+     * Abonnement bezeichnet. Ein Abruf kann sie nicht lesen, deshalb wird sie bei der
+     * Prüfung auf {@code https://} gesetzt — gespeichert und gezeigt wird die tatsächlich
+     * abrufbare Adresse. Andere Schemata bleiben abgelehnt.
      */
     public static String validatedSourceUrl(String raw) {
         String trimmed = raw == null ? "" : raw.trim();
         if (trimmed.isEmpty()) {
             throw new InvalidWasteCalendarUrlException("Die ICS-Adresse fehlt.");
         }
-        if (trimmed.length() > MAX_URL_LENGTH) {
+
+        String normalized = trimmed.startsWith(WEBCAL_PREFIX)
+                ? "https://" + trimmed.substring(WEBCAL_PREFIX.length())
+                : trimmed;
+
+        if (normalized.length() > MAX_URL_LENGTH) {
             throw new InvalidWasteCalendarUrlException(
                     "Die ICS-Adresse darf höchstens " + MAX_URL_LENGTH + " Zeichen lang sein.");
         }
-        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+        if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
             throw new InvalidWasteCalendarUrlException(
                     "Die ICS-Adresse muss mit http:// oder https:// beginnen.");
         }
-        return trimmed;
+        return normalized;
     }
 }

@@ -185,6 +185,26 @@ class HouseholdUseCaseImplTest {
                 .hasMessageContaining("http");
     }
 
+    /**
+     * webcal ist die Konvention für einen ICS-Link — dieselbe Adresse, nur als Abonnement
+     * bezeichnet. Der Abruf kann sie nicht lesen, deshalb wird sie auf https gesetzt und
+     * in dieser Form gespeichert.
+     */
+    @Test
+    void setWasteSource_normalizesWebcalToTheRetrievableUrl() {
+        Household household = household(1L, "Haushalt Müller");
+        when(householdRepository.findById(1L)).thenReturn(Optional.of(household));
+        when(householdRepository.save(any(Household.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Household result = useCase.setWasteSource(ALICE, 1L,
+                "webcal://www.abfalltermine-forchheim.de/Forchheim/Landkreis/Forchheim%20-%20Kersbach/ics"
+                        + "?RESTMUELL=true&BIO=true&YELLOW_SACK=true&PAPER=true");
+
+        assertThat(result.getWasteCalendarUrl()).isEqualTo(
+                "https://www.abfalltermine-forchheim.de/Forchheim/Landkreis/Forchheim%20-%20Kersbach/ics"
+                        + "?RESTMUELL=true&BIO=true&YELLOW_SACK=true&PAPER=true");
+    }
+
     /** Annahme 5: das Entfernen der Quelle lässt die gespeicherten Termine unberührt — hier wird nur das Feld geleert. */
     @Test
     void removeWasteSource_clearsTheFieldOnly() {
