@@ -6,8 +6,10 @@ import static org.mockito.Mockito.verify;
 
 import de.householdmanager.adapters.inbound.scheduler.WasteSyncJob;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
@@ -41,6 +43,19 @@ class ApplicationConfigTest {
         // Der registrierte Lauf ruft den Adapter, nicht eine eigene Umsetzung.
         tasks.getFirst().getRunnable().run();
         verify(job).syncDaily();
+    }
+
+    /**
+     * Der Defekt beim ersten Start: diese Klasse darf keine Bean liefern, die eine
+     * Use Case braucht — sonst schließt sie den Zyklus
+     * ({@code ApplicationConfig → WasteSyncJob → Use Case → ApplicationConfig}).
+     * Die technische Verdrahtung gehört in eigene Config-Klassen.
+     */
+    @Test
+    void providesNoBeansSoNoUseCaseCanDependOnIt() {
+        assertThat(Arrays.stream(ApplicationConfig.class.getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(Bean.class)))
+                .isEmpty();
     }
 
     private static TriggerContext lastRunAt(Instant lastRun) {
