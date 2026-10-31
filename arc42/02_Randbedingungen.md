@@ -12,6 +12,7 @@
 | Sprache Frontend | TypeScript **6** | `frontend/package.json` |
 | Framework Frontend | Angular **22** (standalone, zoneless) | `frontend/package.json` |
 | Testwerkzeuge | JUnit 5 + Mockito + Testcontainers (Backend), Vitest (Frontend) | `backend/pom.xml`, `frontend/package.json` |
+| Abhängigkeit Backend | `org.mnode.ical4j:ical4j` **4.4.0** — iCalendar-Auswertung, ausschließlich im ausgehenden Adapter | `backend/pom.xml`, [ADR 0006](../docs/adr/0006-ical4j-fuer-die-ics-auswertung.md) |
 | Architekturprüfung | ESLint + **Sheriff** (Modulgrenzen) | `frontend/sheriff.config.ts` |
 | Laufzeitumgebung | Docker / Docker Compose | `compose.yml` |
 | Node-Version | ≥ 22.22.3 (24.15+ / 26+) — Angular-CLI-Anforderung | `frontend/README.md` |

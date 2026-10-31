@@ -91,6 +91,7 @@ Farbe erhält. Sie werden nur als Rand und Text von Label-Chips benutzt
 | **Board-Spalte** | Bahn ohne eigene Fläche (nutzt `--hm-bg`), Spalten nur durch 1px `--hm-border` getrennt; Kopf: 12px Mono uppercase `--hm-text-muted` (Name) + Anzahl rechts in Mono, 1px-Linie unten; Spalte ist immer sichtbar, Mindestbreite 0 |
 | **Kanban-Karte** | `--hm-surface`, 1px `--hm-border`, Radius `--hm-radius`, Innenabstand `--hm-space-3`; Titel 14px Sans; Meta-Zeilen 12–13px Mono/Sans `--hm-text-muted`; Karten **nicht** klickbar (Drag-Fläche), Aktionen als explizite Buttons; Status wird **nicht** über Farbe angezeigt, DONE-Titel in `--hm-text-muted` |
 | **Label-Chip** | Radius `--hm-radius-sm`, 12px Mono, **nicht** uppercase (Namen sind Nutzereingaben), Text `var(--hm-label-n)`, Rand 1px `color-mix(… 45 %)`, keine Füllfläche; Entfernen als `×`-Button am Chip |
+| **Zeichenlänge (Eingabe)** | 12px Mono (`--hm-text-xs`) rechtsbündig unter dem Eingabefeld, Zählform „128 / 500"; ab 90 % der Grenze in `--hm-warning`, über der Grenze in `--hm-danger`; die Grenze steht zusätzlich in der Fehlermeldung am Feld |
 | **Drag-Zustände** | Vorschau: Karte mit 1px `--hm-border-strong` + `--hm-shadow` (echte Ebene), Original Deckkraft 0.35; Einrück-Platzhalter: 1px gestrichelt `--hm-border-strong`, Radius `--hm-radius`; Ziel-Bahn: 1px `--hm-accent-line`; Speichern läuft: Mono-Zeile „Wird gespeichert …" `--hm-text-muted`, Karte nicht erneut greifbar; Übergänge ≤ `--hm-duration` |
 
 ## Zustände (Pflicht für jedes interaktive Element)

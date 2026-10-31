@@ -51,9 +51,26 @@
 | `DB_URL` | `jdbc:postgresql://localhost:5432/householdmanager` | Datenbankverbindung |
 | `DB_USER` / `DB_PASSWORD` | `household` / `household` | Zugangsdaten (Dev) |
 | `SPRING_PROFILES_ACTIVE` | — | `local` schaltet Dev Services frei |
+| `HOUSEHOLDMANAGER_WASTE_SYNC_CRON` | `0 0 3 * * *` | Tageslauf des Müllkalenders (Zeitzone `Europe/Berlin`) — ADR 0005 |
+| `HOUSEHOLDMANAGER_WASTE_FEED_TIMEOUT` | 5 s | Zeitlimit für den Abruf einer ICS-Quelle (auch im Sofort-Sync, ADR 0005) |
+
+## Ausgehende Verbindungen (Egress)
+
+Der Backend-Container braucht ausgehenden Netzzugriff: er ruft die
+ICS-Quelle des Entsorgers ab (`GET`, HTTPS). Es kommen **keine** neuen
+Container, **keine** neuen Ports und **keine** neuen Abhängigkeiten dazu —
+der Abruf läuft über den vorhandenen `RestClient` (ADR 0005, ADR 0006).
+
+Ein Container-Image muss das Zertifikat des Entsorgers vertrauen; in der
+Entwicklungsumgebung genügt das System-Truststore des Basis-Images.
 
 ## Betrieb
 
-> **Offen:** Release-Ablauf (Versions-Bump, Tag, Image-Publish, Rollback)
-> ist noch nicht festgelegt — siehe `AGENTS.md` → Release. Health-Check über
-> `/actuator/health` ist vorhanden.
+Der **Release-Ablauf ist festgelegt** — siehe `AGENTS.md` → Release:
+Versions-Bump in `backend/pom.xml` und `frontend/package.json`, Tag
+`v<version>`, Bau der Images `householdmanager-backend` und
+`householdmanager-frontend` über `docker compose -f compose.yml build`, Deploy
+mit `docker compose up -d --build`, Rollback über den vorherigen Tag. Ein
+**Publish in eine Container-Registry ist nicht eingerichtet** — die Images
+werden auf dem Zielsystem gebaut. Health-Check über `/actuator/health` ist
+vorhanden.

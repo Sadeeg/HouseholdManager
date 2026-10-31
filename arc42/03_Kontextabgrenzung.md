@@ -11,9 +11,15 @@ Ausgaben, Termine) gehört zu genau einem Haushalt.
 | Context | Inhalt | Reife |
 |---------|--------|-------|
 | **Haushalt** | Anlegen und Anzeigen von Haushalten; Ernennen und Entfernen von Mitgliedern durch die Haushaltsleitung (Issue #1) | in Arbeit (Issue #1) |
-| Aufgabe | Aufgaben-Board TODO/DOING/DONE mit Labels, Fristen, Zuweisungen je Haushalt (Issue #1) | entworfen (Issue #1), nicht implementiert |
+| Aufgabe | Aufgaben-Board TODO/DOING/DONE mit Labels, Friften, Zuweisungen je Haushalt (Issue #1) | entworfen (Issue #1), nicht implementiert |
+| **Müllkalender** | Read-only-Projektion der Abholtermine eines Haushalts aus einer externen ICS-Quelle: Quelle je Haushalt, täglicher Abruf, Sechs-Wochen-Fenster, Stand (Issue #10) | in Arbeit (Issue #10) |
 | Ausgabe | Ausgaben, Kategorien, Belege | geplant |
 | Termin | Termine, Wiederholungen | geplant |
+
+Der **Müllkalender** ist **kein** Termin-Context: er bildet keinen
+Abfallkalender im Haus ab — keine manuell gepflegten Termine, keine
+Sonderleerungen, keine Aufgaben, keine Ausgaben (Out of Scope in Issue #10).
+Der geplante Context *Termin* bleibt davon getrennt.
 
 Die Contexts sind über den **Haushalt** verbunden. Spätere Contexts
 (Finanzen, Einkauf) greifen nicht direkt auf die Daten anderer Contexts zu,
@@ -30,6 +36,12 @@ Issue #1 konkretisiert das: der Aufgaben-Kontext fragt die Mitgliedschaft
 | PostgreSQL 17 | ↔ | Persistenz | vorhanden |
 | Docker-Host | ← | Betrieb der Container | vorhanden |
 | Nextcloud | ↔ | Identity Provider (OIDC) **und** Nutzerverzeichnis (OCS) — Identitätsquelle für Mitglieder-Ernennung und Aufgaben-Zuweisung | vorhanden (`NextcloudUserDirectory`) |
+| Entsorger (ICS-Feed) | ausgehend (Abruf) | Abholtermine des Haushalts als ICS (`VCALENDAR`/`VEVENT`); nur gelesen, keine Antwort des Systems | vorgesehen (`IcsWasteCalendarFeed`, Issue #10) |
+
+Die Abhängigkeit zum Entsorger ist **einseitig**: das System ruft ab, der
+Entsorger weiß nichts vom HouseholdManager. Die Quelle gehört zum einzelnen
+Haushalt; die Termine zweier Haushalte werden nie zusammengeführt (Annahme 3
+in Issue #10).
 
 > **Offen:** Schnittstellen zu Bank, Lieferanten oder Kalenderdiensten —
 > erst mit dem passenden Epic zu spezifizieren.

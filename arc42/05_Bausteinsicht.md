@@ -152,3 +152,50 @@ Drag-Fehlerpfad AC19).
 > **Offen:** Anzeigename der Zugewiesenen: Live-Auflösung über
 > `UserDirectory` (Verzeichnisabhängigkeit je Request) oder Namens-Snapshot
 > bei Zuweisung — Entscheidung in Runde 3.
+
+## Zielbild: Müllkalender (Issue #10)
+
+Neuer Fach-Kontext **Müllkalender**: er projiziert die Abholtermine eines
+Haushalts aus einer externen ICS-Quelle. Der Context ist **lesend** — er erzeugt
+keine Aufgaben, keine Ausgaben und keine Benachrichtigungen (AC7).
+
+### Backend
+
+| Baustein (Ziel) | Schicht | Anmerkung |
+|-----------|-------|-----------|
+| `WasteCollection` (Termin: `wasteType`, `date` als `LocalDate`, `sourceUid`), `WasteEvent` (Ereignis aus der Quelle), `WasteCalendar` (`MAX_URL_LENGTH = 500`, Fensterkonstante 42 Tage), `WasteFeedUnavailableException`, `InvalidWasteCalendarUrlException` | `domain/model` | framework-frei; ein Termin ist **ganztägig** (R12) und trägt nie eine Uhrzeit — auch ein Ereignis mit Uhrzeit wird auf seinen Kalendertag abgebildet |
+| `WasteCollectionUseCase` (`overview`, `setSource`, `removeSource`, `syncHousehold`, `syncAllHouseholds`) | `application/port/in` | Ein Use Case für geplanten und sofortigen Lauf (ADR 0005); die Mitgliedschaft wird **zuerst** über `MembershipUseCase` geprüft (R1/R2) |
+| `WasteCalendarFeed` (`fetch(sourceUrl, from, to)` → `List<WasteEvent>`), `WasteCollectionRepository`, `WasteSyncStateRepository` | `application/port/out` | Der Port bleibt **bibliotheksfrei**; das Fenster `[from, to]` gibt der Use Case vor — eine Quelle der Wahrheit (`WasteCalendar.WINDOW_DAYS = 42`). Der Feed-Port wirft `WasteFeedUnavailableException` bei Timeout/nicht lesbarem Feed; eine **leere** Liste ist ein gültiges Ergebnis (Leerfall R8) und kein Fehler |
+| `WasteCollectionUseCaseImpl` | `application/usecase` | orchestriert: Quelle lesen → Feed abrufen → Fenster filtern → Bestand ersetzen → Stand fortschreiben; `@Transactional` je Haushalt; Fehler je Haushalt isoliert (ein Lauf bricht nicht ab) |
+| `HouseholdUseCase` — **Erweiterung**: `Optional<String> wasteCalendarUrl(long householdId)`, `void updateWasteCalendarUrl(long householdId, String url)`, `List<Long> householdIdsWithWasteCalendar()` | `application/port/in` (Haushalt-Kontext) | Die einzige Verbindung zum Haushalt-Kontext — **einseitig**: Müllkalender → Haushalt, nie umgekehrt (ADR 0003). Der Haushalt-Kontext trägt die Adresse als untypisiertes Attribut und kennt keine Müllkalender-Regeln |
+| `WasteCollectionController` (`api/households/{householdId}/waste`): `GET` Übersicht, `PUT …/waste/source`, `DELETE …/waste/source` | `adapters/inbound/rest` | DTO-Records in `dto/`; Fehler über `GlobalExceptionHandler` (400/403/404). `PUT` ruft **zwei Use Cases** nacheinander auf: Quelle speichern (Transaktion 1), dann Haushalt synchronisieren (Transaktion 2, 5-s-Grenze) — kein Ereignis, kein Listener, kein `@Async` (ADR 0005) |
+| `WasteSyncJob` (`@Scheduled`) | `adapters/inbound/scheduler` | **neue** Art von eingehendem Adapter: löst genau einen Use Case aus, enthält keine Fachlogik (ADR 0005) |
+| `IcsWasteCalendarFeed` (HTTP via `RestClient`, Timeout 5 s) + **ical4j 4.4.0** (`CalendarBuilder` → `Calendar`/`VEvent`) | `adapters/outbound/ics` | Muster des `RestClient`-Einsatzes aus `NextcloudUserDirectory`; die Bibliothek endet an der Adaptergrenze — `port/out/WasteCalendarFeed` bleibt **bibliotheksfrei** (ADR 0006); der Adapter übersetzt in `WasteEvent`; Formatfehler ≠ leere Quelle. **Tolerant:** Ereignis mit Uhrzeit → Kalendertag in Europe/Berlin; `RRULE` → auf das Fenster expandiert; Ereignis ohne verwendbares Startdatum → ignoriert |
+| `WasteCollectionJpaEntity` (`waste_collection`), `WasteSyncStateJpaEntity` (`waste_sync_state`) + Adapter, `HouseholdJpaEntity`/`HouseholdRepositoryAdapter` — **Erweiterung** um `waste_calendar_url` | `adapters/outbound/persistence` | Mapping im Adapter; die Spalte am Haushalt trägt nur die Adresse, der Stand gehört dem Müllkalender-Kontext |
+| Migration `V5__waste_collection.sql`: Spalte `household.waste_calendar_url VARCHAR(500) NULL`, Tabelle `waste_collection` (Termine), Tabelle `waste_sync_state` (Stand je Haushalt) | `db/migration` | V1–V4 bleiben unverändert; `ddl-auto: validate` verlangt Übereinstimmung |
+
+**Festgelegt (Issue #10):** Der Stand liegt in der eigenen Tabelle
+`waste_sync_state` (`household_id` Primärschlüssel, `last_synced_at`,
+`last_attempt_at`). Das Issue nennt im Begriffsverzeichnis noch
+`waste_collection.last_synced_at` — der Stand gehört **nicht** zum Termin,
+sondern zum Lauf des Haushalts, und wird nicht je Termin gespeichert.
+„Veraltet" (R13/AC20) heißt: `last_attempt_at` ist später als `last_synced_at`
+— also ist seit dem letzten erfolgreichen Lauf ein Lauf **fehlgeschlagen**.
+
+### Frontend
+
+| Baustein (Ziel) | Schicht | Anmerkung |
+|-----------|-------|-----------|
+| `features/waste/` — `routes.ts`, `waste-page.ts`/`.html`, `model/waste-collection.model.ts`, `data/waste-api.ts` + `data/waste-data.ts` (`httpResource`, **route-scoped**), `ui/waste-source-panel.ts`, `ui/waste-collection-list.ts` | Feature | folgt dem Workspace (R11/AC17) wie die Aufgaben-Tafel; Lesezugriff über `httpResource`, Schreiben über `HttpClient` |
+| `features/households/ui/waste-calendar-section.ts` + Bereich „MÜLLKALENDER" in `households-page` | Feature *Haushalte* | pflegt die Adresse inline (kein Dialog); das Feature darf das Feature *Müllkalender* **nicht** importieren (Sheriff-Regel 1) — es nutzt sein eigenes Modell |
+| `core/` — Navigationspunkt „MÜLLTERMINE" in `app.html`/`app.ts`, Route `muelltermine` in `app.routes.ts` | core | sichtbar nur mit gewähltem Haushalt (wie „AUFGABEN") |
+| `sheriff.config.ts` — Modulgruppe `domain:waste` | core | Grenzen des neuen Features maschinell prüfen |
+| `Household`-Modell (Frontend) — **Erweiterung** um `wasteCalendarUrl` | Feature *Haushalte* | die Quelle steht im Haushaltseintrag; kein eigener Ladezustand im Bereich |
+
+**Geplant (Tests):** `WasteCollectionUseCaseImplTest` (ohne Spring, `Clock` fest:
+Fenster 42 Tage, Bestand ersetzen, Fehler → Bestand bleibt, Leerfall → Bestand
+geleert), `IcsWasteCalendarFeedTest` (Adapter mit ical4j: Ganztagsdatum,
+unveränderte Tonnenart, unbekannte Art, unlesbares Dokument),
+`WasteCollectionRepositoryAdapterTest` (`@DataJpaTest` + Testcontainers),
+`WasteCollectionControllerTest` (`@WebMvcTest`), `WasteSyncJobTest`,
+`waste-page.spec.ts`, `waste-calendar-section.spec.ts`.

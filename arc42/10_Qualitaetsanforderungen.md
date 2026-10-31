@@ -16,6 +16,10 @@
 | Q10 | Ein Feature gilt als fertig | Zwei unabhängige Gates (`OK` + `PASS`) liegen vor; Urteile kommen von Subagenten | hoch | `/review`, `/abnahme` |
 
 | Q11 | Eine Person bedient das Board ohne Maus oder ohne Farbwahrnehmung | Jeder Bahnwechsel hat ein Tastatur-Äquivalent; Status und Kennzeichnungen stehen als Text da, nie nur als Farbe | hoch | Issue #1 `## UX` (Barrierefreiheit), AC1/AC13/AC22 |
+| Q12 | Der Entsorger ist nicht erreichbar oder liefert kein ICS | Keine gespeicherten Termine gehen verloren; die Anzeige weist den Stand als **veraltet** aus; der Tageslauf bricht nicht ab | hoch | Issue #10 R7/R13, AC6 — `WasteCollectionUseCaseImplTest`, `IcsWasteCalendarFeedTest` |
+| Q13 | Der Entsorger führt eine neue Tonnenart ein | Sie erscheint in der Liste, ohne dass Code geändert werden muss | mittel | Issue #10 AC19 — `IcsWasteCalendarFeedTest` (Adapter, ical4j) |
+| Q14 | Der Tageslauf wird geprüft | Der Test läuft ohne Wartezeit, ohne Netz und ohne Datenbank — die Zeit ist eine `Clock`, der Job ein dünner Adapter | hoch | Issue #10 R4 — `WasteCollectionUseCaseImplTest`, `WasteSyncJobTest` |
+| Q15 | Die Anwendung startet, obwohl keine Quelle erreichbar ist | Der Start ist unauffällig; der Fehler erscheint erst im Lauf, je Haushalt protokolliert | mittel | Issue #10 — `WasteSyncJobTest` |
 
 ## Nicht-funktionale Anforderungen
 
@@ -27,6 +31,8 @@
 | Wartbarkeit | Änderungen an der Fachlogik ohne Frontend-Änderung | durch Schichtregeln angestrebt |
 | Nachvollziehbarkeit | Entscheidungen als ADR, Anforderungen als Issue | vollständig |
 | Bedienbarkeit | Ein Feature ohne Einarbeitung nutzbar | pro Feature zu prüfen (Abnahme) |
+| Aktualität | Der Stand weist Veraltung **aus**, statt stillschweigend veraltete Daten zu zeigen; die Oberfläche leitet die Veraltung nicht aus dem Zeitstempel ab | umgesetzt (R13/AC20) — das Veraltet-Flag kommt vom Server |
+| Fremdformat | Das ICS-Format bleibt im ausgehenden Adapter; die Anwendung kennt keine Fremdbibliothek und kein Fremdformat | umgesetzt (ADR 0006) |
 
 > **Offen:** Prioritäten bestätigen, Schwellenwerte für Performance und
 > Verfügbarkeit festlegen.

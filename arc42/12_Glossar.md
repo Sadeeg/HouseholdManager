@@ -16,6 +16,12 @@ trägt der ARC-Agent hier ein.
 | **Workspace (der App)** | Der auf App-Ebene gewählte Haushalt; alle Ansichten zeigen ausschließlich dessen Daten. |
 | **Ausgabe** | Geldbetrag in einem Haushalt, optional mit Kategorie und Beleg (späterer Context). |
 | **Termin** | Zeitpunkt mit Beschreibung, ggf. wiederkehrend (späterer Context). |
+| **Müllkalender** | Die hinterlegte ICS-Quelle eines Haushalts samt der daraus abgeleiteten Abholtermine; je Haushalt gilt höchstens eine Quelle, sie ist optional (Issue #10). |
+| **Quelle** | Die Adresse des ICS-Feeds, aus der die Termine eines Haushalts gelesen werden (`household.waste_calendar_url`). |
+| **Mülltermin** | Ein ganztägiger Abholtermin aus der Quelle: Tonnenart (`SUMMARY`) und Datum (`DTSTART`) — ohne Uhrzeit, unverändert übernommen. |
+| **Sechs-Wochen-Fenster** | Die 42 Tage ab dem Tag des Laufs, für die Termine gespeichert werden (R5). |
+| **Stand** | Der Zeitpunkt des letzten **erfolgreichen** Synchronisationslaufs eines Haushalts (`waste_sync_state.last_synced_at`); ohne solchen Lauf: „Noch keine Synchronisation". |
+| **Veraltet** | Der Zustand, in dem seit dem letzten erfolgreichen Lauf ein Lauf fehlgeschlagen ist: die gespeicherten Termine bleiben sichtbar, der Stand wird als veraltet ausgewiesen (R13). |
 | **Invariante** | Fachregel, die immer gilt (z. B. Name nicht leer, höchstens 120 Zeichen). |
 
 ## Architektur
@@ -41,6 +47,8 @@ trägt der ARC-Agent hier ein.
 | **Testcontainer** | Test mit echter Datenbankinstanz (PostgreSQL 17) statt Mock — für den ausgehenden Adapter. |
 | **Dev Services** | Boot-4-Funktion: Spring Boot startet die Compose-Datei selbst — im Projekt nur im Profil `local` aktiv. |
 | **Vertikaler Schnitt** | Feature als durchgehender Schnitt von der Oberfläche bis zur Persistenz. |
+| **Scheduler (eingehender Adapter)** | Zeitgesteuerter Auslöser in `adapters/inbound/scheduler/` — er ruft genau einen Use Case auf und enthält keine Fachlogik (ADR 0005). |
+| **ICS** | Das Austauschformat der Abholtermine (iCalendar): `VCALENDAR` mit `VEVENT`-Ereignissen; ausgewertet wird es mit `ical4j` **im ausgehenden Adapter** — die Anwendung kennt das Format nicht (ADR 0006). |
 
 ## Prozess
 
