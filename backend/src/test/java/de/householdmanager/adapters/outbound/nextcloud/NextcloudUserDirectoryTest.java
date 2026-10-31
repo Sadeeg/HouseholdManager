@@ -127,6 +127,36 @@ class NextcloudUserDirectoryTest {
                 .hasMessageNotContaining("cloud.example.org");
     }
 
+    /**
+     * AC3 (tiefste Ebene): Das Verzeichnis ist erreichbar, es gibt nur keine
+     * Treffer. Nextcloud antwortet dann mit HTTP 200 und leerer Trefferliste —
+     * das ist ein fachlich leeres Ergebnis, kein Ausfall. Der Unterschied zum
+     * Ausfall muss hier schon sichtbar sein, sonst ist er an der Grenze
+     * „leere Liste vs. Fehler" nicht mehr prüfbar.
+     */
+    @Test
+    void search_returnsAnEmptyResult_whenTheDirectoryIsReachableButHasNoMatches() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=zzz")))
+                .andRespond(withSuccess("""
+                        {"ocs":{"meta":{"status":"ok","statuscode":200},"data":{"users":[]}}}""",
+                        MediaType.APPLICATION_JSON));
+
+        assertThat(directory.search("zzz", 10)).isEmpty();
+    }
+
+    /**
+     * Out of Scope von Issue #21: {@code findById} bleibt tolerant — ein nicht
+     * ladbarer Einzelnutzer bedeutet „unbekannt", nicht Verzeichnisfehler.
+     */
+    @Test
+    void findById_staysTolerant_whenTheDirectoryIsUnavailable() {
+        server.expect(requestTo("https://cloud.example.org/ocs/v2.php/cloud/users/sascha"))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThat(directory.findById("sascha")).isEmpty();
+    }
+
     @Test
     void directory_isDisabled_withoutCredentials() {
         NextcloudUserDirectory disabled = new NextcloudUserDirectory(
