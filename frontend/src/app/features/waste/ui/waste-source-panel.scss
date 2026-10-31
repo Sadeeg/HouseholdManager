@@ -1,5 +1,5 @@
 .waste-source-panel {
-  padding: var(--hm-space-3);
+  padding: var(--hm-space-4);
   border: 1px solid var(--hm-border);
   border-radius: var(--hm-radius);
   background: var(--hm-surface);
@@ -19,15 +19,16 @@
   margin: 0;
 }
 
+// Zwei Spalten: Präfix links, Wert rechtsbündig (Desktop).
 .waste-source-panel__row {
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
   align-items: center;
   gap: var(--hm-space-3);
   min-height: 40px;
 }
 
 .waste-source-panel__label {
-  flex: 0 0 auto;
   font-size: var(--hm-text-sm);
   color: var(--hm-text-muted);
 }
@@ -38,8 +39,10 @@
   margin: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--hm-space-3);
   flex-wrap: wrap;
+  min-width: 0;
   font-family: var(--hm-font-mono);
   font-variant-numeric: tabular-nums;
   font-size: var(--hm-text-sm);
@@ -47,11 +50,31 @@
   overflow-wrap: anywhere;
 }
 
+.waste-source-panel__source--none,
+.waste-source-panel__stand--none {
+  color: var(--hm-text-muted);
+}
+
 .waste-source-panel__stand {
   font-family: var(--hm-font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-.waste-source-panel__stand--none {
+// Der veraltete Stand trägt Text, nicht nur Farbe.
+.waste-source-panel__status {
+  margin: var(--hm-space-2) 0 0;
+  font-size: var(--hm-text-sm);
   color: var(--hm-text-muted);
+}
+
+// Schmal: einspaltig — Präfix über Wert, linksbündig.
+@media (max-width: 767px) {
+  .waste-source-panel__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hm-space-1);
+  }
+
+  .waste-source-panel__value {
+    justify-content: flex-start;
+  }
 }

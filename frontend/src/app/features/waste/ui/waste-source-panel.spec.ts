@@ -10,7 +10,7 @@ import { WasteSourcePanel } from './waste-source-panel';
 function standInLocalTime(iso: string): string {
   const when = new Date(iso);
   const two = (value: number): string => String(value).padStart(2, '0');
-  return `${two(when.getDate())}.${two(when.getMonth() + 1)}.${when.getFullYear()} ${two(when.getHours())}:${two(when.getMinutes())}`;
+  return `${two(when.getDate())}.${two(when.getMonth() + 1)}.${when.getFullYear()}, ${two(when.getHours())}:${two(when.getMinutes())}`;
 }
 
 /**

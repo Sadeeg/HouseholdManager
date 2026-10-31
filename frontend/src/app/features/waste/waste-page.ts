@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { WorkspaceService } from '../../core/workspace/workspace-service';
@@ -22,7 +22,7 @@ import { WasteSourcePanel } from './ui/waste-source-panel';
   styleUrl: './waste-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WastePage {
+export class WastePage implements OnInit {
   protected readonly wasteData = inject(WasteData);
   protected readonly workspace = inject(WorkspaceService);
 
@@ -50,5 +50,10 @@ export class WastePage {
 
   protected retry(): void {
     this.wasteData.reload();
+  }
+
+  /** Beim erneuten Betreten der Seite wird der Stand neu gelesen (R6). */
+  ngOnInit(): void {
+    this.wasteData.onEnter();
   }
 }

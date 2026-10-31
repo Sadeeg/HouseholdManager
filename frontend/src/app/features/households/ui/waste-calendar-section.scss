@@ -5,6 +5,30 @@
   border-radius: var(--hm-radius);
 }
 
+// Die gespeicherte Adresse steht über dem Formular — im Monospace wie alle
+// Datenwerte, lange Adressen brechen mit `overflow-wrap: anywhere`.
+.waste-calendar__source {
+  margin: 0 0 var(--hm-space-3);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text);
+  overflow-wrap: anywhere;
+}
+
+.waste-calendar__source-prefix {
+  color: var(--hm-text-muted);
+}
+
+.waste-calendar__source-value--none {
+  color: var(--hm-text-muted);
+}
+
+.waste-calendar__hint {
+  margin: var(--hm-space-1) 0 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
+
 .waste-calendar__field {
   label {
     display: block;
@@ -54,4 +78,18 @@
 
 .waste-calendar__remove:hover:not(:disabled) {
   color: var(--hm-danger);
+}
+
+// Schmal: die Aktionen stehen untereinander — kein rechtsbündiges Verschieben,
+// das den Text verdeckt.
+@media (max-width: 767px) {
+  .waste-calendar__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .waste-calendar__remove {
+    margin-left: 0;
+    align-self: flex-start;
+  }
 }

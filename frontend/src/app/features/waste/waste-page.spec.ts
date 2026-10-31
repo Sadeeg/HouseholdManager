@@ -63,16 +63,16 @@ describe('WastePage', () => {
     expect(fixture.nativeElement.querySelector('app-waste-collection-list')).toBeNull();
   });
 
-  /** AC14: ohne Quelle nennt die Seite, dass jedes Mitglied eine Adresse eintragen kann. */
+  /** AC15: ohne Quelle nennt die Seite, dass jedes Mitglied eine Adresse eintragen kann. */
   it('says that any member can enter a source', async () => {
     const compiled = await open({ sourceUrl: null, lastSyncedAt: null, stale: false, collections: [] });
 
     expect(compiled.textContent).toContain('Kein Müllkalender hinterlegt');
     expect(compiled.textContent).toContain('Jedes Mitglied');
-    expect(compiled.textContent).toContain('500');
+    expect(compiled.textContent).toContain('Haushaltsverwaltung');
   });
 
-  /** AC15: Quelle vorhanden, kein Termin im Fenster. */
+  /** AC14: Quelle vorhanden, kein Termin im Fenster. */
   it('names the six-week window when there are no terms', async () => {
     const compiled = await open({
       sourceUrl: 'https://entsorger.example/ics',
@@ -97,7 +97,7 @@ describe('WastePage', () => {
     expect(compiled.querySelector('.hm-badge--warning')).toBeNull();
   });
 
-  /** AC17: nicht lesbare Quelle — die gespeicherten Termine bleiben sichtbar. */
+  /** AC6: nicht lesbare Quelle — die gespeicherten Termine bleiben sichtbar, der Stand gilt als veraltet. */
   it('keeps stored terms and marks the stand stale', async () => {
     const compiled = await open({
       sourceUrl: 'https://entsorger.example/ics',
@@ -111,7 +111,7 @@ describe('WastePage', () => {
   });
 
   /** R11: die Seite folgt dem gewählten Haushalt. */
-  it('follows the active household (AC13)', async () => {
+  it('follows the active household (AC17)', async () => {
     const fixture = TestBed.createComponent(WastePage);
     fixture.detectChanges();
     httpMock.expectOne('/api/households/1/waste').flush({
@@ -142,7 +142,7 @@ describe('WastePage', () => {
     const fixture = TestBed.createComponent(WastePage);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Mülltermine werden geladen');
+    expect(fixture.nativeElement.textContent).toContain('Termine werden geladen');
 
     // Der Request wird geschlossen, damit der Test keine offene Anfrage hinterlässt.
     httpMock.expectOne('/api/households/1/waste').flush({

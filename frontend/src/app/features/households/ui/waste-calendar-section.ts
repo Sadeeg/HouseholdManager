@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
-import { FormField, form, maxLength, required, submit } from '@angular/forms/signals';
+import { FormField, disabled, form, maxLengthError, required, submit, validate } from '@angular/forms/signals';
 
 import { WASTE_URL_MAX_LENGTH, WASTE_URL_WARN_LENGTH } from '../model/household.model';
 
@@ -45,8 +45,28 @@ export class WasteCalendarSection {
 
   protected readonly urlForm = form(this.model, (schema) => {
     required(schema.url, { message: 'Die ICS-Adresse fehlt.' });
-    maxLength(schema.url, WASTE_URL_MAX_LENGTH, {
-      message: `Die ICS-Adresse darf höchstens ${WASTE_URL_MAX_LENGTH} Zeichen lang sein.`,
+
+    // Während des Speicherns ist das Feld gesperrt (UX-Zustandstabelle) —
+    // die Logik liegt im Schema, das Feld selbst bindet nichts an `disabled`.
+    disabled(schema.url, { when: () => this.saving() });
+
+    // Bewusst ein eigener Validator statt `maxLength()`: der Validator von
+    // Angular spiegelt sich als natives `maxlength`-Attribut in das Feld. Der
+    // Browser würde eine zu lange Adresse dann still abschneiden — die Grenze
+    // bliebe unsichtbar und die abgeschnittene Adresse würde gespeichert. Die
+    // Grenze muss sichtbar werden (R18, `## UX`).
+    validate(schema.url, (ctx) => {
+      const value = ctx.value();
+      // Getrimmt gemessen — gespeichert wird der getrimmte Wert, also zählt
+      // auch die Grenze den getrimmten Text (Zähler und Speichern-Aktion
+      // messen genauso).
+      const length = typeof value === 'string' ? value.trim().length : 0;
+      if (length <= WASTE_URL_MAX_LENGTH) {
+        return undefined;
+      }
+      return maxLengthError(WASTE_URL_MAX_LENGTH, {
+        message: `Die ICS-Adresse darf höchstens ${WASTE_URL_MAX_LENGTH} Zeichen lang sein.`,
+      });
     });
   });
 
@@ -72,14 +92,23 @@ export class WasteCalendarSection {
     return 'normal';
   });
 
+  /** Weicht die Eingabe von der gespeicherten Adresse ab? */
+  protected readonly changed = computed(() => this.model().url.trim() !== (this.savedUrl() ?? ''));
+
   /** Speichern gibt es nur für eine geänderte, nicht leere, nicht zu lange Adresse. */
   protected readonly canSave = computed(
-    () =>
-      this.length() > 0 &&
-      this.length() <= WASTE_URL_MAX_LENGTH &&
-      this.model().url.trim() !== (this.savedUrl() ?? '') &&
-      !this.saving(),
+    () => this.length() > 0 && this.length() <= WASTE_URL_MAX_LENGTH && this.changed() && !this.saving(),
   );
+
+  /**
+   * ARIA-Zuordnung am Feld: der Feldhinweis immer, der Feldfehler nur, wenn
+   * er sichtbar ist. Ein Verweis auf eine nicht existierende ID wäre wertlos.
+   */
+  protected readonly describedBy = computed(() => {
+    const hint = `waste-url-${this.householdId()}-hint`;
+    const error = `waste-url-${this.householdId()}-error`;
+    return this.urlForm.url().invalid() && this.urlForm.url().touched() ? `${hint} ${error}` : hint;
+  });
 
   protected save(): void {
     submit(this.urlForm, async () => {

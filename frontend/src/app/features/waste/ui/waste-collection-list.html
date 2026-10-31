@@ -5,7 +5,7 @@
   </div>
 
   @if (terms().length > 0) {
-    <ul class="waste-list__items">
+    <ul class="waste-list__items" aria-label="Mülltermine">
       @for (term of terms(); track term.date + term.wasteType) {
         <li class="waste-list__row">
           <span class="waste-list__type">{{ term.wasteType }}</span>

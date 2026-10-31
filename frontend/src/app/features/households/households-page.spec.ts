@@ -262,4 +262,63 @@ describe('HouseholdsPage', () => {
     expect(compiled.textContent).toContain('Müllkalender gespeichert');
     expect(section.querySelector('input')!.value).toBe('https://entsorger.example/anderer.ics');
   });
+
+  /**
+   * Das Entfernen der Quelle braucht die Bestätigung: erst der Dialog, dann der
+   * Löschauftrag. Vor der Bestätigung geht kein DELETE raus (AC23).
+   */
+  it('removes the source only after the confirmation', async () => {
+    const workspace = TestBed.inject(WorkspaceService);
+    workspace.currentUser.set({ id: 'alice', displayName: 'Alice Admin' });
+
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      {
+        id: 1,
+        name: 'Haushalt Müller',
+        createdAt: '2026-01-01T00:00:00Z',
+        createdBy: 'alice',
+        wasteCalendarUrl: 'https://entsorger.example/kalender.ics',
+      },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'MÜLLKALENDER')
+      ?.click();
+    fixture.detectChanges();
+
+    const section = compiled.querySelector('app-waste-calendar-section') as HTMLElement;
+    (section.querySelector('.waste-calendar__remove') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    // Der Dialog fragt nach — es geht noch nichts raus.
+    expect(compiled.querySelector('app-confirm-dialog')).not.toBeNull();
+    httpMock.expectNone('/api/households/1/waste/source');
+
+    const confirm = compiled.querySelector('.hm-button--danger') as HTMLButtonElement;
+    confirm.click();
+    fixture.detectChanges();
+
+    const request = httpMock.expectOne('/api/households/1/waste/source');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    await tick(fixture);
+
+    httpMock.expectOne('/api/households').flush([
+      {
+        id: 1,
+        name: 'Haushalt Müller',
+        createdAt: '2026-01-01T00:00:00Z',
+        createdBy: 'alice',
+        wasteCalendarUrl: null,
+      },
+    ]);
+    await tick(fixture);
+
+    expect(compiled.textContent).toContain('Müllkalender entfernt');
+  });
 });

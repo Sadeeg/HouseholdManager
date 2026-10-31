@@ -71,7 +71,7 @@ export class HouseholdsPage {
     if (householdId === null) {
       return '';
     }
-    return 'Die ICS-Adresse wird entfernt. Die bereits gespeicherten Termine bleiben sichtbar, bis ein neuer Lauf sie ersetzt.';
+    return 'Die hinterlegte ICS-Adresse wird entfernt.';
   });
 
   protected isHouseholdAdmin(household: Household): boolean {
@@ -162,7 +162,9 @@ export class HouseholdsPage {
       await this.householdsData.saveWasteSource(householdId, url);
       this.showToast('Müllkalender gespeichert.');
     } catch {
-      this.sourceError.set('Der Müllkalender konnte nicht gespeichert werden.');
+      this.sourceError.set(
+        'Die ICS-Adresse konnte nicht gespeichert werden: Der Dienst ist nicht erreichbar. Deine Eingabe bleibt erhalten.',
+      );
     } finally {
       this.savingSource.set(false);
     }

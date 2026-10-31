@@ -76,6 +76,7 @@
               type="button"
               class="hm-link-action households__waste-action"
               aria-expanded="{{ expandedWasteHouseholdId() === household.id }}"
+              aria-controls="waste-calendar-{{ household.id }}"
               (click)="toggleWasteCalendar(household.id)"
             >
               MÜLLKALENDER
@@ -84,6 +85,7 @@
 
           @if (expandedWasteHouseholdId() === household.id) {
             <app-waste-calendar-section
+              [id]="'waste-calendar-' + household.id"
               [householdId]="household.id"
               [householdName]="household.name"
               [storedUrl]="household.wasteCalendarUrl"
@@ -132,6 +134,7 @@
     <app-confirm-dialog
       title="Müllkalender entfernen"
       [description]="sourceRemoveDescription()"
+      detail="Bis wieder eine Adresse hinterlegt ist, zeigt die Seite „Mülltermine“ den Hinweis „Kein Müllkalender hinterlegt“."
       actionLabel="Entfernen"
       busyLabel="Wird entfernt …"
       [busy]="savingSource()"

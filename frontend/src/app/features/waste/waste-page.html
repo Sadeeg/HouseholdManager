@@ -1,35 +1,49 @@
 <section class="waste">
   <app-page-header
     title="Mülltermine"
-    subtitle="Die Termine der nächsten sechs Wochen aus dem hinterlegten Müllkalender."
+    subtitle="Nächste Abholtermine des aktiven Haushalts."
   />
 
   @if (showNoHousehold()) {
     <p class="state">
-      Kein Haushalt gewählt.
+      Kein Haushalt gewählt. Wähle oben einen Haushalt oder öffne die Haushaltsverwaltung.
       <a class="hm-link-action" routerLink="/haushalte">HAUSHALT WÄHLEN</a>
     </p>
   } @else if (loading()) {
-    <p class="state">Mülltermine werden geladen …</p>
+    <p class="state">Termine werden geladen …</p>
   } @else if (failed()) {
     <p class="state state--error" role="alert">
-      Die Termine konnten nicht geladen werden: Der Dienst ist nicht erreichbar.
+      Die Mülltermine konnten nicht geladen werden. Bitte später erneut versuchen.
       <button type="button" class="hm-link-action" (click)="retry()">ERNEUT VERSUCHEN</button>
     </p>
-  } @else if (showNoSource()) {
-    <p class="state" role="status">
-      Kein Müllkalender hinterlegt. Jedes Mitglied kann die ICS-Adresse des Entsorgers
-      eintragen — im Abschnitt „MÜLLKALENDER" des Haushalts (max. 500 Zeichen).
-    </p>
   } @else {
+    <!--
+      Das Panel steht immer über der Liste — auch ohne hinterlegte Quelle.
+      Der Stand ist die Angabe des Servers zum letzten Lauf; ohne Quelle
+      gibt es keinen Lauf, also „Noch keine Synchronisation" (AC16).
+    -->
     <app-waste-source-panel
       [sourceUrl]="overview.value()?.sourceUrl ?? null"
       [lastSyncedAt]="overview.value()?.lastSyncedAt ?? null"
       [stale]="overview.value()?.stale ?? false"
     />
 
-    @if (showNoTerms()) {
-      <p class="state" role="status">Für die nächsten sechs Wochen liegen keine Termine vor.</p>
+    @if (showNoSource()) {
+      <p class="state" role="status">
+        Kein Müllkalender hinterlegt. Jedes Mitglied kann eine ICS-Adresse im Bereich
+        „Müllkalender" der Haushaltsverwaltung eintragen.
+      </p>
+      <a class="hm-button hm-button--primary state-action" routerLink="/haushalte">
+        Zur Haushaltsverwaltung
+      </a>
+    } @else if (showNoTerms()) {
+      <p class="state" role="status">
+        Für die nächsten sechs Wochen liegen keine Termine vor.
+        Die Quelle liefert für diesen Zeitraum keine Termine.
+      </p>
+      <a class="hm-button hm-button--primary state-action" routerLink="/haushalte">
+        Zur Haushaltsverwaltung
+      </a>
     } @else {
       <app-waste-collection-list [terms]="terms()" />
     }
