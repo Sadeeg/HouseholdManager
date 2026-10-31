@@ -71,6 +71,22 @@ Browserpfad — die UI-Anteile sind nur durch Tests belegt, jsdom kennt keine Ge
 - **Lehre:** Ein neues Feature gehört in die Sheriff-Konfiguration, sonst ist die
   Architekturprüfung für es wirkungslos.
 
+### 1.6 Der Composition Root schloss einen Bean-Zyklus
+
+- **Symptom:** Der Container startete nicht: „The dependencies of some of the beans in the
+  application context form a cycle“ — `ApplicationConfig → WasteSyncJob →
+  HouseholdUseCaseImpl → MembershipUseCaseImpl → ApplicationConfig`.
+- **Ursache:** `ApplicationConfig` war zugleich Verdrahtung der Planung (hängt am
+  Scheduler-Adapter) und Lieferant von Beans, die Use Cases brauchen (`Clock`,
+  `icsRestClient`). Der zweite Weg über den ICS-Adapter war derselbe Fehler.
+- **Nachbesserung:** die Beans liegen in `config/ClockConfig` und `config/IcsClientConfig`;
+  `ApplicationConfig` liefert nichts mehr, sie trägt nur die Cron-Freigabe. Der Start ist
+  grün, 158 Backend-Tests grün.
+- **Lehre:** Ein Composition Root, der selbst von einem Adapter abhängt, darf keine Bean
+  liefern, die eine Use Case braucht. Dieser Fehler ist mit Tests nicht zu finden, solange
+  kein Test den vollen Kontext aufbaut — er zeigt sich erst beim Start. Regel im AGENTS.md
+  (Gotchas) und Guard-Test in `ApplicationConfigTest`.
+
 ---
 
 ## 2. Werkzeug und Umgebung

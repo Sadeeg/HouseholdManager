@@ -396,3 +396,8 @@ starten — ohne baut Docker das zuletzt vorhandene Image nicht neu.
   kommen weiterhin aus `com.fasterxml.jackson.annotation`.
 - **Der OIDC-Principal steckt in `getPrincipal()`**, nicht in der
   `Authentication` selbst.
+- **Der Composition Root liefert keine Beans.** `ApplicationConfig` hängt am
+  Scheduler-Adapter; eine Bean, die eine Use Case braucht (`Clock`, `RestClient`),
+  schließt daraus einen Bean-Zyklus. Technische Verdrahtung liegt in
+  `config/ClockConfig` und `config/IcsClientConfig`. Ohne Test des vollen
+  Kontexts zeigt sich ein Zyklus erst beim Start.
