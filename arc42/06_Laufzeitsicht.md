@@ -42,6 +42,13 @@
    als Aktion verdrahtet.
 ```
 
+**Lebenszyklus der route-scoped Provider:** `provideRouter(routes,
+withAutoCleanupInjectors())` zerstört den Injector einer Route, sobald sie
+verlassen wird. Damit ist ein Feature beim erneuten Betreten eine frische
+Instanz — und `httpResource` liest erneut. Ohne diese Option überlebt die
+Instanz den Wegwechsel, `httpResource` feuert bei unveränderter URL nicht, und
+die Anzeige zeigte den alten Stand (Arc42 09, „Weitere Entscheidungen").
+
 ## Szenario 4 — Aufgaben-Tafel im gewählten Workspace (Issue #1, entworfen)
 
 ```text

@@ -1,13 +1,18 @@
 # Erkenntnisse — Issue #10 „Nächste Mülltermine anzeigen und täglich synchronisieren“
 
 Aufgeschrieben am 31.10.2026, nach Abschluss von Issue #10 (Branch
-`feature/10-muelltermine`, PR offen). Zweck: die Reibung dieses Features festhalten und
+`feature/10-muelltermine`). Zweck: die Reibung dieses Features festhalten und
 die wiederkehrenden Fehler als Regeln überführen.
 
-Belegte Gates: Backend 157 Tests grün · Frontend 16 Dateien / 90 Tests grün · `tsc`,
-`lint`, `sheriff`, Build clean · Architektur-Review **OK** (Round 2, nach Korrektur K1) ·
-Abnahme **PASS**, 23/23 ACs belegt. **Nicht durchgeführt:** Sichtprüfung und manueller
-Browserpfad — die UI-Anteile sind nur durch Tests belegt, jsdom kennt keine Geometrie.
+Belegte Gates (Ende): Backend **177** Tests grün · Frontend **26 Dateien / 115 Tests** grün ·
+`tsc` (app + spec), `lint`, `sheriff`, Build clean · Architektur-Review **OK**
+(0 BLOCKER, 0 MAJOR, 5 MINOR, 1 NIT) · Abnahme **PASS**, 23/23 ACs belegt ·
+Sichtprüfung am laufenden Stack (Nextcloud/OIDC-Anmeldung, 375 px und 1280 px).
+
+Die Abnahme lief fünf Runden; jeder Lauf hat echte Fehler gefunden, die jetzt
+behoben und mit einem roten Regressionstest abgesichert sind. Die Abschnitte
+1.8 bis 1.12 halten diese Fehler fest — sie sind die Regeln mit dem größten
+Wirkungsgrad.
 
 ---
 
@@ -102,33 +107,138 @@ Browserpfad — die UI-Anteile sind nur durch Tests belegt, jsdom kennt keine Ge
   Fachregel — nicht nur der Zeichenanzahl. Was gespeichert wird, muss die tatsächlich
   abrufbare Adresse sein. Regel im Issue #10 nachgetragen (R18).
 
+### 1.8 `maxLength()` wurde zum stillen Abschneiden (MAJOR)
+
+- **Symptom:** Eine zu lange ICS-Adresse wurde **gekürzt und gespeichert** — ohne
+  Fehlermeldung, ohne roten Zustand. Der Nutzer glaubte, die Adresse sei übernommen.
+- **Ursache:** `maxLength()` aus `@angular/forms/signals` spiegelt sich als **natives
+  `maxlength`-Attribut** in das Eingabefeld. Der Browser schneidet den Wert beim Einfügen
+  (Paste!) still ab — die Oberfläche sieht einen gültigen Wert und der Validator greift nie.
+  Der Fehler lag damit **außerhalb** der Anwendung: im Browser.
+- **Nachbesserung:** eigener Validator statt `maxLength()`:
+  `validate(schema.url, …)` mit `maxLengthError(…)` — er prüft den **getrimmten** Text (so
+  messen es auch Zähler und Speichern-Aktion) und erzeugt **kein** `maxlength`-Attribut.
+  Tests: `waste-calendar-section-limit.spec.ts` (Grenze sichtbar), `-native-limit.spec.ts`
+  (kein natives Attribut), `-trim.spec.ts` (getrimmt messen).
+- **Lehre:** Ein Validator, der eine Browser-Fähigkeit spiegelt, ist nicht dasselbe wie eine
+  Prüfung. Wird die Grenze im Browser durchgesetzt, ist sie **unsichtbar** — die Anzeige
+  (Zähler, Fehlermeldung, gesperrter Knopf) ist dann die eigentliche Prüfung.
+
+### 1.9 Die Seite las beim erneuten Betreten nicht neu (MAJOR)
+
+- **Symptom:** Nach dem Speichern einer Quelle zeigte die Seite „Mülltermine" weiterhin den
+  alten Stand. Der Nutzer glaubte, das Speichern habe nicht gewirkt (R6: „die Anzeige zeigt
+  den Stand beim nächsten Aufruf“).
+- **Ursache:** Zwei Ursachen, die zusammenspielten:
+  1. `httpResource` feuert nur, wenn sich die **Request-URL** ändert. Bleibt der Haushalt
+     gleich, kommt kein zweiter Request.
+  2. Der route-scoped Provider überlebt den Wegwechsel — die Route wird nicht zerstört,
+     also bleibt die Instanz mit ihrem alten Ressourcenstand am Leben.
+- **Nachbesserung:** `provideRouter(routes, withAutoCleanupInjectors())` im Composition
+  Root — der Injector der Route wird beim Verlassen zerstört, das Feature ist beim erneuten
+  Betreten eine frische Instanz. Zusätzlich `WasteData.onEnter()` als Sicherung für den
+  Fall, dass eine `RouteReuseStrategy` Handles behält. Belegt: genau **ein** GET je Betreten
+  (`waste-page-reload-production.spec.ts`, Live-Messung über `performance.getEntriesByType`).
+- **Lehre:** „Route-scoped Provider“ heißt nur: gültig, solange die Route aktiv ist. Wer sich
+  darauf verlässt, muss die Zerstörung **einrichten** — sonst lebt der Zustand weiter. Und
+  ein `httpResource` ist kein Abonnement, sondern ein Request bei URL-Änderung.
+
+### 1.10 „Veraltet“ war nach dem ersten Fehlschlag falsch (MAJOR)
+
+- **Symptom:** Nach einem **ersten** fehlgeschlagenen Lauf meldete die Übersicht
+  `stale = false`. Die Anzeigte behauptete einen aktuellen Stand, obwohl es nie einen
+  erfolgreichen Lauf gab.
+- **Ursache:** `WasteCalendar.isStale()` verlangte einen erfolgreichen Lauf
+  (`lastSyncedAt != null`), um überhaupt veraltet sein zu können. „Kein Stand“ war damit
+  gleich „nicht veraltet“.
+- **Nachbesserung:** veraltet, wenn ein Versuch nach dem letzten erfolgreichen Lauf liegt
+  **oder** es (noch) keinen erfolgreichen Lauf gab, aber ein Versuch stattfand. Ohne jeden
+  Versuch bleibt der Stand unveraltet — die Anzeige nennt dann „Noch keine Synchronisation“
+  (R16). Tests: `WasteCalendarStaleTest` (Regeltest im Fachkern),
+  `WasteCollectionFirstRunFailureTest` (Verhalten über die Anwendung), `waste-page-stale.spec.ts`.
+- **Lehre:** Ein Zustand, den die Oberfläche in zwei Varianten zeigt („alter Stand“ und „gar
+  kein Stand“), braucht **zwei** Felder im Modell — nicht ein Boolean, das beide Fälle
+  vermischt. „Fehlgeschlagen“ ist ein eigener Zustand, kein Sonderfall von „erfolgreich“.
+
+### 1.11 Der Leerzustand brauchte die Standzeile (MAJOR)
+
+- **Symptom:** Ohne hinterlegte Quelle fehlte die ganze Anzeige „Quelle und Stand“ — die
+  Zeile „Stand: Noch keine Synchronisation“ kam nicht (AC16).
+- **Ursache:** Die Seite rendert das Panel nur im Zweig „Quelle vorhanden“. Der Leerfall
+  zeigte nur einen Textabsatz.
+- **Nachbesserung:** Das Panel wird **immer** gerendert; Quelle und Stand sind eigene
+  Zustände („Kein Müllkalender hinterlegt“ / „Noch keine Synchronisation“). Zusätzlich die
+  Primäraktion „Zur Haushaltsverwaltung“. Test: `waste-page-no-source.spec.ts`.
+- **Lehre:** Die Zustandstabelle der `## UX` nennt **Kombinationen** von Zuständen. Ein
+  Aufbau, der die Zustände ineinander verschachtelt (`@if` auf dem einen, dann der andere),
+  kann eine geforderte Kombination gar nicht anzeigen. Jede Zustandszeile gehört an eine
+  eigene Stelle, unabhängig vom Zustand der anderen.
+
+### 1.12 Responsive Verhalten war nicht implementiert (MAJOR)
+
+- **Symptom:** Bei 375 px Viewport lief die Seite 608 px breit (waagerechter Scrollbalken),
+  die Terminzeile blieb einzeilig und die Aktionen standen nebeneinander.
+- **Ursache:** In `waste-source-panel.scss`, `waste-collection-list.scss` und
+  `waste-calendar-section.scss` stand **keine einzige** `@media`-Regel.
+- **Nachbesserung:** Rasterlayouts (`grid-template-columns`) mit einem Breakpoint bei
+  767 px: Panel einspaltig mit linksbündigem Wert, Terminzeile gestapelt, Aktionen
+  untereinander; auf dem Desktop Wert rechtsbündig. Am laufenden Stack gemessen.
+- **Lehre:** Die `## UX` ist eine **Anforderung**, keine Beschreibung. „Unter 768 px
+  gestapelt“ ist so verbindlich wie eine Regel — und Geometrie ist in jsdom nicht prüfbar:
+  sie gehört ins Bild der Sichtprüfung, nicht in den Unit-Test. Der waagerechte Overflow
+  selbst kam aus dem App-Kopf (`core`) und ist als **Issue #14** ausgelagert.
+
 ---
 
 ## 2. Werkzeug und Umgebung
 
 - **Node:** Angular 22 verlangt Node ≥ 22.22.3; lokal ist 22.22.1. Frontend-Tests laufen
-  über `docker run … node:24 sh -c "npm test -- --no-progress"`.
+  über `docker run … node:22.22.3 npm test`.
 - **Backend:** lokales JDK fehlt → `maven:3.9-eclipse-temurin-25`. Der Maven-Cache
   `-Dmaven.repo.local` muss dem ausführenden Nutzer gehören; ein vom Container angelegter
   Cache führt zu `AccessDeniedException`.
 - **Signal-Forms-Introspection:** `CronTrigger` liefert keine Zone ablesbar; die Zone ist
   nur über die berechnete Ausführung belegbar.
+- **Sichtprüfung am laufenden Stack:** Die Anwendung meldet sich über Nextcloud/OIDC an; die
+  Nextcloud-Consent-Seite („Allow“) überlagert den Button — ein normaler Klick schlägt fehl,
+  ein Klick im DOM wirkt. Der Anmeldezustand liegt im `sessionStorage`. Playwright lag lokal
+  vor, ist aber **keine** Projektabhängigkeit; die Grundlage dafür ist **Issue #13**.
+- **Testdaten am laufenden Stack:** Zwei Testhaushalte eines Testkontos („Leerfall“ ohne
+  Quelle, „Kersbach“ mit Quelle und 12 echten Terminen). Jeder Prüflauf, der Quellen setzt
+  oder entfernt, muss den Ausgangszustand wiederherstellen — sonst prüft der nächste Lauf
+  einen anderen Zustand.
 
 ---
 
-## 3. Offene Kleinbefunde (Follow-up Issue #11)
+## 3. Abnahme und Review — was der Prüfer gefunden hat
 
-Vier Punkte aus der Abnahme, alle MINOR, alle Testgenauigkeit — das Verhalten ist richtig,
-der Test beweist weniger als er behauptet:
+Die Abnahme lief fünf Runden, das Architektur-Review zwei. Die Befunde, die zu MAJOR
+wurden, sind in Abschnitt 1.8 bis 1.12 festgehalten. Übrig blieben fünf MINOR-Befunde aus
+dem Review (keiner blockierend):
 
-1. **AC3 (Fensterfilter)** wird nur auf Adapterebene geprüft; der Use Case filtert nicht
-   selbst, sein Test prüft nur das übergebene Fenster.
-2. **AC4 (Reihenfolge)** ist über den Render-Pfad nicht bewiesen: der Test prüft die
-   Durchgabeordnung, nicht `waste-data.terms()`.
-3. **AC7 (kein Bezug zu Aufgaben/Ausgaben)** ist ein Strukturtest über Feldtypen — er kann
-   eine zur Laufzeit erzeugte Aufgabe nicht widerlegen.
-4. **AC23 (Entfernen)** beweist nur die Wiederherstellung des Feldes, nicht dass kein
-   Schreibpfad ausgelöst wurde.
+1. Der Reload-Mechanismus existiert doppelt (Auto-Cleanup **und** `onEnter()`); der zweite
+   trägt nur die isolierte Testkonfiguration. → entschärft durch einen zutreffenden Kommentar.
+2. Deutsche Identifier (`besucht`, `beimBetreten`) im Produktionscode → umgestellt auf
+   `visited` / `onEnter()` (Identifier im Code sind englisch, `AGENTS.md`).
+3. Das Verhalten „Feld während des Speicherns gesperrt“ war implementiert, aber unbelegt →
+   `waste-calendar-section-saving.spec.ts`.
+4. Die Regel `isStale()` war nur indirekt belegt → `WasteCalendarStaleTest` (Regeltest im
+   Fachkern).
+5. Die app-weite Router-Option war in `arc42/` nicht erwähnt → `arc42/06` (Lebenszyklus der
+   route-scoped Provider) und `arc42/09` (Entscheidungstabelle) nachgetragen.
 
-Dazu: die AC-Labels in `features/waste/waste-page.spec.ts` sind gegenüber dem Issue
-verschoben (AC13/AC14/AC15) — Inhalt korrekt, Bezeichnungen falsch.
+## 4. Offene Kleinbefunde (Follow-ups)
+
+| Issue | Gegenstand |
+|-------|-----------|
+| [#11](https://github.com/Sadeeg/HouseholdManager/issues/11) | Testgenauigkeit aus der Abnahme — zwischenzeitlich durch die neuen Tests geschlossen |
+| [#13](https://github.com/Sadeeg/HouseholdManager/issues/13) | Playwright-Grundlage für End-to-End-Tests (E2E-Basis) |
+| [#14](https://github.com/Sadeeg/HouseholdManager/issues/14) | App-Kopf läuft bei schmalen Viewports seitlich aus (`core`, vorbestehend) |
+| [#15](https://github.com/Sadeeg/HouseholdManager/issues/15) | Spec-Dateien des Waste-Features je Produktionsklasse bündeln |
+| [#16](https://github.com/Sadeeg/HouseholdManager/issues/16) | Abruf der ICS-Adresse gegen interne Ziele absichern (SSRF) |
+
+Die vier Befunde der ersten Abnahme (AC3 Fensterfilter, AC4 Reihenfolge, AC7 Bezug zu
+Aufgaben, AC23 Entfernen) sind inzwischen durch neue Tests geschlossen: der Use Case setzt
+das 42-Tage-Fenster selbst (`termsInWindow`), die Reihenfolge wird über `waste-data.terms()`
+geprüft, `WasteSyncLeavesTasksUntouchedTest` belegt AC7 als **Verhalten** gegen Postgres, und
+das Entfernen läuft nur nach der Bestätigung (eigener Test in `households-page.spec.ts`).
