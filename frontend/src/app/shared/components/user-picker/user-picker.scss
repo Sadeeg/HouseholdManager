@@ -50,3 +50,12 @@
     color: var(--hm-danger);
   }
 }
+
+// Der Knopf steht unter der Meldung, nicht neben ihr: die Meldung ist ein
+// Text, der Knopf eine Handlung (Issue #20).
+.user-picker__retry {
+  margin-top: var(--hm-space-2);
+  height: auto;
+  padding: var(--hm-space-1) var(--hm-space-3);
+  font-size: var(--hm-text-xs);
+}

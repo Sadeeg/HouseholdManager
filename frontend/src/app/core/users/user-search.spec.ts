@@ -188,13 +188,11 @@ describe('UserSearch', () => {
   });
 
   /**
-   * Bekannte Grenze (Issue #18, MINOR-Befund der Abnahme): derselbe
-   * Suchbegriff löst keinen zweiten Request aus — das Signal ändert sich
-   * nicht. Der Fehlerzustand bleibt deshalb stehen, bis der Begriff
-   * geändert wird. Das Testet dieser Fall, damit die Grenze sichtbar
-   * bleibt und nicht unbemerkt verschwindet.
+   * Issue #20: derselbe Suchbegriff lässt sich erneut suchen — ohne den
+   * Begriff zu verändern. Vorher löste das Setzen desselben Begriffs keinen
+   * zweiten Request aus, der Fehlerzustand blieb stehen.
    */
-  it('keeps the error state when the same query is set again — no second request', async () => {
+  it('starts a new request with the same query on retry', async () => {
     const search = TestBed.inject(UserSearch);
     const fixture = TestBed.createComponent(Probe);
     fixture.detectChanges();
@@ -207,14 +205,29 @@ describe('UserSearch', () => {
     });
     await fixture.whenStable();
     fixture.detectChanges();
+    expect(search.failed()).toBe(true);
 
-    search.search('car');
+    search.retry();
     fixture.detectChanges();
+
+    // Genau ein neuer Request mit derselben URL.
+    httpMock.expectOne('/api/users/search?q=car').flush([{ id: 'carl', displayName: 'Carl Vogel' }]);
     await fixture.whenStable();
     fixture.detectChanges();
 
-    httpMock.expectNone('/api/users/search?q=car');
-    expect(search.failed()).toBe(true);
-    expect(search.results()).toEqual([]);
+    expect(search.failed()).toBe(false);
+    expect(search.results()).toEqual([{ id: 'carl', displayName: 'Carl Vogel' }]);
+  });
+
+  /** Ohne Suche gibt es nichts zu wiederholen. */
+  it('does nothing on retry without a query', () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.retry();
+    fixture.detectChanges();
+
+    httpMock.expectNone('/api/users/search?q=');
   });
 });

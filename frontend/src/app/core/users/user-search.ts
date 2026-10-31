@@ -85,6 +85,21 @@ export class UserSearch {
     this.query.set(query);
   }
 
+  /**
+   * Erneut versuchen: derselbe Begriff, ein neuer Request (Issue #20).
+   *
+   * <p>`httpResource` feuert nur bei URL-Änderung — das Setzen desselben
+   * Begriffs löst keinen Request aus. `reload()` holt dieselbe URL erneut:
+   * der Fehlerzustand wird dabei zurückgesetzt, die Meldung verschwindet,
+   * während der neue Versuch läuft.
+   */
+  retry(): void {
+    if (this.query().trim().length < 2) {
+      return;
+    }
+    this.searchResource.reload();
+  }
+
   reset(): void {
     this.query.set('');
   }
