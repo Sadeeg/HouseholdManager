@@ -321,4 +321,56 @@ describe('HouseholdsPage', () => {
 
     expect(compiled.textContent).toContain('Müllkalender entfernt');
   });
+
+  /**
+   * Issue #16: das Backend nennt den Grund im Detail des ProblemDetail — der
+   * Grund landet beim Mitglied, nicht nur im Log. Eine interne Zieladresse
+   * wird abgelehnt; die Meldung sagt das.
+   */
+  it('shows the reason of the backend when the address is rejected', async () => {
+    const workspace = TestBed.inject(WorkspaceService);
+    workspace.currentUser.set({ id: 'alice', displayName: 'Alice Admin' });
+
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      {
+        id: 1,
+        name: 'Haushalt Müller',
+        createdAt: '2026-01-01T00:00:00Z',
+        createdBy: 'alice',
+        wasteCalendarUrl: null,
+      },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'MÜLLKALENDER')
+      ?.click();
+    fixture.detectChanges();
+
+    const section = compiled.querySelector('app-waste-calendar-section') as HTMLElement;
+    const field = section.querySelector('input') as HTMLInputElement;
+    field.value = 'http://192.168.1.10/kalender.ics';
+    field.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    (section.querySelector('.hm-button--primary') as HTMLButtonElement).click();
+
+    const request = httpMock.expectOne('/api/households/1/waste/source');
+    request.flush(
+      {
+        type: 'https://example.org/problem',
+        title: 'Ungültige ICS-Adresse',
+        status: 400,
+        detail: 'Die ICS-Adresse darf nicht auf ein internes Ziel zeigen.',
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    await tick(fixture);
+
+    expect(compiled.textContent).toContain('Die ICS-Adresse darf nicht auf ein internes Ziel zeigen.');
+  });
 });

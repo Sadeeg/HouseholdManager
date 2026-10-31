@@ -85,6 +85,167 @@ public class WasteCalendar {
             throw new InvalidWasteCalendarUrlException(
                     "Die ICS-Adresse muss mit http:// oder https:// beginnen.");
         }
+        if (isInternalTarget(hostOf(normalized))) {
+            throw new InvalidWasteCalendarUrlException(
+                    "Die ICS-Adresse darf nicht auf ein internes Ziel zeigen.");
+        }
         return normalized;
+    }
+
+    /**
+     * Der Host einer Adresse — ohne Port und Pfad. {@code null}, wenn die
+     * Adresse nicht gelesen werden kann (dann greift keine Literal-Prüfung).
+     */
+    public static String hostOf(String url) {
+        try {
+            return java.net.URI.create(url).getHost();
+        } catch (IllegalArgumentException unreadable) {
+            return null;
+        }
+    }
+
+    /**
+     * R19 (Issue #16): die Quelle darf nicht auf ein internes Ziel zeigen —
+     * sonst könnte der Server sich selbst oder das Netz des Betreibers
+     * abfragen. Geprüft wird der Host als IP-Literal; ein Hostname, der auf
+     * eine interne Adresse auflöst, wird beim Abruf abgewiesen (der Adapter
+     * prüft die aufgelöste Adresse).
+     *
+     * <p>Als intern gelten: 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10,
+     * 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, dazu ::,
+     * ::1, fc00::/7, fe80::/10 und der IPv4-mapped-Bereich ::ffff:0:0/96.
+     */
+    public static boolean isInternalTarget(String host) {
+        if (host == null) {
+            return false;
+        }
+        String value = host.trim().toLowerCase(java.util.Locale.ROOT);
+        if (value.startsWith("[") && value.endsWith("]")) {
+            value = value.substring(1, value.length() - 1);
+        }
+        if (value.isEmpty()) {
+            return false;
+        }
+        if (isIpv4(value)) {
+            return isInternalIpv4(value);
+        }
+        if (value.indexOf(':') >= 0) {
+            return isInternalIpv6(value);
+        }
+        return false;
+    }
+
+    private static boolean isIpv4(String value) {
+        String[] parts = value.split("\\.", -1);
+        if (parts.length != 4) {
+            return false;
+        }
+        for (String part : parts) {
+            if (part.isEmpty() || part.length() > 3) {
+                return false;
+            }
+            for (int index = 0; index < part.length(); index++) {
+                if (!Character.isDigit(part.charAt(index))) {
+                    return false;
+                }
+            }
+            if (Integer.parseInt(part) > 255) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isInternalIpv4(String value) {
+        String[] parts = value.split("\\.");
+        int first = Integer.parseInt(parts[0]);
+        int second = Integer.parseInt(parts[1]);
+        if (first == 0 || first == 10 || first == 127) {
+            return true;
+        }
+        if (first == 172 && second >= 16 && second <= 31) {
+            return true;
+        }
+        if (first == 192 && second == 168) {
+            return true;
+        }
+        if (first == 169 && second == 254) {
+            return true;
+        }
+        return first == 100 && second >= 64 && second <= 127;
+    }
+
+    private static boolean isInternalIpv6(String value) {
+        // IPv4-mapped (::ffff:192.168.0.1) und IPv4-compatible (::192.168.0.1)
+        int lastColon = value.lastIndexOf(':');
+        if (lastColon >= 0 && value.indexOf('.', lastColon) > lastColon) {
+            String embedded = value.substring(lastColon + 1);
+            if (isIpv4(embedded)) {
+                return isInternalIpv4(embedded);
+            }
+        }
+        int[] groups = parseIpv6(value);
+        if (groups == null) {
+            return false;
+        }
+        if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0
+                && groups[4] == 0 && groups[5] == 0xffff) {
+            // ::ffff:a.b.c.d — die eingebettete IPv4-Adresse zählt
+            int high = groups[6] >> 8;
+            int low = groups[6] & 0xff;
+            return isInternalIpv4(high + "." + low + "." + (groups[7] >> 8) + "." + (groups[7] & 0xff));
+        }
+        if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0
+                && groups[4] == 0 && groups[5] == 0 && groups[6] == 0) {
+            // :: (ungegeben) und ::1 (Loopback)
+            return true;
+        }
+        if ((groups[0] & 0xfe00) == 0xfc00) {
+            return true; // fc00::/7 — unique local
+        }
+        return (groups[0] & 0xffc0) == 0xfe80; // fe80::/10 — link local
+    }
+
+    /** Die acht Gruppen einer IPv6-Adresse; {@code null}, wenn unlesbar. */
+    private static int[] parseIpv6(String value) {
+        int doubleColon = value.indexOf("::");
+        int[] groups = new int[8];
+        if (doubleColon < 0) {
+            int[] parsed = parseGroups(value);
+            return parsed != null && parsed.length == 8 ? parsed : null;
+        }
+        int[] head = parseGroups(value.substring(0, doubleColon));
+        int[] tail = parseGroups(value.substring(doubleColon + 2));
+        if (head == null || tail == null) {
+            return null;
+        }
+        int missing = 8 - head.length - tail.length;
+        if (missing < 1) {
+            return null; // "::" muss mindestens eine Gruppe ersetzen
+        }
+        System.arraycopy(head, 0, groups, 0, head.length);
+        System.arraycopy(tail, 0, groups, 8 - tail.length, tail.length);
+        return groups;
+    }
+
+    /** Die Gruppen eines IPv6-Teils (ohne „::"); leer bei leerem Text. */
+    private static int[] parseGroups(String part) {
+        if (part.isEmpty()) {
+            return new int[0];
+        }
+        String[] parts = part.split(":", -1);
+        int[] groups = new int[parts.length];
+        for (int index = 0; index < parts.length; index++) {
+            String group = parts[index];
+            if (group.isEmpty() || group.length() > 4) {
+                return null;
+            }
+            try {
+                groups[index] = Integer.parseInt(group, 16);
+            } catch (NumberFormatException unreadable) {
+                return null;
+            }
+        }
+        return groups;
     }
 }

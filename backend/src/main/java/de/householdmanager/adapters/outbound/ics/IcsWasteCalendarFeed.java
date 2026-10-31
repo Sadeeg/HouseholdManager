@@ -1,10 +1,13 @@
 package de.householdmanager.adapters.outbound.ics;
 
 import de.householdmanager.application.port.out.WasteCalendarFeed;
+import de.householdmanager.domain.model.WasteCalendar;
 import de.householdmanager.domain.model.WasteFeedUnavailableException;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -54,13 +57,24 @@ public class IcsWasteCalendarFeed implements WasteCalendarFeed {
     private final RestClient http;
 
     /**
+     * Die Auflösung des Hostnamens — im Test ersetzt, damit der Test nicht
+     * ins Netz muss (Issue #16).
+     */
+    private final HostResolver hostResolver;
+
+    /**
      * Der RestClient kommt aus dem Composition Root, wo die Abrufzeit
      * ({@code householdmanager.waste.timeout}, Annahme 7) gesetzt wird. Der
      * Adapter nimmt den fertigen Client — dadurch ist er im Test über
      * {@code MockRestServiceServer} prüfbar.
      */
     public IcsWasteCalendarFeed(RestClient http) {
+        this(http, InetAddress::getAllByName);
+    }
+
+    IcsWasteCalendarFeed(RestClient http, HostResolver hostResolver) {
         this.http = http;
+        this.hostResolver = hostResolver;
     }
 
     @Override
@@ -77,10 +91,41 @@ public class IcsWasteCalendarFeed implements WasteCalendarFeed {
 
     private String read(String url, LocalDate from, LocalDate to) {
         log.debug("ICS-Quelle {} lesen für Fenster {} bis {}", url, from, to);
+        rejectInternalTarget(url);
         try {
             return http.get().uri(URI.create(url)).retrieve().body(String.class);
         } catch (RestClientException | IllegalArgumentException failure) {
             throw new WasteFeedUnavailableException("Die ICS-Adresse ist nicht erreichbar: " + url, failure);
+        }
+    }
+
+    /**
+     * R19 (Issue #16): der Abruf darf nicht auf ein internes Ziel zeigen —
+     * sonst könnte der Server sich selbst oder das Netz des Betreibers
+     * abfragen. Geprüft wird die <em>aufgelöste</em> Adresse: ein Hostname,
+     * der auf 127.0.0.1 zeigt, würde eine Prüfung des Textes umgehen.
+     *
+     * <p>Der Abbruch ist ein fehlgeschlagener Lauf, kein Eingabefehler: eine
+     * nicht erreichbare öffentliche Adresse bleibt es auch (Annahme 4 von
+     * Issue #10). Die Meldung unterscheidet den Fall von der bloßen
+     * Unerreichbarkeit.
+     */
+    private void rejectInternalTarget(String url) {
+        String host = WasteCalendar.hostOf(url);
+        if (host == null || host.isBlank()) {
+            return;
+        }
+        InetAddress[] resolved;
+        try {
+            resolved = hostResolver.resolve(host);
+        } catch (UnknownHostException failure) {
+            throw new WasteFeedUnavailableException("Die ICS-Adresse ist nicht erreichbar: " + url, failure);
+        }
+        for (InetAddress address : resolved) {
+            if (WasteCalendar.isInternalTarget(address.getHostAddress())) {
+                throw new WasteFeedUnavailableException(
+                        "Die ICS-Adresse zeigt auf ein internes Ziel und wird nicht abgerufen: " + url);
+            }
         }
     }
 

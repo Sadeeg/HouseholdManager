@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormField, form, maxLength, required, submit } from '@angular/forms/signals';
 
 import { WorkspaceService } from '../../core/workspace/workspace-service';
@@ -161,10 +162,8 @@ export class HouseholdsPage {
     try {
       await this.householdsData.saveWasteSource(householdId, url);
       this.showToast('Müllkalender gespeichert.');
-    } catch {
-      this.sourceError.set(
-        'Die ICS-Adresse konnte nicht gespeichert werden: Der Dienst ist nicht erreichbar. Deine Eingabe bleibt erhalten.',
-      );
+    } catch (error) {
+      this.sourceError.set(this.sourceErrorMessage(error));
     } finally {
       this.savingSource.set(false);
     }
@@ -190,5 +189,22 @@ export class HouseholdsPage {
   private showToast(message: string): void {
     this.toast.set(message);
     setTimeout(() => this.toast.set(null), 4000);
+  }
+
+  /**
+   * Die Meldung beim Speichern der ICS-Adresse: das Backend nennt den Grund
+   * im Detail des ProblemDetail (z. B. „Die ICS-Adresse darf nicht auf ein
+   * internes Ziel zeigen.") — der Grund landet beim Mitglied, nicht nur im
+   * Log (Issue #16).
+   */
+  private sourceErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse && error.status === 400) {
+      const detail = (error.error as { detail?: string } | null)?.detail;
+      if (typeof detail === 'string' && detail.trim() !== '') {
+        return `Die ICS-Adresse konnte nicht gespeichert werden: ${detail} Deine Eingabe bleibt erhalten.`;
+      }
+      return 'Die ICS-Adresse konnte nicht gespeichert werden: Die Adresse wurde abgelehnt. Deine Eingabe bleibt erhalten.';
+    }
+    return 'Die ICS-Adresse konnte nicht gespeichert werden: Der Dienst ist nicht erreichbar. Deine Eingabe bleibt erhalten.';
   }
 }

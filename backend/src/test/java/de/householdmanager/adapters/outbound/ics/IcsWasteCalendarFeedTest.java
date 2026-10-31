@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import de.householdmanager.application.port.out.WasteCalendarFeed.FeedTerm;
 import de.householdmanager.domain.model.WasteFeedUnavailableException;
+import java.net.InetAddress;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,29 @@ class IcsWasteCalendarFeedTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        feed = new IcsWasteCalendarFeed(builder.build());
+        // Der Host löst auf eine öffentliche Adresse auf — der Test kommt ohne
+        // Netz aus (Issue #16).
+        feed = new IcsWasteCalendarFeed(builder.build(), host -> new InetAddress[] {
+            InetAddress.getByName("93.184.216.34")
+        });
+    }
+
+    /**
+     * R19 (Issue #16): ein Ziel im Netz des Servers wird nicht abgerufen. Der
+     * Hostname zeigt auf eine interne Adresse — die Prüfung des Textes allein
+     * würde das nicht sehen.
+     */
+    @Test
+    void fetch_refusesAnInternalTarget_withoutSendingARequest() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer internalServer = MockRestServiceServer.bindTo(builder).build();
+        IcsWasteCalendarFeed internal = new IcsWasteCalendarFeed(builder.build(), host ->
+                new InetAddress[] {InetAddress.getByName("192.168.1.10")});
+
+        assertThatThrownBy(() -> internal.fetch(URL, FROM, TO))
+                .isInstanceOf(WasteFeedUnavailableException.class)
+                .hasMessageContaining("internes Ziel");
+        internalServer.verify(); // es ging kein Request raus
     }
 
     // --- AC8: Datum und Tonnenart unverändert, Wiederholung im Fenster ------
