@@ -143,6 +143,28 @@ class TaskRepositoryAdapterTest {
         assertThat(inB.id()).isNotEqualTo(inA.id());
     }
 
+    /**
+     * Die Grenze des Fachmodells ({@link Label#MAX_NAME_LENGTH}) muss zur
+     * Spaltenbreite der Datenbank passen — sie ist der Grund für die Grenze.
+     * Ein Name an der Grenze muss in PostgreSQL hineinpassen; einer darüber
+     * muss an der Spalte scheitern (und nicht erst am Fachmodell).
+     */
+    @Test
+    void labelName_fitsTheColumnExactlyUpToTheDomainLimit() {
+        String atLimit = "x".repeat(Label.MAX_NAME_LENGTH);
+
+        Label saved = adapter.saveLabel(householdA, new Label(null, atLimit));
+
+        assertThat(saved.name()).isEqualTo(atLimit);
+        assertThat(adapter.findLabel(householdA, atLimit).orElseThrow().name()).isEqualTo(atLimit);
+
+        String tooLong = "x".repeat(Label.MAX_NAME_LENGTH + 1);
+        assertThatThrownBy(() -> {
+            adapter.saveLabel(householdA, new Label(null, tooLong));
+            adapter.findByHousehold(householdA); // Flush, der die Verletzung sichtbar macht
+        }).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
     private Task givenTask(long householdId, String title, TaskStatus status, int position) {
         return adapter.save(Task.builder()
                 .householdId(householdId)

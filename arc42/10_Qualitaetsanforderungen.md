@@ -12,7 +12,7 @@
 | Q6 | Ein Fehlerfall tritt auf | Der Nutzer sieht eine verständliche Meldung; intern bleibt der Fehler ein 5xx, fachlich ein 4xx | hoch | `GlobalExceptionHandler` + Tests |
 | Q7 | Die Liste ist leer | Die Oberfläche zeigt einen Hinweis, keine leere Fläche | mittel | `households-page.spec.ts` |
 | Q8 | Der Auftraggeber liest die Dokumentation | arc42 beschreibt Bausteine, Abläufe und offene Punkte ohne Code-Snippets | mittel | arc42/ |
-| Q9 | Eine Anforderung ist unklar | Der Prozess stellt genau **eine** Frage pro Zug und endet mit bestätigtem Verständnis | hoch | `anforderung-loop` (Grilling, Stop-Kriterien) |
+| Q9 | Eine Anforderung ist unklar | Der Prozess stellt genau **eine** Frage pro Zug und endet mit bestätigtem Verständnis | hoch | `anforderung` (Grilling, Stop-Kriterien) |
 | Q10 | Ein Feature gilt als fertig | Zwei unabhängige Gates (`OK` + `PASS`) liegen vor; Urteile kommen von Subagenten | hoch | `/review`, `/abnahme` |
 
 | Q11 | Eine Person bedient das Board ohne Maus oder ohne Farbwahrnehmung | Jeder Bahnwechsel hat ein Tastatur-Äquivalent; Status und Kennzeichnungen stehen als Text da, nie nur als Farbe | hoch | Issue #1 `## UX` (Barrierefreiheit), AC1/AC13/AC22 |

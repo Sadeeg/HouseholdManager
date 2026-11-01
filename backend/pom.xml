@@ -98,6 +98,19 @@
       <scope>test</scope>
     </dependency>
     <!--
+      Architekturregeln als ausführbare Tests (AGENTS.md §Backend).
+      archunit-junit6 ist das JUnit-6-Modul und passt zu Boot 4.1.2
+      (JUnit Jupiter 6.0.3). Spring Boot verwaltet die Version nicht,
+      deshalb wird sie hier fest gesetzt.
+    -->
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit6</artifactId>
+      <version>1.5.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!--
       Ab Boot 4 liegen die Test-Slices in eigenen Modulen.
       @WebMvcTest: org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
       @DataJpaTest: org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest

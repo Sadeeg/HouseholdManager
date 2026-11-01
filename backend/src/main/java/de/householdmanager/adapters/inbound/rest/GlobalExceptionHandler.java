@@ -2,6 +2,7 @@ package de.householdmanager.adapters.inbound.rest;
 
 import de.householdmanager.domain.model.HouseholdNotFoundException;
 import de.householdmanager.domain.model.InvalidHouseholdNameException;
+import de.householdmanager.domain.model.InvalidLabelNameException;
 import de.householdmanager.domain.model.InvalidTaskTitleException;
 import de.householdmanager.domain.model.InvalidWasteCalendarUrlException;
 import de.householdmanager.domain.model.MembershipRequiredException;
@@ -40,6 +41,14 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, exception.getMessage());
         problem.setTitle("Ungültiger Aufgabentitel");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidLabelNameException.class)
+    public ProblemDetail handleInvalidLabelName(InvalidLabelNameException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Ungültiger Labelname");
         return problem;
     }
 

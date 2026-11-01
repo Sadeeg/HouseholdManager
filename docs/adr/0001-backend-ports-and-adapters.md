@@ -19,9 +19,10 @@ Die Architektur soll:
   die Use Cases erlauben,
 - Use Cases ohne Spring-Kontext testbar machen.
 
-Referenz für die Methodik: Cockburns Ports & Adapters, Skill
-`hexagonal-architecture` (vendort) und `backend-ports-adapters`
-(projektspezifisch).
+Referenz für die Methodik: Cockburns Ports & Adapters. Die
+projektspezifische Fassung (Konzept, Pakete, Tests je Schicht, Fallen) steht
+im Skill `backend-ports-adapters`. Der früher vendorte allgemeine Skill
+`hexagonal-architecture` liegt archiviert in `.opencode/vendor-skills/`.
 
 ## Entscheidung
 

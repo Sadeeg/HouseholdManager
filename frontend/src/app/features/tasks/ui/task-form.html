@@ -126,12 +126,17 @@
             id="task-label"
             class="hm-input"
             list="label-suggestions"
+            [class.hm-input--invalid]="labelError() !== null"
             [value]="newLabel()"
+            aria-describedby="task-label-error"
             (input)="newLabel.set($any($event.target).value)"
             (keydown.enter)="$event.preventDefault(); addLabel()"
           />
           <button type="button" class="hm-button hm-button--secondary" (click)="addLabel()">Hinzufügen</button>
         </div>
+        @if (labelError(); as error) {
+          <p id="task-label-error" class="task-form__field-error" role="alert">{{ error }}</p>
+        }
         <datalist id="label-suggestions">
           @for (label of labelSuggestions(); track label) {
             <option [value]="label"></option>

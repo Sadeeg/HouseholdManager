@@ -131,7 +131,7 @@ dokumentiert (arc42/03 Abschnitt „Technische Schnittstellen“, PR #2).
 | `kritischer-tester` | Zwei fehlende Tests: `updateTask_removingDueDateAndAssignee_clearsThemPersistently` (Entfernen von Frist/Zuständiger bleibt dauerhaft) und `task-card.spec.ts › never marks a task whose due date was removed`. | geschrieben — Backend 116, Frontend 68 Tests |
 | `kritischer-tester` | Testbelastung geprüft: Backend-Mutation `isNull` → `isNotNull` ergab 1 Failure, invertierte Frontend-Badge-Assertion genau 1 Test rot. | Beleg, dass die Tests beißen |
 | Review + Abnahme (MINOR) | `core/auth/start-route.guard.ts` ohne Test · Instanz-Strategie `core/users/user-search.ts` (nicht root-provided, Instanz je Komponente) · `UserRefResponse` als nested Record in `UserSearchController.java:31` statt in `adapters/inbound/rest/dto/` | Follow-up-Issues **#3**, **#4**, **#5** |
-| eigene Beobachtung | Labels über 60 Zeichen werden kommentarlos verworfen (`TaskUseCaseImpl.java:186`, `Label.MAX_NAME_LENGTH = 60`) — ohne Test, ohne Rückmeldung im UI. Die Titelgrenze (`Task.MAX_TITLE_LENGTH = 200`) wird korrekt validiert. | offen, nicht AC-gefordert |
+| eigene Beobachtung | Labels über 60 Zeichen werden kommentarlos verworfen (`TaskUseCaseImpl.java:186`, `Label.MAX_NAME_LENGTH = 60`) — ohne Test, ohne Rückmeldung im UI. Die Titelgrenze (`Task.MAX_TITLE_LENGTH = 200`) wird korrekt validiert. | behoben (Issue **#8**) |
 
 **Lehre 1:** Zwei unabhängige Blicke sind der eigentliche Fortschritt. Der Reviewer fand
 fehlende Architektur-Doku, der Tester fehlende Fehlerpfad-Tests. Ein selbst erteiltes
@@ -220,7 +220,7 @@ der Code. Sonst entsteht eine zusätzliche Review-Runde — hier Runde 1 → Kor
 | Issue #3 | Start-Route-Guard ohne Test (Scoping, Umleitung auf die Tafel des zuletzt gewählten Haushalts) | `frontend/src/app/core/auth/start-route.guard.ts` |
 | Issue #4 | Instanz-Strategie der Nutzersuche klären (`core`-Position, nicht root-provided → eine Instanz je Komponente) — **erledigt**: `UserSearch` ist jetzt `providedIn: 'root'`, der Zustand geteilt, Reset-Regel im Skill und an der Datei | `frontend/src/app/core/users/user-search.ts` |
 | Issue #5 | `UserRefResponse` nach `adapters/inbound/rest/dto/` verschieben | `UserSearchController.java:31` |
-| Issue #8 | Stille Verwerfung von Labels > 60 Zeichen sichtbar machen (Hinweis im Formular, Test) | `TaskUseCaseImpl.java:186` |
+| Issue #8 | Stille Verwerfung von Labels > 60 Zeichen sichtbar machen (Hinweis im Formular, Test) | behoben (Issue **#8**, `docs/erkenntnisse-issue-8.md`) |
 | offen | Branch-Schutz für `main` (PR-Pflicht + Status-Checks) nachweislich nicht gesetzt: PR #2 eröffnete mit `mergeable_state: clean` | GitHub → Settings → Branches |
 | offen | Kein E2E-Setup (Playwright) — UI-Layout bleibt bis dahin manuell geprüft | `.github/workflows/ci.yml` |
 
