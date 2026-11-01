@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { giveElementsGeometry } from '../../testing/jsdom-focus-geometry';
 import { ConfirmDialog } from './confirm-dialog';
 
 @Component({
@@ -25,12 +24,6 @@ class HostComponent {
 }
 
 describe('ConfirmDialog', () => {
-  beforeAll(() => {
-    // Ohne Geometrie hält der CDK jedes Element für unsichtbar — und warnt
-    // bei jedem Öffnen des Dialogs.
-    giveElementsGeometry();
-  });
-
   function setup() {
     TestBed.configureTestingModule({ imports: [HostComponent] });
     const fixture = TestBed.createComponent(HostComponent);
@@ -147,14 +140,44 @@ describe('ConfirmDialog — Fokus (Issue #9)', () => {
 
     // Die Fokusfalle legt Anker vor und hinter den Dialog: wer über den Rand
     // hinaus tabt, landet auf dem Anker und wird zurück in den Dialog
-    // geholt.
+    // geholt. Der Anker ist nur Teil der Tab-Reihenfolge, solange die Falle
+    // aktiv ist — deshalb wird hier der Anker selbst fokussiert und das
+    // Rückholziel geprüft, nicht nur, dass ein Anker im Template steht.
+    const panelEl = panel(fixture);
     const anchor = compiled(fixture).querySelector('.cdk-focus-trap-anchor') as HTMLElement;
     expect(anchor).not.toBeNull();
+    expect(anchor.tabIndex).toBe(0);              // sonst läuft Tab im Browser über den Rand hinaus
+    expect(panelEl.contains(anchor)).toBe(false); // der Anker liegt außerhalb des Panels
 
     anchor.focus();
-    await fixture.whenStable();
 
-    expect(panel(fixture).contains(document.activeElement)).toBe(true);
+    // Rückholziel der vorderen Falle = letzte Aktion im Panel. Wäre die Falle
+    // deaktiviert, bliebe der Fokus auf dem Anker und diese Assertion wäre rot.
+    const lastAction = [...panelEl.querySelectorAll('.confirm-dialog__actions button')].at(-1);
+    expect(document.activeElement).toBe(lastAction);
+    expect(panelEl.contains(document.activeElement)).toBe(true);
+  });
+
+  it('pulls focus back for Shift+Tab too — the end anchor returns into the panel (AC2)', async () => {
+    const fixture = setup();
+    const trigger = compiled(fixture).querySelector('.trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Die Richtung Shift+Tab läuft über den hinteren Anker. Ohne aktive Falle
+    // ist dieser Anker nicht tabbbar und der Fokus wandert im Dokument weiter.
+    const panelEl = panel(fixture);
+    const anchors = [...compiled(fixture).querySelectorAll('.cdk-focus-trap-anchor')] as HTMLElement[];
+    expect(anchors.length).toBe(2);
+    expect(anchors[0].tabIndex).toBe(0);
+
+    anchors[anchors.length - 1].focus();
+
+    const firstAction = [...panelEl.querySelectorAll('.confirm-dialog__actions button')].at(0);
+    expect(document.activeElement).toBe(firstAction);
+    expect(panelEl.contains(document.activeElement)).toBe(true);
   });
 
   it('returns the focus to the trigger when the dialog closes (AC3)', async () => {
@@ -165,6 +188,10 @@ describe('ConfirmDialog — Fokus (Issue #9)', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
+
+    // Zwischenzustand, ohne den die Rückkehr-Aussage beliebig wäre: der Fokus
+    // muss tatsächlich im Dialog sein, bevor er zurückkehren kann.
+    expect(panel(fixture).contains(document.activeElement)).toBe(true);
 
     panel(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
@@ -182,6 +209,10 @@ describe('ConfirmDialog — Fokus (Issue #9)', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
+
+    // Ohne die Anker-Prüfung wäre dieser Fall durch keine Mutation killbar:
+    // ohne Falle bleibt Esc grün, weil das Schließen nie von der Falle abhängt.
+    expect(compiled(fixture).querySelector('.cdk-focus-trap-anchor')).not.toBeNull();
 
     panel(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();

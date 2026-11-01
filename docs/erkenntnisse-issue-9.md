@@ -46,8 +46,11 @@ schließen und die Lehre überführen.
   (`offsetWidth`/`getClientRects`). In jsdom ist jedes Element 0 px groß →
   „unsichtbar" → die Falle fokussiert nichts, der Test schlägt fehl, obwohl
   der Browser es richtig macht.
-- **Nachbesserung:** `shared/testing/jsdom-focus-geometry.ts` gibt den
-  Elementen im Test eine Größe. Das ist eine Einrichtung der Testumgebung,
+- **Nachbesserung:** Die Testumgebung bekommt die Geometrie zentral über das
+  Vitest-Setup (`test.options.setupFiles` in `angular.json`,
+  `shared/testing/vitest-setup.ts`) — ursprünglich ein Helfer, den jede Fokus-
+  Datei selbst aufrief; das ließ dieselbe Komponente in zwei Umgebungen laufen
+  (mit und ohne Sichtbarkeit). Das Setup ist eine Einrichtung der Testumgebung,
   kein Produktivverhalten.
 - **Lehre:** Wenn eine Bibliothek im Test grundsätzlich nichts tut, ist die
   erste Frage nicht „ist der Code falsch?", sondern „was prüft die Bibliothek
@@ -60,11 +63,38 @@ schließen und die Lehre überführen.
 |---|---|
 | Ein Overlay führt den Fokus | `ux-design` §3a — das Muster ist jetzt vollständig beschrieben: Falle auf dem Wrapper, `cdkFocusInitial` + `tabindex="-1"` auf dem Panel, Fokus zurück beim Schließen, Backdrop nicht in der Tab-Reihenfolge |
 | Ein Muster muss erfüllt sein, nicht behauptet | `ux-design` — die frühere Abweichung („noch nicht umgesetzt") ist behoben; die Design-DNA beschreibt den Zustand |
-| Testumgebungen einrichten, wo sie blind sind | `feature-testing` — jsdom kennt keine Geometrie; ein Test, der die Fokusfalle belegen soll, braucht die Geometrie (siehe `shared/testing/jsdom-focus-geometry.ts`) |
+| Testumgebungen einrichten, wo sie blind sind | `feature-testing` — jsdom kennt keine Geometrie; die Umgebung wird **einmal** über das Vitest-Setup eingerichtet (`test.options.setupFiles` in `angular.json`, `shared/testing/vitest-setup.ts`), nicht pro Datei — sonst ist dieselbe Komponente in zwei Umgebungen testbar |
 
 ## 3. Geprüfte Gates
 
 - Architektur-Review: siehe Kommentar am Issue #9.
 - Abnahme: siehe Kommentar am Issue #9.
-- Belege: Frontend 28 Dateien / 128 Tests grün, Lint und Sheriff ohne
-  Beanstandung, Production-Build erfolgreich.
+- Belege: Frontend 28 Dateien / 129 Tests grün (inkl. des ergänzten
+  Esc-Falls am Aufgabenformular), Lint und Sheriff ohne Beanstandung,
+  Production-Build erfolgreich.
+
+### Manualer Tastaturpfad (Browser, Chrome)
+
+Der manuelle Pfad wurde am laufenden Dev-Server dieses Branches gespielt
+(Playwright, `channel: chrome`). Die UI ist der reale Stand von
+`feature/9-fokus-overlays`; die API-Antworten sind auf HTTP-Ebene gestubt,
+weil das Backend ein signiertes OIDC-Token verlangt, das hier nicht geprägt
+werden kann — die Fokusbehandlung selbst läuft ungefiltert im Browser.
+
+Für **beide** Overlays, jeweils: über Tab zum Auslöser, `Enter` zum Öffnen:
+
+| Schritt | Bestätigungsdialog | Aufgabenformular |
+|---|---|---|
+| Initialer Fokus | im Panel (`cdkFocusInitial`) ✓ | im Panel (`cdkFocusInitial`) ✓ |
+| Tab und Shift+Tab | bleiben im Dialog ✓ | bleiben im Formular ✓ |
+| `Esc` | schließt, Fokus zurück auf dem Auslöser („LÖSCHEN“) ✓ | schließt, Fokus zurück auf dem Auslöser („Aufgabe anlegen“) ✓ |
+
+Belege: `docs/images/issue-9-focus-confirm.png`,
+`docs/images/issue-9-focus-taskform.png` (Fokusoutline im Bild sichtbar).
+Ergebnis steht als Kommentar am Issue #9.
+
+Nebenbefund beim Einrichten des Pfads: die OIDC-Library prüft das Token gegen
+`Date.now()` in **Millisekunden** — ein `expires_at` in Sekunden lässt den Guard
+zur Anmeldung umleiten, obwohl ein Token in der Storage steht. Wer den Guard im
+Browser ohne Identity Provider passieren will, muss `expires_at` in Millisekunden
+setzen.

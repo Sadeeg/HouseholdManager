@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { giveElementsGeometry } from '../../../shared/testing/jsdom-focus-geometry';
 import { TaskForm } from './task-form';
 
 /**
@@ -11,15 +10,14 @@ import { TaskForm } from './task-form';
  * Fokusfalle (Tab bleibt im Dialog), Fokus zurück auf das auslösende Element
  * beim Schließen.
  *
+ * Die Geometrie kommt aus dem Vitest-Setup (`shared/testing/vitest-setup.ts`,
+ * registriert in `angular.json`) — nicht mehr aus einem Helfer, den jede Datei
+ * selbst aufrufen muss.
+ *
  * Der Test steht in einer eigenen Datei, damit er unabhängig von den
  * Formular-Tests bleibt (das Repo nutzt dieses Muster auch sonst).
  */
 describe('TaskForm — Fokus (Issue #9)', () => {
-  beforeAll(() => {
-    // Ohne Geometrie hält der CDK jedes Element für unsichtbar.
-    giveElementsGeometry();
-  });
-
   @Component({
     imports: [TaskForm],
     template: `
@@ -71,14 +69,22 @@ describe('TaskForm — Fokus (Issue #9)', () => {
 
     // Die Fokusfalle legt Anker vor und hinter den Dialog: wer über den Rand
     // hinaus tabt, landet auf dem Anker und wird zurück in den Dialog
-    // geholt.
+    // geholt. Der Anker ist nur Teil der Tab-Reihenfolge, solange die Falle
+    // aktiv ist — deshalb wird hier der Anker selbst fokussiert und das
+    // Rückholziel geprüft, nicht nur, dass ein Anker im Template steht.
+    const panelEl = dialog(fixture);
     const anchor = compiled(fixture).querySelector('.cdk-focus-trap-anchor') as HTMLElement;
     expect(anchor).not.toBeNull();
+    expect(anchor.tabIndex).toBe(0);              // sonst läuft Tab im Browser über den Rand hinaus
+    expect(panelEl.contains(anchor)).toBe(false); // der Anker liegt außerhalb des Panels
 
     anchor.focus();
-    await fixture.whenStable();
 
-    expect(dialog(fixture).contains(document.activeElement)).toBe(true);
+    // Rückholziel der vorderen Falle = letzte Aktion im Panel. Wäre die Falle
+    // deaktiviert, bliebe der Fokus auf dem Anker und diese Assertion wäre rot.
+    const lastAction = [...panelEl.querySelectorAll('.task-form__actions button')].at(-1);
+    expect(document.activeElement).toBe(lastAction);
+    expect(panelEl.contains(document.activeElement)).toBe(true);
   });
 
   it('returns the focus to the trigger when the dialog closes (AC3)', async () => {
@@ -90,6 +96,10 @@ describe('TaskForm — Fokus (Issue #9)', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
+    // Zwischenzustand, ohne den die Rückkehr-Aussage beliebig wäre: der Fokus
+    // muss tatsächlich im Dialog sein, bevor er zurückkehren kann.
+    expect(dialog(fixture).contains(document.activeElement)).toBe(true);
+
     dialog(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
     await fixture.whenStable();
@@ -97,5 +107,26 @@ describe('TaskForm — Fokus (Issue #9)', () => {
 
     expect(compiled(fixture).querySelector('[role="dialog"]')).toBeNull();
     expect(document.activeElement).toBe(trigger);
+  });
+
+  /**
+   * AC4: die Fokusfalle darf Esc nicht blockieren. Dieselbe Fläche wie AC3 —
+   * hier ausdrücklich als AC4 benannt, weil die Falle das Schließen können muss.
+   */
+  it('still closes on Escape — the focus trap does not block it (AC4)', async () => {
+    const fixture = setup();
+    const trigger = compiled(fixture).querySelector('.trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(compiled(fixture).querySelector('.cdk-focus-trap-anchor')).not.toBeNull();
+
+    dialog(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(compiled(fixture).querySelector('[role="dialog"]')).toBeNull();
   });
 });
