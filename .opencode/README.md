@@ -21,8 +21,8 @@ Ein Feature gilt erst als fertig, wenn **beide Gates** bestanden sind
 
 | Gate | Werkzeug | Urteil | Korrigiert |
 |------|----------|--------|-----------|
-| **Architektur-Review** | Agent `architektur-reviewer` · Command `/review` · Skill `code-review-gate` | `OK` / `KORREKTUREN` | Der Reviewer ist **read-only**; er liefert einen ausführbaren **Korrekturauftrag**, den das Command an den Implementierer delegiert — dann Review erneut (max. 3 Runden) |
-| **Abnahme (Test)** | Agent `kritischer-tester` · Command `/abnahme` · Skill `feature-testing` | `PASS` / `FAIL` | Der Tester schreibt fehlende Tests selbst (nur Testdateien) |
+| **Architektur-Review** | Agent `architektur-reviewer` · Command `/review` · Skill `code-review-gate` | `OK` / `KORREKTUREN` | Der Reviewer ist **read-only**; er liefert einen ausführbaren **Korrekturauftrag**, den das Command an den Implementierer delegiert. Runde 1 vollständig (geschlossene Befundliste), Runden 2–3 nur offene `K`-Befunde + Regressionen — **max. 3 Runden insgesamt**, gezählt am Befund-Kommentar |
+| **Abnahme (Test)** | Agent `kritischer-tester` · Command `/abnahme` · Skill `feature-testing` | `PASS` / `FAIL` | Der Tester schreibt fehlende Tests selbst (nur Testdateien). Bei `FAIL` genau **eine** Wiederholung, die nur die offenen Punkte prüft |
 
 ```text
 Implementieren → Tests (feature-testing)
@@ -33,7 +33,9 @@ Implementieren → Tests (feature-testing)
 Beide Gates bekommen **frischen Kontext** und urteilen selbst — sie kennen
 die Begründungen des Implementierers nicht. Die Urteile werden als
 Issue-Kommentar protokolliert (`<!-- review: status=OK … -->`,
-`<!-- abnahme: status=PASS … -->`).
+`<!-- abnahme: status=PASS … -->`). Der **Befundstand je Runde** steht im
+Marker `<!-- review-findings: runde=<n> … -->` — er ist die Quelle der
+Folgerunde, nicht der Chatverlauf.
 
 ## Skills (vendort)
 
