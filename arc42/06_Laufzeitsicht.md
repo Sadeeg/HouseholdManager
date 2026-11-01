@@ -72,6 +72,17 @@ die übrigen Chats desselben Haushalts nicht; ein fehlgeschlagener
 **Haushalt** stoppt die übrigen Haushalte nicht. Das Vorbild ist die
 Fehlerisolierung je Haushalt aus ADR 0005.
 
+**Grenze der Isolierung:** die Isolierung gilt für **Zustellfehler** — ein
+Fehler von Telegram (Zustellfehler oder Protokollfehler) wird protokolliert
+und der Lauf läuft weiter. Der gesamte Lauf steht in **einer** Transaktion
+(`@Transactional` am Use Case). Ein Fehler der Datenbank während des Laufs
+(etwa beim Commit) verwirft deshalb den Lauf als Ganzes: die Vermerke der
+bereits erfolgreich zugestellten Nachrichten gehen verloren und die
+Zustellung wird beim nächsten Lauf wiederholt. Das ist bewusst so gewählt —
+eine Transaktion je Haushalt würde den Zustellvermerk nur verschieben, ohne
+den Grund zu beheben: der Fehler läge dann im Detail der Transaktion, nicht
+in der Zustellung.
+
 ### Der Wiederholungslauf (stündlich)
 
 Der dritte Zeitgeber folgt demselben Muster: `NotificationRetryJob` löst

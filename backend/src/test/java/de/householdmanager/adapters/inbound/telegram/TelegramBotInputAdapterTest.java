@@ -118,6 +118,39 @@ class TelegramBotInputAdapterTest {
                 .isInstanceOf(RestClientException.class);
     }
 
+    /**
+     * Der Bot-Token darf in keiner Logausgabe stehen — die Ausnahme von
+     * Spring nennt die Anfrage-URL im Klartext.
+     */
+    @Test
+    void pollLoop_logsNoToken() {
+        String token = "123456:ABC-DEF-secret-token";
+        when(api.getUpdates(any(Long.class), any(Integer.class)))
+                .thenThrow(new RestClientException(
+                        "I/O error on GET request for \"https://api.telegram.org/bot" + token + "/getUpdates\""));
+        ch.qos.logback.classic.Logger logger =
+                (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(TelegramBotInputAdapter.class);
+        // Der Abfragelauf läuft endlos — deshalb wird nur eine Iteration
+        // geprüft: der Fehler darf nicht nach oben durchschlagen.
+        org.assertj.core.api.Assertions.assertThatThrownBy(adapter::pollOnce)
+                .isInstanceOf(RestClientException.class);
+
+        logger.detachAndStopAllAppenders();
+        ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> appender =
+                new ch.qos.logback.core.read.ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            adapter.pollIteration();
+        } finally {
+            logger.detachAppender(appender);
+        }
+        String logged = appender.list.stream()
+                .map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+                .reduce("", (a, b) -> a + "\n" + b);
+        assertThat(logged).contains("fehlgeschlagen").doesNotContain(token).doesNotContain("bot" + token);
+    }
+
     /** Ohne konfigurierten Token startet der Abfragelauf nicht. */
     @Test
     void start_doesNothingWithoutAToken() {

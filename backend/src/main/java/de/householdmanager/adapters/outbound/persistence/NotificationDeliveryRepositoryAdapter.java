@@ -45,9 +45,27 @@ public class NotificationDeliveryRepositoryAdapter implements NotificationDelive
                 .lastError(delivery.getLastError())
                 .lastAttemptAt(delivery.getLastAttemptAt())
                 .completed(delivery.isCompleted())
-                .createdAt(Instant.now(clock))
+                .createdAt(createdAtOf(delivery))
                 .build());
         return toDomain(entity);
+    }
+
+    /**
+     * Der Erstellzeitpunkt — beim Anlegen des Vermerks gesetzt, beim Update
+     * <strong>unverändert</strong>.
+     *
+     * <p>Der Vermerk wird beim Versand angelegt und danach mehrfach
+     * fortgeschrieben (Zustellung, Fehlversuch). Jedes Update schreibt den
+     * Vermerk vollständig — der Erstellzeitpunkt bliebe sonst bei jedem
+     * Versuch neu.
+     */
+    private Instant createdAtOf(NotificationDelivery delivery) {
+        if (delivery.getId() == null) {
+            return Instant.now(clock);
+        }
+        return deliveryJpaRepository.findById(delivery.getId())
+                .map(NotificationDeliveryJpaEntity::getCreatedAt)
+                .orElseGet(() -> Instant.now(clock));
     }
 
     private NotificationDelivery toDomain(NotificationDeliveryJpaEntity entity) {

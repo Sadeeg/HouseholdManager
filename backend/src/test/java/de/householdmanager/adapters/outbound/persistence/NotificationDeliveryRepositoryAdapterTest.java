@@ -96,6 +96,22 @@ class NotificationDeliveryRepositoryAdapterTest {
         assertThat(adapter.findRetryCandidates()).hasSize(1);
     }
 
+    /**
+     * Der Erstellzeitpunkt bleibt über die Fortschreibungen des Vermerks
+     * unverändert — er ist der Zeitpunkt der Anlage, nicht der des letzten
+     * Versuchs.
+     */
+    @Test
+    void save_keepsTheCreationTimestampAcrossUpdates() {
+        NotificationDelivery saved = adapter.save(delivery(householdA, "chat-1", "Text", 0,
+                NotificationDelivery.Status.PENDING, null, false));
+        Instant createdAt = deliveryJpaRepository.findAll().getFirst().getCreatedAt();
+
+        adapter.save(saved.failed(Instant.now(), "nicht erreichbar"));
+
+        assertThat(deliveryJpaRepository.findAll().getFirst().getCreatedAt()).isEqualTo(createdAt);
+    }
+
     /** Der Zähler steigt mit jedem Versuch — der Zustand der Wiederholung bleibt erhalten. */
     @Test
     void save_keepsTheRaisedAttemptCount() {

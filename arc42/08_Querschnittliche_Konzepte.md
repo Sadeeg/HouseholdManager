@@ -97,8 +97,11 @@ Adapter liefert die **Kandidaten** (`findRetryCandidates()`), die Fälligkeit
 entscheidet die Anwendung (`NotificationDelivery.isDueAt(now)`).
 
 Der Zustellvermerk entsteht **vor** dem Versand. Bricht der Vorgang zwischen
-Versand und Vermerk ab, bleibt der Vermerk bestehen und der Wiederholungslauf
-versucht es erneut — der Zustellzustand geht nicht verloren.
+Versand und Vermerk ab, bleibt der Vermerk im Zustand `PENDING` bestehen — der
+Zustellzustand geht nicht verloren. Er wird aber **nicht** erneut versucht:
+Telegram könnte die Nachricht schon angenommen haben, ein zweiter Versand liefe
+auf eine doppelte Zustellung hinaus. Wiederholt wird nur ein Vermerk im Zustand
+`FAILED` — dort steht fest, dass der Versand fehlgeschlagen ist (AC26).
 
 ## Validierung
 

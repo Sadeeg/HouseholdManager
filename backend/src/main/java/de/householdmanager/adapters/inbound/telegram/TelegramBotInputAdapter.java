@@ -1,6 +1,7 @@
 package de.householdmanager.adapters.inbound.telegram;
 
 import de.householdmanager.adapters.outbound.telegram.TelegramApiClient;
+import de.householdmanager.adapters.outbound.telegram.TelegramApiException;
 import de.householdmanager.application.port.in.TelegramChatUseCase;
 import de.householdmanager.application.port.out.TelegramBot;
 import de.householdmanager.config.TelegramConfig;
@@ -91,15 +92,39 @@ public class TelegramBotInputAdapter {
      */
     void pollLoop() {
         while (running.get()) {
-            try {
-                pollOnce();
-            } catch (RestClientException | TelegramDeliveryException failure) {
-                log.warn("Die Abfrage bei Telegram ist fehlgeschlagen: {}", failure.getMessage());
-                sleep();
-            } catch (RuntimeException failure) {
-                log.warn("Die Verarbeitung einer Telegram-Nachricht ist fehlgeschlagen: {}", failure.getMessage());
-                sleep();
-            }
+            pollIteration();
+        }
+    }
+
+    /**
+     * Eine Iteration des Abfragelaufs: eine Abfrage und die Behandlung ihres
+     * Fehlers.
+     *
+     * <p>Eigene Methode, damit der Test den Fehlerpfad prüfen kann, ohne den
+     * Lauf endlos laufen zu lassen.
+     */
+    void pollIteration() {
+        try {
+            pollOnce();
+        } catch (TelegramApiException failure) {
+            // Die Meldung des technischen Fehlers ist tokenfrei.
+            log.warn("Die Abfrage bei Telegram ist fehlgeschlagen: {}", failure.getMessage());
+            sleep();
+        } catch (RestClientException failure) {
+            // Sollte nicht mehr vorkommen: der API-Client kapselt jeden
+            // Fehler. Die Meldung wird nicht ausgegeben — sie könnte die
+            // URL mit dem Token nennen.
+            log.warn("Die Abfrage bei Telegram ist fehlgeschlagen (Verbindungsfehler).");
+            sleep();
+        } catch (TelegramDeliveryException failure) {
+            log.warn("Die Abfrage bei Telegram ist fehlgeschlagen: {}", failure.getMessage());
+            sleep();
+        } catch (RuntimeException failure) {
+            // Auch hier wird die Meldung nicht ausgegeben: sie könnte eine
+            // Anfrage-URL mit dem Token nennen. Der Typ genügt zur Diagnose.
+            log.warn("Die Verarbeitung einer Telegram-Nachricht ist fehlgeschlagen ({}).",
+                    failure.getClass().getSimpleName());
+            sleep();
         }
     }
 

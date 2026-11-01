@@ -5,11 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.householdmanager.config.TelegramConfig;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 /**
  * Der HTTP-Zugriff auf die Telegram-Bot-API — die einzige Stelle, die die
@@ -24,6 +27,11 @@ import org.springframework.web.client.RestClient;
  * weiter: die Unterscheidung zwischen <em>Zustellfehler</em> (Telegram war
  * nicht erreichbar) und <em>Protokollfehler</em> (Telegram hat die Anfrage
  * abgelehnt) ist fachlich und gehört in den Adapter.
+ *
+ * <p>Er kapselt den Fehler der Verbindung aber in einer
+ * {@link TelegramApiException}: die Ausnahme von Spring nennt die
+ * Anfrage-URL im Klartext — und im Pfad der URL steht der Bot-Token. Die
+ * Kapselung trägt nur eine tokenfreie Meldung und den HTTP-Status.
  */
 @Component
 public class TelegramApiClient {
@@ -88,31 +96,29 @@ public class TelegramApiClient {
     /**
      * Die Chat-Beschreibung zu einer Chat-Kennung.
      *
-     * @throws org.springframework.web.client.RestClientException bei einem
-     *     HTTP- oder Verbindungsfehler.
+     * @throws TelegramApiException bei einem HTTP- oder Verbindungsfehler.
      */
     public ApiResponse<ApiChat> getChat(String chatId) {
-        return http.post()
+        return call(() -> http.post()
                 .uri(url("getChat"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("chat_id", chatId))
                 .retrieve()
-                .body(CHAT_RESPONSE);
+                .body(CHAT_RESPONSE));
     }
 
     /**
      * Sendet eine Nachricht an einen Chat.
      *
-     * @throws org.springframework.web.client.RestClientException bei einem
-     *     HTTP- oder Verbindungsfehler.
+     * @throws TelegramApiException bei einem HTTP- oder Verbindungsfehler.
      */
     public ApiResponse<ApiChat> sendMessage(String chatId, String text) {
-        return http.post()
+        return call(() -> http.post()
                 .uri(url("sendMessage"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("chat_id", chatId, "text", text))
                 .retrieve()
-                .body(CHAT_RESPONSE);
+                .body(CHAT_RESPONSE));
     }
 
     /**
@@ -123,15 +129,35 @@ public class TelegramApiClient {
      * {@code timeout} wartet Telegram die angegebene Zahl Sekunden auf eine
      * neue Nachricht, bevor es leer antwortet.
      *
-     * @throws org.springframework.web.client.RestClientException bei einem
-     *     HTTP- oder Verbindungsfehler.
+     * @throws TelegramApiException bei einem HTTP- oder Verbindungsfehler.
      */
     public ApiResponse<List<ApiUpdate>> getUpdates(long offset, int timeoutSeconds) {
-        return http.get()
+        return call(() -> http.get()
                 .uri(url("getUpdates") + "?offset=" + offset + "&timeout=" + timeoutSeconds)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .body(UPDATE_RESPONSE);
+                .body(UPDATE_RESPONSE));
+    }
+
+    /**
+     * Führt einen Aufruf aus und kapselt einen Fehler der Verbindung.
+     *
+     * <p>Die Ausnahme von Spring nennt die Anfrage-URL im Klartext
+     * ({@code I/O error on GET request for "https://api.telegram.org/bot…"}) —
+     * im Pfad steht der Bot-Token. Sie darf deshalb nicht nach außen
+     * gelangen. Die Kapselung nennt nur den HTTP-Status oder den Fehler
+     * der Verbindung; die Meldung des Originals wird nicht übernommen.
+     */
+    private <T> T call(Supplier<T> request) {
+        try {
+            return request.get();
+        } catch (RestClientResponseException failure) {
+            throw new TelegramApiException(
+                    "Die Telegram-Bot-API hat mit HTTP " + failure.getStatusCode().value() + " geantwortet.",
+                    failure.getStatusCode().value(), failure);
+        } catch (RestClientException failure) {
+            throw new TelegramApiException("Die Telegram-Bot-API ist nicht erreichbar.", null, failure);
+        }
     }
 
     /**

@@ -6,8 +6,6 @@ import de.householdmanager.domain.model.TelegramDeliveryException;
 import de.householdmanager.domain.model.TelegramProtocolException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
 
 /**
  * Ausgehender Adapter: Telegram als Nachrichtenkanal (ADR 0007).
@@ -59,11 +57,8 @@ public class TelegramBotAdapter implements TelegramBot {
                 throw new TelegramProtocolException("Telegram hat die Nachricht abgelehnt: "
                         + reasonOf(response));
             }
-        } catch (RestClientResponseException failure) {
-            throw new TelegramDeliveryException(
-                    "Telegram ist nicht erreichbar (HTTP " + failure.getStatusCode().value() + ").", failure);
-        } catch (RestClientException failure) {
-            throw new TelegramDeliveryException("Telegram ist nicht erreichbar.", failure);
+        } catch (TelegramApiException failure) {
+            throw new TelegramDeliveryException("Telegram ist nicht erreichbar" + statusOf(failure) + ".", failure);
         }
     }
 
@@ -107,12 +102,20 @@ public class TelegramBotAdapter implements TelegramBot {
                 throw new TelegramProtocolException("Telegram kennt den Chat nicht: " + reasonOf(response));
             }
             return response.result();
-        } catch (RestClientResponseException failure) {
-            throw new TelegramDeliveryException(
-                    "Telegram ist nicht erreichbar (HTTP " + failure.getStatusCode().value() + ").", failure);
-        } catch (RestClientException failure) {
-            throw new TelegramDeliveryException("Telegram ist nicht erreichbar.", failure);
+        } catch (TelegramApiException failure) {
+            throw new TelegramDeliveryException("Telegram ist nicht erreichbar" + statusOf(failure) + ".", failure);
         }
+    }
+
+    /**
+     * Der HTTP-Status des Fehlers — als Zusatz zur Meldung.
+     *
+     * <p>Die Meldung des technischen Fehlers ist tokenfrei; der Status kommt
+     * aus {@link TelegramApiException}. Die Ausnahme von Spring wird nicht
+     * mehr abgefangen: sie nennt die URL mit dem Token.
+     */
+    private String statusOf(TelegramApiException failure) {
+        return failure.httpStatus() == null ? "" : " (HTTP " + failure.httpStatus() + ")";
     }
 
     /** Der Grund der Ablehnung — ohne den Token, ohne die URL. */
