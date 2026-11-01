@@ -104,10 +104,15 @@ public class TelegramChatUseCaseImpl implements TelegramChatUseCase {
      * ignoriert — der Bot antwortet nicht (AC6).
      *
      * <p>Ein gültiger Code schaltet den Chat für seinen Haushalt frei (AC3).
-     * Ein ungültiger Code — unbekannt oder zu einem anderen Haushalt
-     * gehörend — bekommt einen Hinweis, wie ein gültiger Code beschafft wird
-     * (AC9, AC10). Die Antwort nennt <strong>nie</strong> den Haushaltsnamen
-     * (AC8).
+     * Der Code bestimmt den Haushalt — der Bot kennt keine andere
+     * Zuordnung.
+     *
+     * <p>Ein ungültiger Code bekommt einen Hinweis, wie ein gültiger Code
+     * beschafft wird (AC9): entweder kennt niemanden den Code, oder der
+     * Code gehört zu einem Haushalt, zu dem der Chat <em>nicht</em> gehört
+     * (AC10). In beiden Fällen ist die Antwort gleich — sie verrät nicht,
+     * ob der Code existiert. Die Antwort nennt <strong>nie</strong> den
+     * Haushaltsnamen (AC8).
      */
     @Override
     @Transactional
@@ -120,8 +125,15 @@ public class TelegramChatUseCaseImpl implements TelegramChatUseCase {
 
         Optional<CodeOwner> owner = chatRepository.findCodeOwner(code.get());
         if (owner.isEmpty()) {
-            // Unbekannter Code oder der Code eines anderen Haushalts: für den
-            // Bot ist beides dasselbe (AC9, AC10).
+            // Unbekannter Code: für den Bot ist beides dasselbe (AC9, AC10).
+            return new BotAnswer(true, INVALID_CODE_HINT);
+        }
+
+        // Ein Chat gehört zu genau einem Haushalt. Ist er schon an einen
+        // anderen gebunden, schaltet ein fremder Code ihn nicht um (AC10) —
+        // die Antwort ist dieselbe wie bei einem unbekannten Code.
+        Optional<Long> boundHousehold = chatRepository.findHouseholdByChatId(chatId);
+        if (boundHousehold.isPresent() && boundHousehold.get() != owner.get().householdId()) {
             return new BotAnswer(true, INVALID_CODE_HINT);
         }
 

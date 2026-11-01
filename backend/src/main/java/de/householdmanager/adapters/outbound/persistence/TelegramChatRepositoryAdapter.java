@@ -55,6 +55,11 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
     }
 
     @Override
+    public Optional<Long> findHouseholdByChatId(String chatId) {
+        return chatJpaRepository.findHouseholdIdByChatId(chatId);
+    }
+
+    @Override
     public List<Long> findHouseholdsWithChats() {
         return chatJpaRepository.findHouseholdIds();
     }

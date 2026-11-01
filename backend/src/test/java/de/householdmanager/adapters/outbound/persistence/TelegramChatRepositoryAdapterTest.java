@@ -165,6 +165,20 @@ class TelegramChatRepositoryAdapterTest {
         assertThat(adapter.findHouseholdsWithChats()).containsExactly(householdA);
     }
 
+    /** Der Haushalt eines Chats — er wird gebraucht, um einen fremden Code abzuweisen (AC10). */
+    @Test
+    void findHouseholdByChatId_returnsTheHouseholdOfTheChat() {
+        adapter.save(chat(householdA, "-100", "Gruppe A", TelegramChat.ChatKind.GROUP, "alice"));
+
+        assertThat(adapter.findHouseholdByChatId("-100")).contains(householdA);
+    }
+
+    /** Ein noch nicht freigeschalteter Chat gehört zu keinem Haushalt. */
+    @Test
+    void findHouseholdByChatId_forAnUnknownChat_isEmpty() {
+        assertThat(adapter.findHouseholdByChatId("-100")).isEmpty();
+    }
+
     /** AC15: nach dem Trennen ist der Chat weg — er bekommt keine weiteren Nachrichten. */
     @Test
     void delete_removesTheChatOfThatHousehold() {

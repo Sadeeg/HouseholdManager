@@ -17,6 +17,10 @@ interface TelegramChatJpaRepository extends JpaRepository<TelegramChatJpaEntity,
     /** Der Chat eines Haushalts mit dieser Chat-ID. */
     Optional<TelegramChatJpaEntity> findByHouseholdIdAndChatId(long householdId, String chatId);
 
+    /** Der Haushalt eines Chats — ein Chat gehört zu höchstens einem Haushalt. */
+    @Query("select c.householdId from TelegramChatJpaEntity c where c.chatId = :chatId")
+    Optional<Long> findHouseholdIdByChatId(String chatId);
+
     /** Die Haushalte, die mindestens einen freigeschalteten Chat haben. */
     @Query("select distinct c.householdId from TelegramChatJpaEntity c order by c.householdId")
     List<Long> findHouseholdIds();

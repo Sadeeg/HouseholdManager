@@ -33,6 +33,16 @@ public interface TelegramChatRepository {
     Optional<TelegramChat> findByHouseholdAndChatId(long householdId, String chatId);
 
     /**
+     * Der Haushalt, zu dem ein Chat gehört; leer, wenn der Chat noch nicht
+     * freigeschaltet ist.
+     *
+     * <p>Ein Chat gehört zu höchstens einem Haushalt: die Chat-Kennung ist
+     * der Zugriffsweg, und dieselbe Kennung in zwei Haushalten wäre eine
+     * doppelte Zustellung.
+     */
+    Optional<Long> findHouseholdByChatId(String chatId);
+
+    /**
      * Der Haushalt, zu dem ein Code gehört, <strong>und</strong> die Person,
      * die den Code angefordert hat — die freischaltende Person der
      * Verbindung (AC13). Leer, wenn der Code zu keinem Haushalt passt

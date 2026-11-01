@@ -35,9 +35,11 @@ import org.junit.jupiter.api.Test;
 class TelegramChatUseCaseImplTest {
 
     private static final long HOUSEHOLD = 1L;
+    private static final long OTHER_HOUSEHOLD = 2L;
     private static final String MEMBER = "alice";
     private static final String OTHER_MEMBER = "bob";
     private static final String CODE = "123456";
+    private static final String OTHER_CODE = "654321";
     private static final String CHAT_ID = "-1001234567890";
 
     private InMemoryChats chats;
@@ -218,17 +220,30 @@ class TelegramChatUseCaseImplTest {
     }
 
     /**
-     * AC10: der Code eines anderen Haushalts bekommt denselben Hinweis — die
-     * Antwort verrät nicht, ob der Code existiert.
-     */
+ * * AC10: der Code eines anderen Haushalts bekommt denselben Hinweis — die
+ * * Antwort verrät nicht, ob der Code existiert.
+ *
+ * * <p>Der Fall ist <em>spezifisch</em>: der Chat ist bereits an einen
+ * * Haushalt gebunden, und der Code gehört zu einem anderen. Der Code
+ * * existiert also — er passt nur nicht zu diesem Chat.
+ */
     @Test
     void handleMessage_withTheCodeOfAnotherHousehold_answersWithTheSameHint() {
-        chats.codeKnown = false;
+        // Der Chat ist bereits für den ersten Haushalt freigeschaltet …
+        givenCodeForHousehold(MEMBER);
+        useCase.handleMessage(CHAT_ID, CODE);
 
-        TelegramChatUseCase.BotAnswer answer = useCase.handleMessage(CHAT_ID, "999999");
+        // … und der Code gehört zu einem anderen Haushalt.
+        String foreignCode = chats.ensureCode(OTHER_HOUSEHOLD, MEMBER);
 
+        TelegramChatUseCase.BotAnswer answer = useCase.handleMessage(CHAT_ID, foreignCode);
+
+        assertThat(answer.recognized()).isTrue();
+        assertThat(answer.hasMessage()).isTrue();
         assertThat(answer.message()).contains("Freischalt-Code");
-        assertThat(chats.findByHouseholdAndChatId(HOUSEHOLD, CHAT_ID)).isEmpty();
+        // Die Verbindung bleibt beim ersten Haushalt.
+        assertThat(chats.findByHouseholdAndChatId(HOUSEHOLD, CHAT_ID)).isPresent();
+        assertThat(chats.findByHouseholdAndChatId(OTHER_HOUSEHOLD, CHAT_ID)).isEmpty();
     }
 
     // --- AC13, AC14: das Trennen --------------------------------------------
@@ -298,6 +313,14 @@ class TelegramChatUseCaseImplTest {
         }
 
         @Override
+        public Optional<Long> findHouseholdByChatId(String chatId) {
+            return chats.entrySet().stream()
+                    .filter(entry -> entry.getValue().containsKey(chatId))
+                    .map(Map.Entry::getKey)
+                    .findFirst();
+        }
+
+        @Override
         public List<Long> findHouseholdsWithChats() {
             return chats.keySet().stream().sorted().toList();
         }
@@ -315,11 +338,15 @@ class TelegramChatUseCaseImplTest {
             return Optional.empty();
         }
 
+        /**
+         * Der Code des Haushalts — je Haushalt ein eigener Code, wie in der
+         * Anwendung (der Code ist über alle Haushalte eindeutig).
+         */
         @Override
         public String ensureCode(long householdId, String userId) {
             return codes.computeIfAbsent(householdId, id -> {
                 codeOwners.put(id, userId);
-                return CODE;
+                return id == OTHER_HOUSEHOLD ? OTHER_CODE : CODE;
             });
         }
 

@@ -376,6 +376,11 @@ class NotificationDispatchUseCaseImplTest {
         }
 
         @Override
+        public Optional<Long> findHouseholdByChatId(String chatId) {
+            return Optional.empty();
+        }
+
+        @Override
         public List<Long> findHouseholdsWithChats() {
             return chats.keySet().stream().sorted().toList();
         }

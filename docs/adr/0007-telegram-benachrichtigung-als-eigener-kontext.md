@@ -120,6 +120,24 @@ zuerst anfordert, ist der Eigentümer der darüber entstehenden Verbindungen.
 Das ist eine bewusste Vereinfachung: sie braucht keine Identität im
 Telegram-Protokoll und hält die Trennberechtigung eindeutig.
 
+### Der Code bestimmt den Haushalt
+
+Der Bot kennt keine Person und keine Zuordnung von Chats zu Haushalten —
+er sieht nur die Chat-Kennung und die Nachricht. Deshalb bestimmt **der
+Code** den Haushalt: der Code gehört zu genau einem Haushalt, und eine
+Freischaltung über diesen Code gehört diesem Haushalt.
+
+Daraus folgt die Antwortregel des Bots: ein **unbekannter** Code und ein
+Code, der zu einem **anderen** Haushalt als dem des Chats gehört, bekommen
+dieselbe Antwort — einen Hinweis, wie ein gültiger Code beschafft wird
+(AC9, AC10). Die Antwort verrät damit nicht, ob der Code existiert, und
+nennt nie den Haushaltsnamen (AC8).
+
+Ein Chat gehört zu höchstens einem Haushalt: die Chat-Kennung ist der
+Zugriffsweg, und dieselbe Kennung in zwei Haushalten wäre eine doppelte
+Zustellung. Der Adapter sichert das zusätzlich über einen Unique-Index
+über (Haushalt, Chat-ID).
+
 ## Konsequenzen
 
 **Positiv**

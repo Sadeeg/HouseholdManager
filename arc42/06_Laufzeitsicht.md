@@ -94,9 +94,14 @@ Der **Empfang** läuft nicht über HTTP, sondern über einen Abfragelauf:
 3. Der Use Case entscheidet, ob es ein Freischalt-Code ist (Ziffernfolge
    oder "/code <Code>") und schaltet den Chat frei; alles andere wird
    ignoriert — der Bot schweigt
-4. Antwortet der Bot, geht die Antwort über den TelegramBot-Port zurück
+4. Der Code bestimmt den Haushalt: der Bot kennt keine andere Zuordnung.
+   Ein unbekannter Code und ein Code, der zu einem anderen Haushalt als
+   dem des Chats gehört, bekommen **dieselbe** Antwort — einen Hinweis,
+   wie ein gültiger Code beschafft wird. Die Antwort verrät nicht, ob
+   der Code existiert, und nennt nie den Haushaltsnamen
+5. Antwortet der Bot, geht die Antwort über den TelegramBot-Port zurück
    in denselben Chat
-5. Beim ContextClosedEvent endet der Abfragelauf — er darf den Shutdown
+6. Beim ContextClosedEvent endet der Abfragelauf — er darf den Shutdown
    nicht blockieren; ein Abfragefehler beendet den Lauf nicht
 ```
 
