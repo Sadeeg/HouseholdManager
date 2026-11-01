@@ -78,8 +78,8 @@ Der Katalog (Name + Beschreibung) wird automatisch geladen — hier steht
 
 - Projekt-Skills liegen in `.opencode/skills/`; Herkunft und Pflege:
   `.opencode/skills/README.md`.
-- `.opencode/vendor-skills/` ist **nicht registriert** und wird nie
-  automatisch geladen. Nur bei nachweislichem Bedarf zurückholen.
+- Fremd-Skills werden **nicht eingecheckt**. Projektregeln gehören in die
+  projektspezifischen Skills (Vertrag: `.opencode/skills/README.md`).
 - Agenten: `architektur-reviewer` (Architektur-Gate), `kritischer-tester`
   (Test-Gate), `ux-designer` (UX-Entwurf), `arc-agent` (pflegt `arc42/`),
   `backend-dev` / `frontend-dev` (Implementierung je Stack).

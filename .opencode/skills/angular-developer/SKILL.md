@@ -1,12 +1,7 @@
 ---
 name: angular-developer
-description: Generates Angular code and provides architectural guidance. Trigger when creating projects, components, services, or HTTP communication, or for best practices on reactivity (signals, linkedSignal, resource, httpResource), queries and content projection, forms, dependency injection, routing, server and hybrid rendering (SSR, prerendering, hydration), accessibility (ARIA), animations, styling (component styles, Tailwind CSS), testing, naming conventions, or CLI tooling.
-license: MIT
-metadata:
-  author: Copyright 2026 Google LLC
-  version: '1.0'
+description: "Use for Angular 22 code: Signals, httpResource, Signal Forms, zoneless, DI, routing, testing, accessibility."
 ---
-
 # Angular Developer Guidelines
 
 1. Always analyze the project's Angular version before providing guidance, as best practices and available features can vary significantly between versions. If creating a new project with Angular CLI, do not specify a version unless prompted by the user.

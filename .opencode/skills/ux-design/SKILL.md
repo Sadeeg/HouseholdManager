@@ -1,8 +1,7 @@
 ---
 name: UX-Design
-description: Use when a feature needs a user interface or an interaction design. Defines the design method for HouseholdManager (flow, screens, states, interaction rules), the format of the UX section written into the issue, and the design DNA that every implementation must follow — modern, dark mode, a touch of terminal. Load this before designing screens or before implementing any UI.
+description: Use when a feature needs a UI. Defines the design method (flow, screens, states), the '## UX' issue section and the design DNA.
 ---
-
 # UX-Design
 
 Der UX-Entwurf ist eine eigene Runde im Anforderungs-Loop: **Runde 2a**, nach

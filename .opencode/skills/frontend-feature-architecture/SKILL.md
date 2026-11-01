@@ -1,8 +1,7 @@
 ---
 name: Frontend-Feature-Architektur
-description: Use for every change in the Angular frontend of HouseholdManager. Encodes the feature-based architecture after Manfred Steyer - the architecture matrix (feature, ui, data, util), the two rules (a feature may only use its own modules plus shared, a module may only use lower layers), the folder layout, smart versus dumb components, routing per feature and the Sheriff tags that enforce the boundaries. Load this when adding a feature, a component, a service, a model or a route.
+description: "Use for every frontend change. Fixes the feature architecture: matrix, folder layout, smart/dumb components, Sheriff boundaries."
 ---
-
 # Frontend — Feature-basierte Architektur
 
 Das Frontend folgt der **feature-basierten Architektur von Manfred Steyer**

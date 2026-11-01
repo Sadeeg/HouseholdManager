@@ -12,7 +12,7 @@ permissions:
     resource: feature-testing
     effect: allow
   - action: skill
-    resource: anforderung
+    resource: anforderung-loop
     effect: allow
   - action: edit
     resource: "frontend/**"

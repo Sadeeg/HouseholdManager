@@ -35,25 +35,25 @@ die Begründungen des Implementierers nicht. Die Urteile werden als
 Issue-Kommentar protokolliert (`<!-- review: status=OK … -->`,
 `<!-- abnahme: status=PASS … -->`).
 
-## Stack-Skills (vendort)
+## Skills (vendort)
 
-Für den Stack des Projekts sind offizielle Skills eingecheckt — sie werden
-geladen, sobald eine Änderung in den jeweiligen Bereich geht:
+Zwei Fremd-Skills sind eingecheckt, weil sie echtes Framework-Wissen liefern,
+das nicht im Projekt steht. Sie werden geladen, sobald eine Änderung in den
+jeweiligen Bereich geht:
 
 | Bereich | Skills |
 |---------|--------|
-| Frontend | `angular-developer` (Angular 22: Signals, `httpResource`, Signal Forms, zoneless, Vitest) · `angular-new-app` · `vitest` (Vitest 5: Mocking, Coverage, Filter) |
-| Backend | `spring-boot` · `spring-framework` · `spring-data-jpa` · `spring-flyway` · `spring-web` · `spring-security` · `spring-testing` · `spring-versions` |
-| Architektur | `hexagonal-architecture` (allgemeine Methodik) · `backend-ports-adapters` (projektspezifisch) · `frontend-feature-architecture` (Steyer, projektspezifisch) |
-| Design | `ux-design` (projektspezifisch: UX-Methode, Issue-Abschnitt `## UX`, Design-DNA) |
-| Testen | `feature-testing` (projektspezifisch: Testebenen, AC-Abdeckung) |
-| Review | `code-review-gate` (projektspezifisch: Kategorien, Severity, Korrekturauftrag) |
+| Frontend | `angular-developer` (Angular 22: Signals, `httpResource`, Signal Forms, zoneless) · `vitest` (Vitest 5: Mocking, Coverage, Filter) |
+| Architektur | `backend-ports-adapters` (Ports & Adapters, projektspezifisch) · `frontend-feature-architecture` (Steyer, projektspezifisch) |
+| Design | `ux-design` (UX-Methode, Issue-Abschnitt `## UX`, Design-DNA) |
+| Testen | `feature-testing` (Testebenen, AC-Abdeckung) |
+| Review | `code-review-gate` (Kategorien, Severity, Korrekturauftrag) |
 
-Herkunft, Stand, Lizenz und Update-Befehle: `skills/README.md`.
-
-> **Achtung Versionsangaben:** `spring-versions` nennt Stand 2026-04-02 und
-> damit Boot 4.0.5. In diesem Projekt läuft **Boot 4.1.2** — maßgeblich ist
-> `backend/pom.xml`, nicht die Skill.
+Die generischen Spring-Skills (`spring-boot`, `spring-web`, `spring-testing`
+u. a.) sowie `spring-versions`, `angular-new-app` und `hexagonal-architecture`
+wurden entfernt: sie enthielten keine projektspezifische Regel und lagen
+doppelt im Katalog. Herkunft, Stand, Lizenz und Update-Befehle:
+`skills/README.md`.
 
 ## Architektur
 
@@ -72,18 +72,27 @@ Rückfragen umsetzen kann. Jede Runde hat ein Grilling und ein Gate; bei
 Lücken läuft die Schleife in die zuständige Runde zurück. Zwischen Runde 2
 und Runde 3 steht die **ARC-Runde**.
 
-| Runde | Skill/Agent | Grilling | Ergebnis |
-|-------|-------------|----------|----------|
-| 1 — Erfassen | `anforderung-intake` | Verständnis sichern (Ziel, Kern, Verzicht) | Ziel, Kontext, Scope, Nicht-Ziele, Epic-/Phasen-Schnitt — **Issue wird angelegt** |
-| 2 — Fachlich | `anforderung-fachlich` | Regeln attackieren (Randfall, Rolle, Umkehr) | Rollen, Nutzerfluss, fachliche Regeln, prüfbare Akzeptanzkriterien, Fehlerfälle |
+Die Skill **`anforderung-loop`** enthält alle drei Runden, das Gate und das
+Grilling; die Referenzen liegen in `references/`:
+
+| Datei | Inhalt |
+|-------|--------|
+| `anforderung-loop/SKILL.md` | Die drei Runden, Gate-Vertrag, Epic/Phasen, Regeln |
+| `anforderung-loop/references/grilling.md` | Angriffskategorien, Frageprotokoll, Stop-Kriterien |
+| `anforderung-loop/references/gate.md` | Vollständigkeitscheckliste je Runde, Urteil `PASS`/`GAPS` |
+| `anforderung-loop/references/technik-checkliste.md` | Kurzfassung der Konventionen für Runde 3 |
+
+| Runde | Abschnitt | Grilling | Ergebnis |
+|-------|-----------|----------|----------|
+| 1 — Erfassen | `anforderung-loop` §Runde 1 | Verständnis sichern (Ziel, Kern, Verzicht) | Ziel, Kontext, Scope, Nicht-Ziele, Epic-/Phasen-Schnitt — **Issue wird angelegt** |
+| 2 — Fachlich | `anforderung-loop` §Runde 2 | Regeln attackieren (Randfall, Rolle, Umkehr) | Rollen, Nutzerfluss, fachliche Regeln, prüfbare Akzeptanzkriterien, Fehlerfälle |
 | 2a — UX | Agent `ux-designer` | — | **`## UX` im Issue**: Screens, Abläufe, Zustände, Texte — nach Design-DNA |
 | 2b — Architektur | Agent `arc-agent` | — | **arc42 gepflegt**, Vorgaben für Runde 3, offene Architekturfragen |
-| 3 — Technisch | `anforderung-technisch` | Bauplan attackieren (Widerspruch, Folge, Zeit) | Zielort, Datenmodell, API-Vertrag, UI, Dateiliste, Tests, Verify |
+| 3 — Technisch | `anforderung-loop` §Runde 3 | Bauplan attackieren (Widerspruch, Folge, Zeit) | Zielort, Datenmodell, API-Vertrag, UI, Dateiliste, Tests, Verify |
 
 | Skill | Aufgabe |
 |-------|---------|
-| `anforderung-loop` | Orchestrierung: Runden, Phasen-Übergang, Gate-Vertrag, Fortsetzen |
-| `anforderung-gate` | Vollständigkeitscheckliste je Runde, Urteil `PASS`/`GAPS` |
+| `anforderung-loop` | Der ganze Loop: Runden, Phasen-Übergang, Gate-Vertrag, Fortsetzen |
 | `issue-formulierung` | Hausstil: Titel, Labels, Section-Reihenfolge, Verify-Block |
 | `issue-github` | Issue anlegen, Body je Runde ersetzen, Protokoll kommentieren, finalisieren |
 
@@ -174,15 +183,15 @@ dasselbe bei jedem PR — der PR ist bei rotem CI nicht mergebar. Details in
 ```text
 Rohidee
   │
-  ├─ Runde 1 (anforderung-intake) ─▶ Grilling ─▶ Gate runde=1
+  ├─ Runde 1 (Erfassen) ──────▶ Grilling ─▶ Gate runde=1
   │        ▲                              │ GAPS
   │        └──────────────────────────────┘
   │                            └──▶ "Soll ich mit Runde 2 weitermachen?"
-  ├─ Runde 2 (anforderung-fachlich) ▶ Grilling ─▶ Gate runde=2
+  ├─ Runde 2 (Fachlich) ──────▶ Grilling ─▶ Gate runde=2
   │        ▲                              │ GAPS
   │        └──────────────────────────────┘
   │                            └──▶ "Soll ich mit Runde 3 weitermachen?"
-  ├─ Runde 3 (anforderung-technisch) ▶ Grilling ─▶ Gate runde=3
+  ├─ Runde 3 (Technisch) ─────▶ Grilling ─▶ Gate runde=3
   │        ▲                              │ GAPS
   │        └──────────────────────────────┘
   │

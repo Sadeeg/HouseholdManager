@@ -1,8 +1,7 @@
 ---
 name: Issue-GitHub
-description: Use to create and maintain the GitHub issue that carries the requirements loop as its working state. Creates the issue after round 1, replaces the body after every later round, appends the round protocol as a comment, and finalizes title, labels and type when the final gate passes. Load this whenever a round of the loop writes its result back to GitHub.
+description: "Use to maintain the GitHub issue that carries the loop: create, replace body per round, comment the protocol, finalize."
 ---
-
 # Issue-GitHub
 
 Das GitHub-Issue **ist** der Arbeitsstand des Anforderungs-Loops. Es gibt

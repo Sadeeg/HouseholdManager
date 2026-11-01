@@ -21,8 +21,9 @@ Die Architektur soll:
 
 Referenz für die Methodik: Cockburns Ports & Adapters. Die
 projektspezifische Fassung (Konzept, Pakete, Tests je Schicht, Fallen) steht
-im Skill `backend-ports-adapters`. Der früher vendorte allgemeine Skill
-`hexagonal-architecture` liegt archiviert in `.opencode/vendor-skills/`.
+im Skill `backend-ports-adapters`. Ein früher vendorter allgemeiner Skill
+`hexagonal-architecture` wurde entfernt — er enthielt keine projektspezifische
+Regel, die nicht dort oder in `AGENTS.md` steht.
 
 ## Entscheidung
 

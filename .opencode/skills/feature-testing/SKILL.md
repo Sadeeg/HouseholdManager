@@ -1,6 +1,6 @@
 ---
 name: Feature-Testing
-description: Use when writing, reviewing or extending the tests of a feature in HouseholdManager. Defines which test belongs on which layer (domain, use case, inbound/outbound adapter, UI), the commands to run them, what "vollständig getestet" means (every acceptance criterion needs a proving test), and the anti-patterns to avoid. Load this before writing tests or when the critical tester reports gaps.
+description: "Use when writing tests. Defines the test per layer, what 'vollständig getestet' means (every AC needs a test) and anti-patterns."
 ---
 
 # Feature-Testing
@@ -10,9 +10,9 @@ Tests, sondern **Beleg**: jedes Akzeptanzkriterium (AC) braucht einen Test,
 der das Verhalten zeigt — und zwar auf der **tiefsten** Ebene, die den
 Fehler noch findet.
 
-Verwandte Skills: `spring-testing` (Backend-Test-Slices), `vitest`
-(Frontend-Testwerkzeug), `angular-developer` (Test-Referenzen),
-`backend-ports-adapters` / `frontend-feature-architecture` (Schichtregeln).
+Verwandte Skills: `vitest` (Frontend-Testwerkzeug), `angular-developer`
+(Test-Referenzen), `backend-ports-adapters` /
+`frontend-feature-architecture` (Schichtregeln).
 
 ## Die Regel
 

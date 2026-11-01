@@ -642,3 +642,95 @@ kennt kein `archunit`), deshalb steht sie fest im `pom.xml`.
 | A2 | CI-Job, der prüft: Regel in `AGENTS.md`/`pruefgrundlage.md` geändert → Test mitgeändert | umsetzbar, sobald A1 steht |
 | A3 | `TempProbeTest.java` (untracked, kompiliert nicht) aufräumen — sie brach den Maven-Build | du (vorbestehende Datei, nicht von mir) |
 
+---
+
+## 15. Zweite Runde (2026-11-01) — Dubletten und Katalog
+
+§9 beschreibt eine Optimierung, die im Repo **nicht nachgehalten** war:
+Die 10 Fremd-Skills lagen byte-gleich in `.opencode/skills/` **und**
+`.opencode/vendor-skills/` (also doppelt im Katalog), und die 5
+`anforderung-*`-Skills waren wieder aufgespalten, obwohl §9.2.4 einen Merge
+auf **eine** Skill beschreibt. Diese Runde hat beides nachgezogen.
+
+### 15.1 Befund
+
+| Befund | Messwert | Beleg |
+|--------|-----------|-------|
+| **Fremd-Skills doppelt registriert** | 10 Skills, 119.688 B zweimal im Repo | `diff -rq .opencode/skills/<s> .opencode/vendor-skills/<s>` → 0 Unterschiede bei allen 10 |
+| **Loop wieder aufgespalten** | 6 Skills (`anforderung`, `-loop`, `-intake`, `-fachlich`, `-technisch`, `-gate`) | die 5 tragen Inhalt, den `anforderung` + 3 Referenzen bereits vollständig abdecken |
+| **Katalog zu geschwätzig** | 8.177 Zeichen in 25 `description` | längste: `anforderung-loop` 598 Zeichen |
+
+### 15.2 Was geändert wurde
+
+1. **10 Fremd-Skills entfernt** (registriert *und* vendort):
+   `angular-new-app`, `hexagonal-architecture`, `spring-boot`,
+   `spring-data-jpa`, `spring-flyway`, `spring-framework`,
+   `spring-security`, `spring-testing`, `spring-versions`, `spring-web`.
+   **Begründung je Skill** in `.opencode/skills/README.md`. Vor dem Löschen
+   geprüft: `backend-ports-adapters` enthält das hexagonale Konzept
+   vollständig (Schichten, Abhängigkeitsregel, Ports, Adapter, Composition
+   Root, Tests je Ebene) — der Fremd-Skill brachte keine projektspezifische
+   Regel. `spring-versions` nannte Boot 4.0.5, das Projekt läuft 4.1.2.
+2. **Loop konsolidiert:** die 5 `anforderung-*`-Skills sind in
+   `anforderung-loop` aufgegangen (Body der gemergten `anforderung`-Skill +
+   `references/{gate,grilling,technik-checkliste}.md`). Der gemergte Body
+   wurde gegen die 5 Quell-Skills geprüft: jede Regel, die dort stand, ist
+   entweder im Body oder in einer Referenz enthalten.
+3. **Alle 10 `description` auf ≤ 130 Zeichen** gekürzt, Form „Wann laden,
+   was liefert es". Katalog: 8.177 → 1.195 Zeichen.
+4. **Verweise repariert:** `AGENTS.md`, `.opencode/README.md`,
+   `.opencode/skills/README.md`, ADR 0001, `backend-ports-adapters`,
+   `feature-testing`, `commands/anforderung.md`, `commands/issue-check.md`,
+   `agents/backend-dev.md` (Allowlist).
+
+### 15.3 Messung
+
+| Posten | vorher | nachher | Δ |
+|--------|--------|---------|---|
+| Registrierte Skills | 25 | 10 | −15 sichtbar |
+| **Katalog (Beschreibungen)** | 8.177 Z ≈ 2.150 T | 1.195 Z ≈ 315 T | **−85 %** |
+| `SKILL.md`-Bodies | 256.519 B | 83.760 B | −67 % |
+| `references/` | 408.086 B | 319.008 B | −22 % |
+| Skill-Ladung Anforderungs-Loop | ~112.700 B | ~46.000 B | **−59 %** |
+| `AGENTS.md` | 13.832 B | 13.842 B | ±0 |
+
+**Sockel pro Turn:** der Katalog schrumpft um ~1.835 Token — bei jedem Turn
+und in **jedem** Subagenten (der Katalog steht auch dort im System-Prompt).
+
+### 15.4 Fehler, die dabei passiert sind
+
+| Fehler | Ursache | Fix |
+|--------|---------|-----|
+| YAML-Fehler „mapping values are not allowed here" | `description:` mit unquotiertem `:` im Text | YAML-Description quoten, wenn sie `:` enthält |
+| `---` am Zeilenende der Description | `edit` ohne abschließenden Zeilenumbruch | Frontmatter mit Skript neu schreiben, nicht mit Einzel-Edit |
+| `feature-testing` ohne Description | Beschreibungstext und `---` waren in einem Edit verschmolzen | Frontmatter neu aufgebaut, YAML validiert |
+
+**Regel:** Frontmatter-Änderungen immer per Skript, danach mit `yaml.safe_load`
+gegenprüfen — nicht per `edit` am Zeilenende.
+
+### 15.5 Was bewusst erhalten blieb
+
+- **Grilling, Gate-Checklisten, Stop-Kriterien** — der Kern des Loops, jetzt in
+  `anforderung-loop/references/`.
+- **Akzeptanzkriterien-Disziplin** (`feature-testing`): jedes AC braucht einen
+  Test.
+- **Gate-Urteile und Korrekturauftrag** (`code-review-gate`).
+- **Design-DNA-Verweise** und „keine Hex-Literale".
+- **Boot-4-/Angular-22-Fallen** in `AGENTS.md §Boot-4-Fallen` und
+  `anforderung-loop/references/technik-checkliste.md`.
+
+### 15.6 Offen
+
+| # | Punkt | Grund |
+|---|-------|-------|
+| O1 | `angular-developer`: 43 Referenzen (~240 KB), Body überwiegend `ng new` | inhaltliche Auswahl nötig, kein Automatismus |
+| O2 | `vitest`-Referenzen (19 Dateien) | klein und selten geladen, kein Hebel |
+| O3 | Bodies über dem 6-KB-Ziel (`feature-testing`, `frontend-feature-architecture`, `ux-design`, `anforderung-loop`) | jede Kürzung braucht eine Sichtprüfung der Regeln |
+| O4 | `Skill-Optimierung.md` selbst (~35 KB) | gehört aus dem Repo-Root — nach `docs/` oder weg |
+
+### 15.7 Prüfregel
+
+Nach den ersten 3–5 Features gegenprüfen: Steigen Fehlversuche, Rückfragen
+oder „falscher Skill geladen"-Fälle, wird die Kürzung an der Stelle
+zurückgenommen. Die Zahlen dafür stehen in §6.
+

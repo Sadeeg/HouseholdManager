@@ -21,9 +21,8 @@ und nach jeder Runde aktualisiert. Es gibt keine lokale Draft-Datei.
 
 **Ablauf je Runde:**
 
-1. Lade die passende Skill der Runde — `anforderung-intake` (Runde 1),
-   `anforderung-fachlich` (Runde 2), `anforderung-technisch` (Runde 3) — und
-   führe sie aus. Lies vorher
+1. Lade die Skill `anforderung-loop` und führe die Runde aus (Runde 1/2/3
+   sind darin beschrieben). Lies vorher
    `.opencode/skills/anforderung-loop/references/grilling.md`.
 2. **Grilling**: stelle **eine** Frage nach der anderen und warte auf jede
    Antwort. Höre erst auf, wenn die Stop-Kriterien erfüllt sind. Schreibe
@@ -31,8 +30,9 @@ und nach jeder Runde aktualisiert. Es gibt keine lokale Draft-Datei.
 3. Lade `issue-formulierung` und formatiere den Issue-Text nach Hausstil.
 4. Lade `issue-github` — Teil A nach Runde 1 (Issue anlegen), Teil B nach
    Runde 2 und 3 (Body ersetzen, Protokoll kommentieren).
-5. Lade `anforderung-gate` mit `runde: <n>`. Bei `GAPS` → Zielrunde
-   bestimmen, Runde erneut ausführen (max. 2 Durchläufe je Runde).
+5. Prüfe mit `anforderung-loop` → `references/gate.md` (Runde `<n>`). Bei
+   `GAPS` → Zielrunde bestimmen, Runde erneut ausführen (max. 2 Durchläufe
+   je Runde).
 6. **Phasen-Übergang:** Frage **eine** Frage: „Soll ich mit Runde <n+1>
    weitermachen?" — A: weiter, B: pausieren (Issue bleibt `[WIP]`), C: eigene
    Richtung. Bei B zusammenfassen, was erreicht ist und was als Nächstes
@@ -45,9 +45,9 @@ und nach jeder Runde aktualisiert. Es gibt keine lokale Draft-Datei.
      `arc42/` und liefert die Vorgaben für Runde 3.
    - Offene UX- oder Architekturfragen dem Auftraggeber stellen, bevor Runde 3
      beginnt.
-8. Nach Runde 3: `anforderung-gate` mit `runde: final`. Bei `PASS` →
-   `issue-github` **Teil C** — finalisieren, `[WIP]` aus dem Titel, Labels
-   und Typ setzen, Abschlusskommentar.
+8. Nach Runde 3: `anforderung-loop` → `references/gate.md` mit `runde: final`.
+   Bei `PASS` → `issue-github` **Teil C** — finalisieren, `[WIP]` aus dem
+   Titel, Labels und Typ setzen, Abschlusskommentar.
 
 Regeln:
 

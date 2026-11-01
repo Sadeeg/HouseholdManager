@@ -1,8 +1,7 @@
 ---
 name: Code-Review-Gate
-description: Use when reviewing a change in HouseholdManager before it counts as done. Defines the review categories (correctness, backend architecture, frontend architecture, tests, errors/data, security, conventions), the severity levels, the OK/KORREKTUREN gate verdict, and the format of the correction order that gets delegated back to the implementer. Load this when the architektur-reviewer runs or when you need to prepare, interpret or execute a correction order.
+description: Use when reviewing a change. Defines review categories, severity levels, the OK/KORREKTUREN verdict and the correction order.
 ---
-
 # Code-Review-Gate
 
 Ein Review ist ein **Gate**, kein Meinungsaustausch: Am Ende steht genau ein

@@ -1,35 +1,72 @@
-# Skills — Herkunft und Lizenz
+# Skills — Herkunft und Pflege
 
-Die Skills in diesem Ordner sind **vendored** (fest im Repo eingecheckt), damit
-das Projekt ohne Netzwerkzugriff und ohne nachinstallierte Pakete arbeitet.
-
-| Skill | Quelle | Stand | Lizenz |
-|-------|--------|-------|--------|
-| `angular-developer/` | [github.com/angular/skills](https://github.com/angular/skills) | `5d929e5` (2026-10-29) | MIT, Copyright Google LLC |
-| `angular-new-app/` | [github.com/angular/skills](https://github.com/angular/skills) | `5d929e5` (2026-10-29) | MIT, Copyright Google LLC |
-| `spring-boot/` | [github.com/rynr/spring-skills](https://github.com/rynr/spring-skills) | `fe9d704` (2026-04-02) | MIT |
-| `spring-framework/` | dito | dito | MIT |
-| `spring-data-jpa/` | dito | dito | MIT |
-| `spring-flyway/` | dito | dito | MIT |
-| `spring-security/` | dito | dito | MIT |
-| `spring-testing/` | dito | dito | MIT |
-| `spring-versions/` | dito | dito | MIT |
-| `spring-web/` | dito | dito | MIT |
-| `hexagonal-architecture/` | [github.com/affaan-m/ECC](https://github.com/affaan-m/ECC) | Stand 2026-10-29 | MIT |
-| `vitest/` | [github.com/antfu/skills](https://github.com/antfu/skills) | `8886fe2` (2026-10-23) | MIT |
-
-## Eigene Skills des Projekts
-
-Diese Skills sind **projektspezifisch** und werden hier gepflegt:
+Die Skills in diesem Ordner sind **projektspezifisch** und werden hier
+gepflegt. Jeder Eintrag im Katalog kostet in *jedem* Turn Kontext — deshalb
+gilt der Vertrag unten.
 
 | Skill | Inhalt |
 |-------|--------|
+| `anforderung-loop/` | Der Anforderungs-Loop in 3 Runden (Erfassen → fachlich → technisch) mit Grilling und Gate. Referenzen: `grilling.md`, `gate.md`, `technik-checkliste.md` |
+| `issue-formulierung/` | Hausstil: Titel, Labels, Section-Reihenfolge, Verify-Block. `references/hausstil.md` |
+| `issue-github/` | Issue anlegen, Body je Runde ersetzen, Protokoll kommentieren, finalisieren |
 | `backend-ports-adapters/` | Ports-&-Adapters-Aufbau des Backends (Schichten, Ports, Mapping, Transaktionen, Tests je Schicht) — Entscheid: [ADR 0001](../../docs/adr/0001-backend-ports-and-adapters.md) |
 | `frontend-feature-architecture/` | Feature-Architektur nach Manfred Steyer (Architektur-Matrix, Ordnerregeln, Smart/Dumb, Sheriff-Tags) — Entscheid: [ADR 0002](../../docs/adr/0002-frontend-feature-architecture.md) |
 | `feature-testing/` | Teststrategie: Testebene je Fehler, AC-Abdeckung, Definition von „vollständig getestet", Anti-Patterns, Angular-22-Testfallen |
 | `code-review-gate/` | Review-Doktrin: 8 Kategorien, Severity, OK/KORREKTUREN, Format des Korrekturauftrags, Proben für Sichtbarkeit/Erreichbarkeit |
 | `ux-design/` | UX-Methode: Ablauf, Screens, Zustände, Sichtprüfung (Layout ist nicht testbar), Issue-Abschnitt `## UX`, Design-DNA |
-| `anforderung-*`, `issue-formulierung`, `issue-github` | Anforderungs-Loop und GitHub-Schreibvorgänge (siehe `.opencode/README.md`) |
+| `angular-developer/` | Angular 22 (Signals, `httpResource`, Signal Forms, zoneless) — vendort, MIT, [github.com/angular/skills](https://github.com/angular/skills), Stand `5d929e5` (2026-10-29) |
+| `vitest/` | Vitest 5 (Mocking, Coverage, Filter) — vendort, MIT, [github.com/antfu/skills](https://github.com/antfu/skills), Stand `8886fe2` (2026-10-23) |
+
+## Skill-Vertrag
+
+1. `description` ≤ 130 Zeichen, beginnt mit „Wann laden, was liefert es".
+   Der Katalog steht in **jedem** Turn — die Beschreibung ist der teuerste
+   Text des Repos.
+2. `SKILL.md` ≤ 6 KB. Alles darüber gehört in `references/` und wird nur
+   geladen, wenn genau diese Frage gestellt wird.
+3. Kein Skill wiederholt `AGENTS.md` — er verweist darauf. `AGENTS.md`
+   enthält die Entscheidungen, die Skill die Umsetzung.
+4. Verify-Befehle stehen **einmal**: `AGENTS.md §Verify`.
+5. Kein Skill enthält Beispielcode, der nicht projekttypisch ist.
+6. Neue generische Fremd-Skills werden **nicht** eingecheckt. Projektregeln
+   gehören in die projektspezifischen Skills.
+
+## Entfernte Fremd-Skills (2026-11-01)
+
+Diese Skills lagen byte-gleich in `.opencode/skills/` **und**
+`.opencode/vendor-skills/` und wurden doppelt im Katalog gezählt. Sie sind
+entfernt, weil sie keine projektspezifische Regel enthielten:
+
+| Skill | Grund |
+|-------|-------|
+| `spring-boot` · `spring-framework` · `spring-data-jpa` · `spring-flyway` · `spring-web` · `spring-security` · `spring-testing` | generische API-Referenz; die Projektregeln stehen in `AGENTS.md` und `backend-ports-adapters` |
+| `spring-versions` | Versionsfragen beantwortet `backend/pom.xml` / `frontend/package.json` — der Skill nannte Boot 4.0.5, das Projekt läuft 4.1.2 |
+| `angular-new-app` | Projekt existiert; eine Anleitung zum Anlegen einer neuen App ist gegenstandslos |
+| `hexagonal-architecture` | allgemeine Methodik; die projektspezifische Fassung (Schichten, Ports, Adapter, Composition Root, Tests je Ebene, Fallen) steht vollständig in `backend-ports-adapters` |
+
+**Wiederherstellung:** aus dem Upstream-Repo (siehe Herkunftstabelle oben)
+nach `.opencode/skills/` kopieren. Nur, wenn der Inhalt nachweislich fehlt.
+
+## Aktualisieren
+
+```bash
+git clone --depth 1 https://github.com/angular/skills /tmp/angular-skills
+git clone --depth 1 https://github.com/antfu/skills /tmp/antfu-skills
+
+cp -r /tmp/angular-skills/angular-developer .opencode/skills/
+cp -r /tmp/antfu-skills/vitest .opencode/skills/
+```
+
+Danach Commit-SHA und Datum in der Tabelle oben aktualisieren.
+
+## Hinweise zu diesem Projekt
+
+- Die Angular-Skills zielen auf die **aktuelle** Angular-Version (v22+);
+  `angular-developer` nennt Angular 22 als Mindestversion für Signal Forms.
+- Boot-4-Sonderheiten (Dev Services, Testcontainers 2.x
+  `org.testcontainers:testcontainers-postgresql`, Jackson 3 `tools.jackson.*`)
+  stehen in `AGENTS.md §Boot-4-Fallen` und in
+  `anforderung-loop/references/technik-checkliste.md`.
 
 ## Agenten
 
@@ -39,39 +76,5 @@ Diese Skills sind **projektspezifisch** und werden hier gepflegt:
 | `.opencode/agents/ux-designer.md` | UX-Runde (zwischen fachlicher und technischer Runde): entwirft die Oberfläche nach der Design-DNA und schreibt den Abschnitt `## UX` in den Issue-Body |
 | `.opencode/agents/architektur-reviewer.md` | Architektur-Gate: prüft read-only gegen `AGENTS.md`, ADRs und Skills, urteilt `OK`/`KORREKTUREN`, liefert den ausführbaren Korrekturauftrag (wird delegiert, nicht selbst umgesetzt) |
 | `.opencode/agents/kritischer-tester.md` | Test-Gate: prüft adversarial gegen die Akzeptanzkriterien, schreibt fehlende Tests, urteilt `PASS`/`FAIL` |
-
-## Aktualisieren
-
-```bash
-git clone --depth 1 https://github.com/angular/skills /tmp/angular-skills
-git clone --depth 1 https://github.com/rynr/spring-skills /tmp/spring-skills
-
-cp -r /tmp/angular-skills/angular-developer /tmp/angular-skills/angular-new-app .opencode/skills/
-for s in spring-boot spring-framework spring-data-jpa spring-flyway \
-         spring-security spring-testing spring-versions spring-web; do
-  cp -r /tmp/spring-skills/skills/$s .opencode/skills/
-done
-```
-
-Danach Commit-SHA und Datum in der Tabelle oben aktualisieren.
-
-## Hinweise zu diesem Projekt
-
-- Die Angular-Skills zielen auf die **aktuelle** Angular-Version (v22+);
-  `angular-developer` nennt Angular 22 als Mindestversion für Signal Forms.
-- `spring-versions` war zuletzt am 2026-04-02 aktualisiert und nennt daher
-  Boot 4.0.5 als „current GA". **In diesem Projekt läuft Spring Boot 4.1.2** —
-  die Versionsangaben der Skill sind nicht die Projekt-Version. Maßgeblich ist
-  `backend/pom.xml`.
-- `spring-boot-docker-compose` (Dev Services), Testcontainers 2.x
-  (`org.testcontainers:testcontainers-postgresql`) und Jackson 3
-  (`tools.jackson.*`) sind Boot-4-Sonderheiten — siehe
-  `.opencode/skills/anforderung-technisch/references/technik-checkliste.md`.
-- `hexagonal-architecture` ist sprachübergreifend und allgemein gehalten. Die
-  **projektspezifische** Fassung (Pakete, Teststrategie, Fallen) steht in
-  `backend-ports-adapters`.
-
-## Eigene Skills des Projekts
-
-`anforderung-*`, `issue-formulierung` und `issue-github` sind projektspezifisch
-und werden hier gepflegt (siehe `.opencode/README.md`).
+| `.opencode/agents/backend-dev.md` | Backend-Implementierer: setzt Backend-Teile um, Bericht statt Dateidump |
+| `.opencode/agents/frontend-dev.md` | Frontend-Implementierer: setzt Frontend-Teile um, Bericht statt Dateidump |

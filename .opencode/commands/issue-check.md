@@ -22,19 +22,22 @@ Vorgehen:
    - referenzierte Pfade im Repo existieren (`find`/`grep`, nicht raten)
    - der Body enthält **kein** Entscheidungsprotokoll — es gehört in die
      Kommentare
-4. Lade `anforderung-gate` und führe ihn mit `runde: final` gegen den
-   Issue-Body aus. Fehlt ein Protokoll zu einer abgeschlossenen Runde, ist
-   das eine Lücke der Art `VERSTÄNDNIS` → Zielrunde 1.
-5. Lade `anforderung-technisch` und prüfe, ob die technischen Angaben
-   (Datenmodell, API, Dateiliste, Tests) für eine Umsetzung reichen. Fehlt
-   etwas, ist das eine `TECH`-Lücke → Zielrunde 3.
-6. Lade `anforderung-fachlich` und prüfe, ob die fachlichen Angaben
-   (Rollen, Ablauf, Regeln, Fehlerfälle) vollständig sind. Fehlt etwas,
-   ist das eine `FACH`-Lücke → Zielrunde 2.
-7. Lade `references/grilling.md` und prüfe, ob die Stop-Kriterien erfüllt
-   sind: Ziel bestätigt, keine offene Frage mit Tragweite, Entscheidungen
-   entschieden, Durchschau-Test bestanden, Kern und Verzicht benannt.
-   Offene Punkte sind eine `VERSTÄNDNIS`-Lücke → in die betroffene Runde.
+4. Lade `anforderung-loop` → `references/gate.md` und führe die Prüfung mit
+   `runde: final` gegen den Issue-Body aus. Fehlt ein Protokoll zu einer
+   abgeschlossenen Runde, ist das eine Lücke der Art `VERSTÄNDNIS` →
+   Zielrunde 1.
+5. Prüfe, ob die technischen Angaben (Datenmodell, API, Dateiliste, Tests)
+   für eine Umsetzung reichen — Maßstab ist `anforderung-loop` →
+   `references/technik-checkliste.md`. Fehlt etwas, ist das eine `TECH`-Lücke
+   → Zielrunde 3.
+6. Prüfe, ob die fachlichen Angaben (Rollen, Ablauf, Regeln, Fehlerfälle)
+   vollständig sind — Maßstab ist `anforderung-loop` → Runde 2. Fehlt
+   etwas, ist das eine `FACH`-Lücke → Zielrunde 2.
+7. Lade `anforderung-loop` → `references/grilling.md` und prüfe, ob die
+   Stop-Kriterien erfüllt sind: Ziel bestätigt, keine offene Frage mit
+   Tragweite, Entscheidungen entschieden, Durchschau-Test bestanden, Kern
+   und Verzicht benannt. Offene Punkte sind eine `VERSTÄNDNIS`-Lücke → in die
+   betroffene Runde.
 8. Gib aus: Gate-Befund, Liste der konkreten Befunde mit Abschnitt und
    Zielrunde, danach ein korrigierter Issue-Text als Vorschlag — ohne das
    Issue zu veröffentlichen oder zu verändern.

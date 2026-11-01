@@ -1,8 +1,7 @@
 ---
 name: Issue-Formulierung
-description: Use whenever a HouseholdManager issue text is written or rewritten so that issues always look the same. Defines title format, label vocabulary, section order, and the verify block. Load this in every round of the requirements loop and whenever an existing issue is reformatted.
+description: Use whenever an issue text is written or reformatted. Defines title format, labels, section order and the verify block.
 ---
-
 # Issue-Formulierung
 
 Setzt den Hausstil. Diese Skill wird in **jeder** Runde des

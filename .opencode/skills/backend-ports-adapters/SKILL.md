@@ -1,16 +1,16 @@
 ---
 name: Backend-Ports-Adapters
-description: Use for every change in the Spring Boot backend of HouseholdManager. Encodes the project's Ports-and-Adapters (hexagonal) architecture after Manfred Steyer - package layout, the dependency rule (domain knows nobody, application knows only ports, adapters know the ports), where DTOs and mapping live, where transactions belong, and how each layer is tested. Load this when adding or changing a use case, a REST endpoint, a repository, an entity or a migration.
+description: Use for every backend change. Fixes the Ports-and-Adapters layers, dependency rule, where DTOs/transactions live, tests per layer.
 ---
-
 # Backend — Ports & Adapters
 
 Das Backend von HouseholdManager ist eine **Ports-and-Adapters-Architektur**
 (hexagonale Architektur, Alistair Cockburn). Der Fachkern ist die Mitte,
 alles andere ist austauschbar.
 
-Verbindliche Quelle: `AGENTS.md`. Allgemeine Methodik:
-`hexagonal-architecture` (vendort).
+Verbindliche Quelle: `AGENTS.md` (ADR 0001). Die-hexagonale-Methodik steht in
+dieser Skill: Schichten, Abhängigkeitsregel, Ports, Adapter, Composition
+Root und die Tests je Ebene.
 
 ## Die drei Schichten
 
