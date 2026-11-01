@@ -64,7 +64,7 @@ umgekehrt, der Stand ist in beiden Fällen grün.
 
 | # | Was | Wo |
 |---|---|---|
-| Issue #20 | Nach einem Fehler löst derselbe Suchbegriff keinen zweiten Request aus (das Signal ändert sich nicht) — die naheliegendste Nutzeraktion bleibt ohne Wirkung. Als Charakterisierungstest festgehalten | `frontend/src/app/core/users/user-search.spec.ts` |
+| Issue #20 | Nach einem Fehler löst derselbe Suchbegriff keinen zweiten Request aus (das Signal ändert sich nicht) — die naheliegendste Nutzeraktion bleibt ohne Wirkung. Als Charakterisierungstest festgehalten; das Setzen desselben Begriffs löst weiterhin **keinen** Request aus — der Weg führt über `retry()` (Issue #20) | `frontend/src/app/core/users/user-search.spec.ts` |
 | Issue #21 | Ist **Nextcloud** nicht erreichbar, liefert `api/users/search` 200 mit `[]` → der Nutzer sieht „Keine Person gefunden." statt einer Fehlermeldung. Die Meldung erscheint nur, wenn das Backend selbst unerreichbar ist | `backend/.../adapters/outbound/nextcloud/NextcloudUserDirectory.java` |
 | MINOR aus dem Review | `docs/erkenntnisse-issue-18.md` behauptete die Gate-Ergebnisse und eine PR-Nummer vor deren Existenz — nach dem Lauf berichtigt | `docs/erkenntnisse-issue-18.md` |
 

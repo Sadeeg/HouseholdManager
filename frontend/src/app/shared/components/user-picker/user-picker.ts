@@ -37,6 +37,11 @@ export class UserPicker {
     this.search.search(value);
   }
 
+  /** Erneut versuchen: derselbe Begriff, ein neuer Request (Issue #20). */
+  protected retry(): void {
+    this.search.retry();
+  }
+
   protected pick(user: UserRef): void {
     this.search.reset();
     this.selected.emit(user);

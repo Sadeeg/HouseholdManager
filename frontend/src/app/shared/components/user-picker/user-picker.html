@@ -15,6 +15,14 @@
     <p class="user-picker__state user-picker__state--error" role="alert">
       Nutzerverzeichnis nicht erreichbar.
     </p>
+    <button
+      type="button"
+      class="hm-button hm-button--secondary user-picker__retry"
+      [disabled]="searching()"
+      (click)="retry()"
+    >
+      Erneut versuchen
+    </button>
   }
 
   @if (results().length > 0) {

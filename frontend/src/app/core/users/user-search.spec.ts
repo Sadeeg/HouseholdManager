@@ -188,11 +188,12 @@ describe('UserSearch', () => {
   });
 
   /**
-   * Bekannte Grenze (Issue #18, MINOR-Befund der Abnahme): derselbe
-   * Suchbegriff löst keinen zweiten Request aus — das Signal ändert sich
-   * nicht. Der Fehlerzustand bleibt deshalb stehen, bis der Begriff
-   * geändert wird. Das Testet dieser Fall, damit die Grenze sichtbar
-   * bleibt und nicht unbemerkt verschwindet.
+   * Issue #20: derselbe Suchbegriff lässt sich erneut suchen — ohne den
+   * Begriff zu verändern. Vorher löste das Setzen desselben Begriffs keinen
+   * zweiten Request aus, der Fehlerzustand blieb stehen.
+   *
+   * <p>Das Setzen desselben Begriffs löst weiterhin **keinen** Request aus —
+   * der Weg führt über `retry()`. Dieser Test hält die alte Erkenntnis fest.
    */
   it('keeps the error state when the same query is set again — no second request', async () => {
     const search = TestBed.inject(UserSearch);
@@ -207,14 +208,114 @@ describe('UserSearch', () => {
     });
     await fixture.whenStable();
     fixture.detectChanges();
+    expect(search.failed()).toBe(true);
 
+    // Derselbe Begriff erneut setzen: `httpResource` feuert nur bei
+    // URL-Änderung — es geht kein zweiter Request raus, der Fehler bleibt.
+    // (Aus Issue #18 als Charakterisierungstest übernommen.)
     search.search('car');
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
+    expect(search.failed()).toBe(true);
     httpMock.expectNone('/api/users/search?q=car');
+  });
+
+  it('starts a new request with the same query on retry', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 500,
+      statusText: 'Server Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(search.failed()).toBe(true);
+
+    search.retry();
+    fixture.detectChanges();
+
+    // Zwischenzustand: während des Versuchs läuft kein Fehlerzustand — die
+    // Meldung verschwindet, der Such-Indikator steht. Ohne den Guard in
+    // `failed()` (Issue #20, K1) wäre diese Assertion rot, weil `reload()`
+    // bei gleicher URL den alten Stream behält.
+    expect(search.failed()).toBe(false);
+    expect(search.searching()).toBe(true);
+
+    // Genau ein neuer Request mit derselben URL.
+    httpMock.expectOne('/api/users/search?q=car').flush([{ id: 'carl', displayName: 'Carl Vogel' }]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(false);
+    expect(search.results()).toEqual([{ id: 'carl', displayName: 'Carl Vogel' }]);
+  });
+
+  /**
+   * Kein Dead End: Schlägt auch der erneute Versuch fehl, bleibt der
+   * Fehlerzustand bestehen — und der Nutzer darf es erneut versuchen.
+   *
+   * <p>Ohne diesen Weg könnte der Nutzer nach zwei Fehlern nur noch den
+   * Begriff ändern; der Fehlerzustand selbst wäre eine Sackgasse.
+   */
+  it('starts a new request when the previous retry failed as well', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 500,
+      statusText: 'Server Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(search.failed()).toBe(true);
+
+    search.retry();
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Der zweite Fehlschlag: die Meldung muss wiederkommen, es gibt keine Treffer.
     expect(search.failed()).toBe(true);
     expect(search.results()).toEqual([]);
+
+    // Und es geht weiter: der dritte Versuch startet wieder genau einen Request.
+    search.retry();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(false);
+    httpMock.expectOne('/api/users/search?q=car').flush([{ id: 'carl', displayName: 'Carl Vogel' }]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(false);
+    expect(search.results()).toEqual([{ id: 'carl', displayName: 'Carl Vogel' }]);
+    // Genau ein Request je Versuch: `expectOne` nimmt alle Treffer derselben
+    // URL mit, ein zweiter Request mit derselben URL bliebe sonst unentdeckt.
+    httpMock.verify();
+  });
+
+  /** Ohne Suche gibt es nichts zu wiederholen. */
+  it('does nothing on retry without a query', () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.retry();
+    fixture.detectChanges();
+
+    httpMock.expectNone('/api/users/search?q=');
   });
 });
