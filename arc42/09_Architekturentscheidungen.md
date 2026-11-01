@@ -12,7 +12,7 @@ Entscheidung — **keine** Dublette.
 | [0004](../docs/adr/0004-workspace-auswahl-des-haushalts-in-core.md) | Workspace-Auswahl des Haushalts in core/ | angenommen | 2026-10-29 | Auswahl app-weit in `core/workspace`; Features lesen nur den gewählten Haushalt |
 | [0005](../docs/adr/0005-taeglicher-serverlauf-fuer-externe-quellen.md) | Täglicher Serverlauf für externe Terminquellen | angenommen | 2026-10-31 | Scheduler als eingehender Adapter in derselben Anwendung (03:00 Europe/Berlin); geplanter und sofortiger Lauf teilen einen Use Case; Fehler je Haushalt isoliert |
 | [0006](../docs/adr/0006-ical4j-fuer-die-ics-auswertung.md) | ICS-Auswertung mit iCalendar-Bibliothek (ical4j) | angenommen | 2026-10-31 | `org.mnode.ical4j:ical4j` 4.4.0 ausschließlich im ausgehenden Adapter; der Port bleibt bibliotheksfrei; Formatfehler ≠ Leerfall |
-| [0007](../docs/adr/0007-telegram-benachrichtigung-als-eigener-kontext.md) | Telegram-Benachrichtigung als eigener Fach-Kontext | **vorgeschlagen** | 2026-11-01 | Kontext „Benachrichtigung" mit eigenem Fachmodell, Tabellen und Ports; liest die Termine über den In-Port des Müllkalender-Kontexts; Telegram-Transport nur als Adapter; 18:00-Uhr-Lauf als zweiter eingehender Adapter |
+| [0007](../docs/adr/0007-telegram-benachrichtigung-als-eigener-kontext.md) | Telegram-Benachrichtigung als eigener Fach-Kontext | **angenommen** | 2026-11-01 | Kontext „Benachrichtigung" mit eigenem Fachmodell, Tabellen und Ports; liest die Termine über den In-Port des Müllkalender-Kontexts; Telegram-Transport nur als Adapter; Long-Poll statt Webhook; 18:00-Uhr-Lauf und stündlicher Wiederholungslauf als eingehende Adapter |
 
 ## Weitere Entscheidungen (ohne ADR, bewusst)
 
@@ -28,11 +28,11 @@ Entscheidung — **keine** Dublette.
 > **Offen:** Mandantenfähigkeit im Sinne „Context pro Haushalt/Mieter" und
 > Monorepo-Tooling (Nx?) — jeweils als ADR, sobald entschieden.
 
-> **Offen (ADR 0007):** Wie eine Chat-Nachricht das Backend erreicht
-> (HTTP-Webhook mit öffentlichem Endpunkt oder Long-Poll) und wie die
-> Wiederholung einer fehlgeschlagenen Zustellung zeitversetzt ausgelöst wird.
-> Beides verändert die Betriebsannahme (07) bzw. die Zahl der Zeitgeber — der
-> Auftraggeber entscheidet, der ARC-Agent nicht.
+> **Erledigt (ADR 0007, angenommen):** die vier offenen Punkte O1–O4 sind
+> entschieden — Long-Poll statt Webhook, eigener stündlicher Wiederholungs-
+> Tick, Bot-Token im Backend als Secret, Code nur im Chat. Die Entscheidungen
+> und ihre Umsetzung stehen in der ADR; die Folgen in den betroffenen
+> Kapiteln (03, 05, 06, 07, 08, 11).
 
 **Hinweis:** Die Auswirkungen der ADRs stehen in den betroffenen Kapiteln
 (03, 05, 06, 07, 08). Dieses Kapitel listet sie auf — es wiederholt sie

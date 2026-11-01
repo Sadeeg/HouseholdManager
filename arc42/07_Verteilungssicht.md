@@ -54,9 +54,12 @@
 | `HOUSEHOLDMANAGER_WASTE_SYNC_CRON` | `0 0 3 * * *` | Tageslauf des Müllkalenders — ADR 0005 |
 | `HOUSEHOLDMANAGER_WASTE_SYNC_ZONE` | `Europe/Berlin` | Zeitzone des Tageslaufs (`householdmanager.waste.sync-zone`) — ADR 0005 |
 | `HOUSEHOLDMANAGER_WASTE_TIMEOUT` | 5 s | Zeitlimit für den Abruf einer ICS-Quelle (`householdmanager.waste.timeout`, auch im Sofort-Sync, ADR 0005) |
-| `HOUSEHOLDMANAGER_TELEGRAM_BOT_TOKEN` | — | **Secret** des Telegram-Bots (`householdmanager.telegram.bot-token`); ohne Wert ist der Benachrichtigungs-Kontext inaktiv (ADR 0007) |
-| `HOUSEHOLDMANAGER_NOTIFICATION_CRON` | `0 0 18 * * *` | 18:00-Uhr-Lauf der Benachrichtigung (`householdmanager.notification.cron`) — ADR 0007 |
-| `HOUSEHOLDMANAGER_NOTIFICATION_ZONE` | `Europe/Berlin` | Zeitzone der Benachrichtigung (`householdmanager.notification.zone`) |
+| `HOUSEHOLDMANAGER_TELEGRAM_BOT_TOKEN` | — | **Secret** des Telegram-Bots (`householdmanager.telegram.bot-token`); ohne Wert ist der Benachrichtigungs-Kontext inaktiv: kein Bot-Eingang, kein Versand (ADR 0007) |
+| `HOUSEHOLDMANAGER_TELEGRAM_DISPATCH_CRON` | `0 0 18 * * *` | 18:00-Uhr-Lauf der Benachrichtigung (`householdmanager.telegram.dispatch-cron`) — ADR 0007 |
+| `HOUSEHOLDMANAGER_TELEGRAM_RETRY_CRON` | `0 0 * * * *` | stündlicher Wiederholungslauf (`householdmanager.telegram.retry-cron`) — ADR 0007 |
+| `HOUSEHOLDMANAGER_TELEGRAM_ZONE` | `Europe/Berlin` | Zeitzone der Benachrichtigung (`householdmanager.telegram.zone`) — „morgen" und „kommende Woche" rechnen in dieser Zone |
+| `HOUSEHOLDMANAGER_TELEGRAM_POLL_INTERVAL_MS` | `5000` | Abstand zwischen zwei Abfragen des Long-Polls (`householdmanager.telegram.poll-interval-ms`) |
+| `HOUSEHOLDMANAGER_TELEGRAM_TIMEOUT` | `10s` | Zeitgrenze des HTTP-Clients der Bot-API (`householdmanager.telegram.timeout`) |
 
 ## Ausgehende Verbindungen (Egress)
 
@@ -74,13 +77,17 @@ Für den Versand von Benachrichtigungen braucht der Backend-Container
 zusätzlich **ausgehenden** Netzzugriff zur Telegram-Bot-API (`HTTPS`).
 
 Der Empfang läuft über **Long-Poll**: die Anwendung fragt Telegram aktiv
-nach Nachrichten ab. Damit braucht der Container **keinen eingehenden**
+nach Nachrichten ab (`TelegramBotInputAdapter`, Daemon-Thread
+`telegram-long-poll`). Damit braucht der Container **keinen eingehenden**
 Port, kein TLS-Zertifikat und keinen öffentlich erreichbaren Endpunkt
-(ADR 0007, O1).
+(ADR 0007, O1). Der Abfragelauf startet erst, wenn ein Bot-Token hinterlegt
+ist, und endet beim Herunterfahren.
 
 Es kommen **keine** neuen Container, **keine** neuen Ports und **keine**
 neuen Abhängigkeiten dazu — die Benachrichtigung läuft in derselben
-Anwendung (ADR 0003, ADR 0007).
+Anwendung (ADR 0003, ADR 0007). Der Bot-Token kommt aus der `.env`, die der
+Backend-Container read-only einbindet; ein eigener `environment:`-Eintrag in
+`compose.yml` ist dafür nicht nötig.
 
 ## Betrieb
 

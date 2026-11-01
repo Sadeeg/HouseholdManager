@@ -36,9 +36,9 @@ Fachlogik:
 | Art | Beispiel | Auslöser |
 |-----|----------|----------|
 | **HTTP-Controller** | `HouseholdController`, `TaskController`, `WasteCollectionController`, `TelegramChatController` | Request |
-| **Scheduler** | `WasteSyncJob` | Cron, konfiguriert im Composition Root (ADR 0005) |
+| **Scheduler** | `WasteSyncJob`, `NotificationDispatchJob`, `NotificationRetryJob` | Cron, konfiguriert im Composition Root (ADR 0005, 0007) |
 | **Geplanter Abruf** | Teil des `WasteSyncJob` | je Haushalt, isoliert |
-| **Bot-Eingang** | `TelegramBotInboundAdapter` | Chat-Nachricht aus Telegram |
+| **Bot-Eingang** | `TelegramBotInputAdapter` | Chat-Nachricht aus Telegram (Long-Poll) |
 
 **Fehlerisolierung:** ein fehlerhafter Haushalt stoppt den Lauf nicht. Der
 Adapter protokolliert, fährt mit dem nächsten fort und beendet den Job ohne
@@ -46,7 +46,7 @@ Fehler.
 
 ### Der Benachrichtigungslauf (18:00 Uhr)
 
-Der zweite Zeitgeber läuft nach **demselben Muster** wie der Tageslauf
+Der Benachrichtigungslauf läuft nach **demselben Muster** wie der Tageslauf
 (ADR 0005, ADR 0007):
 
 ```text
@@ -60,7 +60,7 @@ Der zweite Zeitgeber läuft nach **demselben Muster** wie der Tageslauf
 4. Use Case legt je Haushalt und Nachricht einen Zustellvermerk an und
    versendet ihn über den TelegramBot-Port
 5. Fehlgeschlagener Versand: Fehler wird protokolliert, der Vermerk zählt
-   den Versuch; ein weiterer Versuch folgt erst nach einer Stunde
+   den Versuch; ein weiterer Versuch folgt beim nächsten stündlichen Lauf
 6. Nach dem dritten Fehlversuch: kein weiterer Versuch — die Verbindung
    des Chats bleibt bestehen
 ```
@@ -70,10 +70,38 @@ die übrigen Chats desselben Haushalts nicht; ein fehlgeschlagener
 **Haushalt** stoppt die übrigen Haushalte nicht. Das Vorbild ist die
 Fehlerisolierung je Haushalt aus ADR 0005.
 
-> **Offen:** Wie die Wiederholung nach einer Stunde ausgelöst wird — eigener
-> stündlicher Scheduler-Tick, `@Scheduled(fixedDelay)` oder ein gespeicherter
-> Versuchszeitpunkt (ADR 0007, O2). Der Zähler selbst liegt in jedem Fall
-> persistent in `notification_delivery`.
+### Der Wiederholungslauf (stündlich)
+
+Der dritte Zeitgeber folgt demselben Muster: `NotificationRetryJob` löst
+genau einen Use Case aus (`NotificationDispatchUseCase.retryFailed()`), der
+**keine** Fachlogik im Adapter. Der Use Case sucht alle Zustellvermerke, die
+noch einen Versuch brauchen (`attempt_count < 3`, nicht abgeschlossen), und
+versucht sie erneut. Die Auswahl der Vermerke liegt im Use Case, die
+Taktung in der Konfiguration (`householdmanager.telegram.retry-cron`,
+Vorgabe `0 0 * * * *`) — beide Läufe werden in `config/ApplicationConfig`
+neben dem Tageslauf eingetragen (ADR 0007, O2).
+
+### Der Bot-Eingang (Long-Poll)
+
+Der **Empfang** läuft nicht über HTTP, sondern über einen Abfragelauf:
+
+```text
+1. Beim ApplicationReadyEvent startet TelegramBotInputAdapter einen
+   Daemon-Thread ("telegram-long-poll") — ohne konfigurierten Token
+   startet er gar nicht
+2. Der Thread fragt Telegram aktiv ab (getUpdates) und reicht je
+   Nachricht den Text an TelegramChatUseCase.handleMessage(chatId, text)
+3. Der Use Case entscheidet, ob es ein Freischalt-Code ist (Ziffernfolge
+   oder "/code <Code>") und schaltet den Chat frei; alles andere wird
+   ignoriert — der Bot schweigt
+4. Antwortet der Bot, geht die Antwort über den TelegramBot-Port zurück
+   in denselben Chat
+5. Beim ContextClosedEvent endet der Abfragelauf — er darf den Shutdown
+   nicht blockieren; ein Abfragefehler beendet den Lauf nicht
+```
+
+Damit gibt es **keinen** öffentlich erreichbaren Endpunkt für Telegram —
+nur Egress (ADR 0007, O1).
 
 ## Ausgehende Adapter
 
@@ -82,7 +110,7 @@ Fehlerisolierung je Haushalt aus ADR 0005.
 | **Persistenz** | `HouseholdRepositoryAdapter` | Mapping im Adapter, Entity nie außerhalb |
 | **HTTP** | `NextcloudUserDirectory`, `IcsWasteCalendarFeed` | `RestClient` mit Timeout; Fehler → Fachfehler |
 | **Fremdbibliothek** | `ical4j` in `IcsWasteCalendarFeed` | Bibliothek endet an der Adaptergrenze, der Port bleibt bibliotheksfrei (ADR 0006) |
-| **Nachrichtenkanal** | `TelegramBotAdapter` | Bot-API endet an der Adaptergrenze, der Port bleibt protokollfrei (ADR 0007) |
+| **Nachrichtenkanal** | `TelegramBotAdapter` + `TelegramApiClient` | Bot-API endet an der Adaptergrenze, der Port bleibt protokollfrei (ADR 0007) |
 
 ## Zugriff zwischen Kontexten
 

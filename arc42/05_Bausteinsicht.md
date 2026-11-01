@@ -118,9 +118,11 @@ im jeweiligen GitHub-Issue.
 | `TelegramChatRepositoryAdapter` | Adapter (aus-) | Fachmodell ↔ JPA, Ort des Mappings |
 | `NotificationDeliveryRepositoryAdapter` | Adapter (aus-) | Fachmodell ↔ JPA, Ort des Mappings |
 | `TelegramBotAdapter` | Adapter (aus-) | Telegram-Bot-API; endet an der Adaptergrenze (ADR 0007) |
-| `TelegramBotInboundAdapter` | Adapter (ein-) | nimmt Chat-Nachrichten entgegen, erkennt den Freischalt-Code |
+| `TelegramBotInputAdapter` | Adapter (ein-) | Long-Poll; nimmt Chat-Nachrichten entgegen und löst den Use Case aus |
 | `NotificationDispatchJob` | Adapter (ein-) | 18:00-Uhr-Lauf; löst genau einen Use Case aus (ADR 0005-Muster) |
-| `TelegramChatController` | Adapter (ein-) | HTTP ↔ Use Case (`api/telegram-chats`) |
+| `NotificationRetryJob` | Adapter (ein-) | stündlicher Wiederholungslauf; löst genau einen Use Case aus |
+| `TelegramChatController` | Adapter (ein-) | HTTP ↔ Use Case (`api/households/{householdId}/telegram/…`) |
+| `TelegramConfig` | Konfiguration | Bot-Token (`TelegramToken`-Record) und `RestClient` der Bot-API — **keine** Bean in `ApplicationConfig` |
 | `TelegramChatSection` | UI (dumb) | Abschnitt „Telegram-Chats" auf der Haushaltsseite; reiner Input/Output |
 
 ### Kontext „Benachrichtigung"
@@ -131,13 +133,15 @@ liest die Mülltermine über den In-Port des Müllkalender-Kontexts (ADR 0007).
 ```text
                 ┌────────────────────────────────────────────┐
  Telegram  ───▶ │ adapters/inbound/telegram  (Bot-Eingang)    │
- (Chat-Nachricht)│  erkennt Code / Befehl, ruft Use Case      │
+ (Chat-Nachricht)│  TelegramBotInputAdapter (Long-Poll)       │
+                │  reicht die Nachricht an den Use Case      │
                 └────────────────────┬───────────────────────┘
                                      │ spricht nur den Port an
                                      ▼
                 ┌────────────────────────────────────────────┐
                 │ application/port/in                         │
                 │  TelegramChatUseCase (Interface)            │
+                │  NotificationDispatchUseCase (Interface)    │
                 ├────────────────────────────────────────────┤
                 │ application/usecase                         │
                 │  TelegramChatUseCaseImpl                    │
@@ -158,8 +162,15 @@ liest die Mülltermine über den In-Port des Müllkalender-Kontexts (ADR 0007).
                 │  NotificationDeliveryRepositoryAdapter      │
                 │ adapters/outbound/telegram                  │
                 │  TelegramBotAdapter (Bot-API)               │
+                │  TelegramApiClient                          │
                 └────────────────────────────────────────────┘
 ```
+
+Die eingehenden Adapter des Kontexts sind **vier**: der Bot-Eingang
+(`TelegramBotInputAdapter`), der REST-Adapter (`TelegramChatController`)
+und die beiden Scheduler (`NotificationDispatchJob`,
+`NotificationRetryJob`). Sie sprechen nur die Ports an und tragen keine
+Fachlogik (ADR 0005, ADR 0007).
 
 **Die Zeitregeln liegen in der Anwendung, nicht im Adapter:** „morgen",
 „kommende Woche" (Montag–Sonntag), der Auslösetag (Sonntag) und die
@@ -175,11 +186,11 @@ Diese Bausteinarten wiederholen sich je Fach-Kontext. Sie stehen hier
 | Muster | Ausprägung | Regel |
 |--------|-----------|-------|
 | **Use Case je Fach-Vorgang** | `HouseholdUseCase`, `TaskUseCase`, `MembershipUseCase`, `WasteCollectionUseCase` | Orchestrierung + Invariante; Transaktionsgrenze |
-| **Fach-Exception je Regelverletzung** | `InvalidHouseholdNameException`, `WasteFeedUnavailableException` | framework-frei; der Adapter übersetzt sie in einen Statuscode |
+| **Fach-Exception je Regelverletzung** | `InvalidHouseholdNameException`, `WasteFeedUnavailableException`, `NotChatOwnerException`, `TelegramChatNotFoundException` | framework-frei; der Adapter übersetzt sie in einen Statuscode |
 | **Repository-Port + Adapter je Aggregat** | `HouseholdRepository` → `HouseholdRepositoryAdapter` | Mapping ausschließlich im Adapter |
 | **Controller je Kontext** | `HouseholdController`, `TaskController`, `MemberController`, `WasteCollectionController` | `api/<resource>`; DTO-Records in `dto/` |
-| **In-Port für Context-Zugriff** | `MembershipUseCase.requireMembership`, `WasteCollectionUseCase.overview` | ein Context greift **nie** auf die Tabellen eines anderen zu (ADR 0003, 0007) |
-| **Scheduler-Adapter** | `WasteSyncJob`, `NotificationDispatchJob` | löst genau einen Use Case aus, enthält keine Fachlogik (ADR 0005) |
+| **In-Port für Context-Zugriff** | `MembershipUseCase.requireMembership`, `WasteCollectionUseCase.overview`, `WasteCollectionUseCase.collectionsOf` | ein Context greift **nie** auf die Tabellen eines anderen zu (ADR 0003, 0007) |
+| **Scheduler-Adapter** | `WasteSyncJob`, `NotificationDispatchJob`, `NotificationRetryJob` | löst genau einen Use Case aus, enthält keine Fachlogik (ADR 0005, 0007) |
 | **Workspace-Auswahl** | `WorkspaceUseCase`, `WorkspaceSelectionRepository` | app-weit in `core/workspace`; Auswahl wird je Person gemerkt (ADR 0004) |
 | **Feature-Ordner je Kontext** | `features/households/`, `features/tasks/`, `features/waste/` | `routes.ts`; route-scoped Data-Services |
 | **core-Bausteine** | `core/workspace/`, `core/users/` | app-weit, eine Instanz (`providedIn: 'root'`) |
@@ -196,7 +207,8 @@ Diese Bausteinarten wiederholen sich je Fach-Kontext. Sie stehen hier
 | `workspace_selection` | Haushalt | Workspace-Merkung je Person (ADR 0004) |
 | `task`, `label`, `task_label` | Aufgabe | Reihenfolge je Spalte über ein `position`-Feld |
 | `waste_collection`, `waste_sync_state` | Müllkalender | der Stand gehört dem **Lauf**, nicht dem Termin |
-| `telegram_chat` | Benachrichtigung | je Haushalt viele Chats; je Chat genau eine freischaltende Person |
+| `telegram_activation_code` | Benachrichtigung | je Haushalt **eine** Zeile: der Code (UNIQUE) und die Person, die ihn angefordert hat — die freischaltende Person der daraus entstehenden Verbindungen |
+| `telegram_chat` | Benachrichtigung | je Haushalt viele Chats; je Chat genau eine freischaltende Person; UNIQUE über (household_id, chat_id) |
 | `notification_delivery` | Benachrichtigung | Zustellvermerk je Nachricht; trägt die Versuchszählung |
 
 **Fachliche Konstanten im `domain`:** `Household.MAX_NAME_LENGTH`,
@@ -205,12 +217,28 @@ Das Fenster gibt der Use Case dem Feed-Port vor — eine Quelle der Wahrheit.
 Die Konstante steht im Fachmodell, damit Use Case und Adapter dieselbe
 Grenze kennen.
 
-Im Benachrichtigungs-Kontext liegen dieselben Regeln: die **Codeform**
-(Ziffern fester Länge) und die **Versuchszählung** (maximal drei Versuche) sind
-fachliche Grenzen und stehen im Fachmodell, nicht im Adapter. Die Codeform
-hat dabei **zwei** Seiten: die Erzeugung (Anwendung) und die **Erkennung** im
-Chat (Adapter). Beide lesen dieselbe Grenze — sonst entsteht ein Code, den
-der Bot nicht erkennt.
+Im Benachrichtigungs-Kontext liegen dieselben Regeln: die **Versuchszählung**
+(maximal drei Versuche, `NotificationDelivery.MAX_ATTEMPTS`) ist eine
+fachliche Grenze und steht im Fachmodell, nicht im Adapter.
+
+Die **Codeform** hat zwei Seiten, und die liegen an verschiedenen Orten: die
+**Erzeugung** des Codes (Ziffern, nicht vorhersagbar) liegt im Persistenz-
+Adapter `TelegramChatRepositoryAdapter`, die **Erkennung** im Chat (eine
+Nachricht aus Ziffern oder `/code <Code>`) liegt im Use Case
+`TelegramChatUseCaseImpl` — sie ist eine fachliche Entscheidung („ist das
+eine Freischaltung?"), keine Telegram-Kenntnis. Beide Seiten sprechen
+dieselbe Form (Ziffern), sonst entsteht ein Code, den der Bot nicht erkennt.
+
+**Der Freischalt-Code trägt die freischaltende Person.** Der Bot kennt keine
+Person; deshalb entsteht der Code beim ersten Anfordern **im Namen** eines
+Mitglieds und speichert dessen Kennung (`telegram_activation_code.activated_by`,
+übernommen in `TelegramChat.activatedBy`). Die Freischaltung über diesen Code
+gehört der Person, die ihn angefordert hat. Die Spaltengrenzen des
+Benachrichtigungs-Kontexts stehen als Konstanten im Fachmodell
+(`TelegramChat.MAX_CHAT_NAME_LENGTH`, `TelegramChat.MAX_CHAT_ID_LENGTH`,
+`TelegramChat.MAX_ACTIVATED_BY_LENGTH`, `NotificationDelivery.MAX_CHAT_ID_LENGTH`,
+`NotificationDelivery.MAX_CONTENT_LENGTH`) und werden von den JPA-Entities
+gespiegelt.
 
 **Migrationen:** jede Schema-Änderung ist eine **neue** `V`-Migration;
 bestehende Dateien werden nie editiert. `ddl-auto: validate` verlangt

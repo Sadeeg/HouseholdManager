@@ -6,8 +6,10 @@ import de.householdmanager.domain.model.InvalidLabelNameException;
 import de.householdmanager.domain.model.InvalidTaskTitleException;
 import de.householdmanager.domain.model.InvalidWasteCalendarUrlException;
 import de.householdmanager.domain.model.MembershipRequiredException;
+import de.householdmanager.domain.model.NotChatOwnerException;
 import de.householdmanager.domain.model.NotHouseholdAdminException;
 import de.householdmanager.domain.model.TaskNotFoundException;
+import de.householdmanager.domain.model.TelegramChatNotFoundException;
 import de.householdmanager.domain.model.UserDirectoryUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -89,7 +91,20 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler({TaskNotFoundException.class, HouseholdNotFoundException.class})
+    /**
+     * Die Verbindung gehört einer anderen Person — nur die freischaltende
+     * Person darf sie trennen (AC14).
+     */
+    @ExceptionHandler(NotChatOwnerException.class)
+    public ProblemDetail handleNotChatOwner(NotChatOwnerException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN, exception.getMessage());
+        problem.setTitle("Nicht die freischaltende Person");
+        return problem;
+    }
+
+    @ExceptionHandler({TaskNotFoundException.class, HouseholdNotFoundException.class,
+            TelegramChatNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND, exception.getMessage());

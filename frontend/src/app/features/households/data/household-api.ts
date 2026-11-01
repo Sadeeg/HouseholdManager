@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { API_CONFIG } from '../../../core/config/api.config';
 import { Household, WasteSourceResponse } from '../model/household.model';
 import { Member } from '../model/member.model';
+import { TelegramChatList, TelegramCode } from '../model/telegram-chat.model';
 
 const HOUSEHOLDS_URL = `${API_CONFIG.basePath}/households`;
 
@@ -52,5 +53,28 @@ export class HouseholdApi {
   /** Quelle entfernen; die gespeicherten Termine bleiben (Annahme 5). */
   removeWasteSource(householdId: number): Observable<void> {
     return this.http.delete<void>(`${HOUSEHOLDS_URL}/${householdId}/waste/source`);
+  }
+
+  /**
+   * Der Freischalt-Code des Haushalts — beim ersten Aufruf erzeugt das
+   * Backend ihn (AC1, AC2).
+   */
+  telegramCode(householdId: number): Observable<TelegramCode> {
+    return this.http.get<TelegramCode>(`${HOUSEHOLDS_URL}/${householdId}/telegram/code`);
+  }
+
+  /** Die freigeschalteten Telegram-Chats des Haushalts (AC11, AC12). */
+  telegramChats(householdId: number): Observable<TelegramChatList> {
+    return this.http.get<TelegramChatList>(`${HOUSEHOLDS_URL}/${householdId}/telegram/chats`);
+  }
+
+  /**
+   * Trennt eine eigene Verbindung (AC13). Die Chat-Kennung steht im Pfad —
+   * sie wird nirgends angezeigt.
+   */
+  disconnectTelegramChat(householdId: number, chatId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${HOUSEHOLDS_URL}/${householdId}/telegram/chats/${encodeURIComponent(chatId)}`,
+    );
   }
 }

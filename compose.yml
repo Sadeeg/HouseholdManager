@@ -28,6 +28,11 @@ services:
     # Die lokale Konfiguration (Secrets) wird nicht ins Image kopiert,
     # sondern read-only eingebunden. Fehlt die Datei, startet der Container
     # ohne Authentifizierung (siehe Backend-Log).
+    #
+    # In derselben Datei stehen die weiteren Secrets — etwa der Bot-Token
+    # des Telegram-Bots (TELEGRAM_BOT_TOKEN). Ein eigener environment:-Eintrag
+    # ist dafür nicht nötig: das Backend liest die .env über
+    # spring.config.import (siehe backend/src/main/resources/application.yml).
     volumes:
       - ./.env:/app/.env:ro
     depends_on:

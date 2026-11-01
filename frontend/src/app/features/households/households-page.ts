@@ -7,8 +7,10 @@ import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-di
 import { HouseholdsData } from './data/households-data';
 import { Household } from './model/household.model';
 import { Member } from './model/member.model';
+import { TelegramChat } from './model/telegram-chat.model';
 import { HouseholdItem } from './ui/household-item';
 import { MemberSection } from './ui/member-section';
+import { TelegramChatSection } from './ui/telegram-chat-section';
 import { WasteCalendarSection } from './ui/waste-calendar-section';
 
 /**
@@ -24,7 +26,15 @@ import { WasteCalendarSection } from './ui/waste-calendar-section';
  */
 @Component({
   selector: 'app-households-page',
-  imports: [FormField, HouseholdItem, MemberSection, PageHeader, ConfirmDialog, WasteCalendarSection],
+  imports: [
+    FormField,
+    HouseholdItem,
+    MemberSection,
+    PageHeader,
+    ConfirmDialog,
+    TelegramChatSection,
+    WasteCalendarSection,
+  ],
   templateUrl: './households-page.html',
   styleUrl: './households-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +67,19 @@ export class HouseholdsPage {
 
   protected readonly members = this.householdsData.members;
 
+  // Telegram-Chats: der Abschnitt klappt inline auf wie der Müllkalender.
+  // Code und Chat-Liste werden getrennt gelesen — sie haben eigene Lade-
+  // und Fehlerzustände und bleiben unabhängig nutzbar.
+  protected readonly expandedTelegramHouseholdId = signal<number | null>(null);
+  protected readonly pendingChatDisconnect = signal<{ chat: TelegramChat; householdId: number } | null>(
+    null,
+  );
+  protected readonly disconnectingChat = signal(false);
+  protected readonly disconnectError = signal<string | null>(null);
+
+  protected readonly telegramCode = this.householdsData.telegramCode;
+  protected readonly telegramChats = this.householdsData.telegramChats;
+
   protected readonly removeDescription = computed(() => {
     const pending = this.pendingMemberRemove();
     if (pending === null) {
@@ -72,6 +95,15 @@ export class HouseholdsPage {
       return '';
     }
     return 'Die hinterlegte ICS-Adresse wird entfernt.';
+  });
+
+  /** Der Dialog nennt den Chat beim Namen — der Nutzer muss erkennen, was er trennt. */
+  protected readonly chatDisconnectDescription = computed(() => {
+    const pending = this.pendingChatDisconnect();
+    if (pending === null) {
+      return '';
+    }
+    return `Der Telegram-Chat „${pending.chat.chatName}" wird von diesem Haushalt getrennt. Der Chat erhält keine weiteren Benachrichtigungen.`;
   });
 
   protected isHouseholdAdmin(household: Household): boolean {
@@ -184,6 +216,46 @@ export class HouseholdsPage {
       this.sourceError.set('Der Müllkalender konnte nicht entfernt werden.');
     } finally {
       this.savingSource.set(false);
+    }
+  }
+
+  /** Öffnet (bzw. schließt) den Telegram-Abschnitt. */
+  protected toggleTelegramChats(householdId: number): void {
+    this.disconnectError.set(null);
+    const isOpen = this.expandedTelegramHouseholdId() === householdId;
+    this.expandedTelegramHouseholdId.set(isOpen ? null : householdId);
+    // Ohne offenen Abschnitt läuft kein Request.
+    this.householdsData.showTelegram(isOpen ? null : householdId);
+  }
+
+  /** Lädt Code und Chat-Liste erneut — nach einem Ladefehler. */
+  protected reloadTelegram(): void {
+    this.householdsData.reloadTelegram();
+  }
+
+  /**
+   * Trennt eine eigene Verbindung. Die Bestätigung passiert im Dialog — erst
+   * danach wird getrennt (AC13).
+   */
+  protected async confirmChatDisconnect(): Promise<void> {
+    const pending = this.pendingChatDisconnect();
+    if (pending === null) {
+      return;
+    }
+    this.disconnectingChat.set(true);
+    this.disconnectError.set(null);
+    try {
+      await this.householdsData.disconnectTelegramChat(pending.householdId, pending.chat.chatId);
+      this.pendingChatDisconnect.set(null);
+      this.showToast('Telegram-Chat getrennt.');
+    } catch {
+      // Die Zeile bleibt stehen, der Dialog schließt (Zustandstabelle).
+      this.pendingChatDisconnect.set(null);
+      this.disconnectError.set(
+        'Die Verbindung konnte nicht getrennt werden. Bitte später erneut versuchen.',
+      );
+    } finally {
+      this.disconnectingChat.set(false);
     }
   }
 

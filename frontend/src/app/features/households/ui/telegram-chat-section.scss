@@ -1,0 +1,163 @@
+.telegram-chats {
+  margin-top: var(--hm-space-2);
+  padding: var(--hm-space-3);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+}
+
+// Der Bot-Token-Hinweis: 2px linke Linie in der Warnfarbe — nur Text, keine
+// Aktion. Ohne Bot-Token wäre jede Code-Aktion wirkungslos.
+.telegram-chats__notice {
+  margin: 0 0 var(--hm-space-3);
+  padding: var(--hm-space-2) var(--hm-space-3);
+  border-left: 2px solid var(--hm-warning);
+  background: var(--hm-warning-soft);
+  color: var(--hm-warning);
+  font-size: var(--hm-text-sm);
+}
+
+.telegram-chats__state {
+  margin: 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
+
+.telegram-chats__error {
+  margin: 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-danger);
+
+  // Der Fehlertext und die Aktion stehen in einer Zeile: „ERNEUT VERSUCHEN“
+  // ist die Handlung, die aus dem Zustand herausführt.
+  .hm-link-action {
+    margin-left: var(--hm-space-2);
+  }
+}
+
+// --- Code-Bereich ----------------------------------------------------------
+
+.telegram-chats__code {
+  margin-bottom: var(--hm-space-4);
+}
+
+// Feld links flexibel, „Kopieren" rechts — die Rückmeldung darunter in
+// derselben Spalte wie der Knopf.
+.telegram-chats__code-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--hm-space-3);
+}
+
+// Muster „Code-Feld": Fläche, 1px-Linie, Radius, Innenabstand. Der Wert
+// steht in Monospace, nie abgeschnitten — er muss ablesbar bleiben.
+.telegram-chats__code-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--hm-space-3);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  background: var(--hm-surface-2);
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-lg);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: var(--hm-text);
+  overflow-wrap: anywhere;
+}
+
+.telegram-chats__copy {
+  flex: 0 0 auto;
+}
+
+.telegram-chats__copy-feedback {
+  margin: var(--hm-space-2) 0 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-success);
+
+  &--error {
+    color: var(--hm-danger);
+  }
+}
+
+// --- Chat-Liste ------------------------------------------------------------
+
+.telegram-chats__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.telegram-chats__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hm-space-2) var(--hm-space-3);
+  min-height: 40px;
+  padding: var(--hm-space-2) 0;
+  border-bottom: 1px solid var(--hm-border);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.telegram-chats__row-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hm-space-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// Der Name kommt von Telegram und kann beliebig lang sein — er bricht um,
+// statt aus der Zeile herauszusprechen.
+.telegram-chats__name {
+  font-size: var(--hm-text-md);
+  color: var(--hm-text);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.telegram-chats__kind {
+  flex: 0 0 auto;
+}
+
+// „Freigeschaltet von …" steht immer in der Zeile — auch wenn die Person
+// selbst den Chat freigeschaltet hat.
+.telegram-chats__activated {
+  font-family: var(--hm-font-mono);
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.telegram-chats__disconnect {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+// Der Fehler des Trennens steht unter der Zeile, nicht daneben.
+.telegram-chats__error--row {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+// Schmal: der Knopf rutscht unter den Text, statt ihn zu verdrängen.
+@media (max-width: 767px) {
+  .telegram-chats__code-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .telegram-chats__copy {
+    align-self: flex-start;
+  }
+
+  .telegram-chats__disconnect {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}

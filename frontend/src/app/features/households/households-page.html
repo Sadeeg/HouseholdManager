@@ -81,6 +81,16 @@
             >
               MÜLLKALENDER
             </button>
+
+            <button
+              type="button"
+              class="hm-link-action households__telegram-action"
+              aria-expanded="{{ expandedTelegramHouseholdId() === household.id }}"
+              aria-controls="telegram-chats-{{ household.id }}"
+              (click)="toggleTelegramChats(household.id)"
+            >
+              TELEGRAM-CHATS
+            </button>
           </div>
 
           @if (expandedWasteHouseholdId() === household.id) {
@@ -105,6 +115,26 @@
               (addMember)="addMember(household.id, $event)"
               (removeRequested)="pendingMemberRemove.set({ member: $event, householdId: household.id })"
               (retry)="householdsData.reloadMembers()"
+            />
+          }
+
+          @if (expandedTelegramHouseholdId() === household.id) {
+            <app-telegram-chat-section
+              [id]="'telegram-chats-' + household.id"
+              [householdId]="household.id"
+              [householdName]="household.name"
+              [code]="telegramCode.value()?.code ?? null"
+              [codeLoading]="telegramCode.isLoading()"
+              [codeFailed]="!!telegramCode.error()"
+              [botConfigured]="telegramCode.value()?.botConfigured ?? true"
+              [chats]="telegramChats.value()?.chats ?? null"
+              [chatsLoading]="telegramChats.isLoading()"
+              [chatsFailed]="!!telegramChats.error()"
+              [disconnecting]="disconnectingChat()"
+              [disconnectError]="disconnectError()"
+              (retryCode)="reloadTelegram()"
+              (retryChats)="reloadTelegram()"
+              (disconnectRequested)="pendingChatDisconnect.set({ chat: $event, householdId: household.id })"
             />
           }
         </li>
@@ -140,6 +170,18 @@
       [busy]="savingSource()"
       (confirmed)="confirmSourceRemove()"
       (cancelled)="pendingWasteRemove.set(null)"
+    />
+  }
+
+  @if (pendingChatDisconnect()) {
+    <app-confirm-dialog
+      title="Telegram-Chat trennen"
+      [description]="chatDisconnectDescription()"
+      actionLabel="Trennen"
+      busyLabel="Wird getrennt …"
+      [busy]="disconnectingChat()"
+      (confirmed)="confirmChatDisconnect()"
+      (cancelled)="pendingChatDisconnect.set(null)"
     />
   }
 

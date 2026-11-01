@@ -1,0 +1,104 @@
+<section class="telegram-chats" [attr.aria-label]="`Telegram-Chats von ${householdName()}`">
+  @if (!botConfigured()) {
+    <p class="telegram-chats__notice">
+      Der Telegram-Bot ist nicht konfiguriert. Ohne Bot-Token lassen sich keine Chats freischalten.
+    </p>
+  }
+
+  <!-- Code-Bereich -->
+  <div class="telegram-chats__code">
+    @if (codeLoading()) {
+      <p class="telegram-chats__state">Freischalt-Code wird geladen …</p>
+      <!-- Der Knopf bleibt sichtbar, aber deaktiviert: die Aktion ist bekannt
+           und nur noch nicht möglich (Zustandstabelle). -->
+      <div class="telegram-chats__code-row">
+        <button
+          type="button"
+          class="hm-button hm-button--secondary telegram-chats__copy"
+          disabled
+        >
+          Kopieren
+        </button>
+      </div>
+    } @else if (codeFailed()) {
+      <p class="telegram-chats__error" role="alert">
+        Der Freischalt-Code konnte nicht geladen werden: Der Dienst ist nicht erreichbar.
+        Bitte später erneut versuchen.
+        <button type="button" class="hm-link-action" (click)="retryCode.emit()">ERNEUT VERSUCHEN</button>
+      </p>
+    } @else if (codeValue()) {
+      <div class="telegram-chats__code-row">
+        <output class="telegram-chats__code-value" [attr.aria-label]="'Freischalt-Code'">
+          {{ codeValue() }}
+        </output>
+        <button
+          type="button"
+          class="hm-button hm-button--secondary telegram-chats__copy"
+          [disabled]="!canCopy()"
+          (click)="copyCode()"
+        >
+          Kopieren
+        </button>
+      </div>
+      @if (copyFeedback(); as feedback) {
+        <p
+          class="telegram-chats__copy-feedback"
+          [class.telegram-chats__copy-feedback--error]="copyFailed()"
+          role="status"
+        >
+          {{ feedback }}
+        </p>
+      }
+    } @else {
+      <p class="telegram-chats__state">
+        Es wurde noch kein Freischalt-Code erzeugt.
+        <button type="button" class="hm-link-action" (click)="retryCode.emit()">
+          Freischalt-Code anzeigen
+        </button>
+      </p>
+    }
+  </div>
+
+  <!-- Chat-Liste -->
+  <div class="telegram-chats__list">
+    @if (chatsLoading()) {
+      <p class="telegram-chats__state">Telegram-Chats werden geladen …</p>
+    } @else if (chatsFailed()) {
+      <p class="telegram-chats__error" role="alert">
+        Die Telegram-Chats konnten nicht geladen werden: Der Dienst ist nicht erreichbar.
+        Bitte später erneut versuchen.
+        <button type="button" class="hm-link-action" (click)="retryChats.emit()">ERNEUT VERSUCHEN</button>
+      </p>
+    } @else if ((chats() ?? []).length === 0) {
+      <p class="telegram-chats__state">
+        Noch kein Telegram-Chat freigeschaltet. Sende den Code oben an den Bot, um eine Gruppe
+        oder einen Einzelchat zu verbinden.
+      </p>
+    } @else {
+      <ul class="telegram-chats__rows">
+        @for (chat of chats() ?? []; track chat.chatId) {
+          <li class="telegram-chats__row">
+            <div class="telegram-chats__row-main">
+              <span class="telegram-chats__name">{{ chat.chatName }}</span>
+              <span class="hm-badge hm-badge--neutral telegram-chats__kind">{{ chat.chatKind }}</span>
+              <span class="telegram-chats__activated">Freigeschaltet von {{ chat.activatedBy }}</span>
+            </div>
+            @if (chat.ownConnection) {
+              <button
+                type="button"
+                class="hm-link-action telegram-chats__disconnect"
+                [disabled]="disconnecting()"
+                (click)="requestDisconnect(chat)"
+              >
+                TRENNEN
+              </button>
+            }
+            @if (disconnectError(); as error) {
+              <p class="telegram-chats__error telegram-chats__error--row" role="alert">{{ error }}</p>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

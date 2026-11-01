@@ -1,6 +1,6 @@
 # ADR 0007 — Telegram-Benachrichtigung als eigener Fach-Kontext
 
-- **Status:** vorgeschlagen (Runde 2b, Issue #35) — Entscheidung durch den Auftraggeber offen
+- **Status:** angenommen (Issue #35, umgesetzt am 2026-11-01)
 - **Datum:** 2026-11-01
 - **Entscheidung:** Die Telegram-Anbindung (Bot, Freischaltung, Zustellung von
   Mülltermin-Benachrichtigungen) wird als **eigener Fach-Kontext
@@ -75,6 +75,13 @@ können, ohne den Müllkalender anzufassen.
 
 ## Offene Entscheidungen (Blocker für Runde 3)
 
+> **Aufgelöst in Runde final (Issue #35).** Die Entscheidungen zu O1–O4 stehen
+> im Abschnitt „Entscheidungen zu O1–O4" weiter unten; die Tabelle bleibt als
+> Nachweis der offenen Punkte im Anforderungs-Lauf erhalten.
+
+Diese Punkte hat das Issue **nicht** entschieden; der ARC-Agent entscheidet sie
+nicht selbst.
+
 Diese Punkte hat das Issue **nicht** entschieden; der ARC-Agent entscheidet sie
 nicht selbst.
 
@@ -84,6 +91,34 @@ nicht selbst.
 | O2 | **Wie werden die Wiederholungen ausgelöst** — ein eigener stündlicher Scheduler-Tick, ein `@Scheduled(fixedDelay)`-Wiederholer oder ein gespeicherter Versuchszeitpunkt? | Der Versuchszähler braucht persistenten Zustand; die Wahl bestimmt, ob ein **zweiter** Zeitgeber in `ApplicationConfig` nötig wird (Zyklusrisiko) und ob „nicht nachholen" (Out of Scope) eingehalten bleibt. |
 | O3 | **Liegt der Bot-Token im Backend** (Egress) — ja, sonst kann die Anwendung nicht senden. | Bestätigt nur, dass `householdmanager.telegram.bot-token` ein **Secret** in `.env` ist und nie ins Repository kommt; kein Client-Secret, kein OIDC-Binding. |
 | O4 | **Wie wird der Bot-Token im Frontend behandelt**? | Der Code wird **im Chat an den Bot** gesendet, nicht über die Oberfläche. Das Backend muss den Code also **aus Telegram heraus** entgegennehmen — der Code darf den Oberflächenweg nicht verlassen. |
+
+## Entscheidungen zu O1–O4 (Issue #35, Runde final)
+
+Das Issue hat die vier offenen Punkte entschieden; die Umsetzung folgt ihnen.
+
+| Nr | Entscheidung | Umsetzung |
+|----|--------------|-----------|
+| O1 | **Long-Poll.** Die Anwendung fragt Telegram aktiv ab — nur Egress, kein öffentlicher Endpunkt, kein Zertifikat, kein Ingress. | `adapters/inbound/telegram/TelegramBotInputAdapter` — ein Daemon-Thread mit `getUpdates`; der Thread endet beim Herunterfahren (`ContextClosedEvent`), sonst blockiert er den Shutdown. |
+| O2 | **Eigener stündlicher Scheduler-Tick.** Der Versuchszähler liegt persistent in `notification_delivery`; der Wiederholungslauf läuft stündlich über `ApplicationConfig` (zweiter CronTask neben dem 18:00-Lauf). | `adapters/inbound/scheduler/NotificationRetryJob` → `NotificationDispatchUseCase.retryFailed()`; die Vermerke mit `attempt_count < 3` und fehlgeschlagenem letzten Versuch werden erneut versucht. |
+| O3 | **Der Bot-Token liegt im Backend.** `householdmanager.telegram.bot-token` ist ein Secret aus der `.env` — nie im Repository, nie in einer Logausgabe, nie in der Oberfläche. | `config/TelegramConfig.TelegramToken` (eigener Typ statt eines nackten `String`-Beans); der Adapter meldet nur „gesetzt"/„nicht gesetzt". |
+| O4 | **Der Code verlässt die Oberfläche nicht.** Er wird **im Chat an den Bot** gesendet; das Backend nimmt ihn aus Telegram heraus entgegen. Die Oberfläche zeigt und kopiert ihn nur. | `TelegramChatUseCase.handleMessage(chatId, text)` — der Use Case erkennt den Code; `GET /api/households/{id}/telegram/code` liefert nur den Anzeigewert. |
+
+### Die freischaltende Person
+
+Der Bot kennt **keine Person** — er sieht nur die Chat-Kennung und die
+Nachricht. Wer den Chat freigeschaltet hat, muss trotzdem fachlich feststehen:
+nur diese Person darf die Verbindung trennen (AC13, AC14).
+
+Die Festlegung: der **Code trägt die anfordernde Person**. Er entsteht beim
+ersten Anfordern durch ein Mitglied und wird zusammen mit dessen Kennung
+gespeichert (`telegram_activation_code.activated_by`). Eine Freischaltung über
+diesen Code gehört dann der Person, die den Code angefordert hat — je Chat
+genau eine freischaltende Person.
+
+Der Code selbst bleibt haushaltsweit und für jedes Mitglied sichtbar; wer ihn
+zuerst anfordert, ist der Eigentümer der darüber entstehenden Verbindungen.
+Das ist eine bewusste Vereinfachung: sie braucht keine Identität im
+Telegram-Protokoll und hält die Trennberechtigung eindeutig.
 
 ## Konsequenzen
 

@@ -97,6 +97,12 @@ app-waste-calendar-section {
   grid-column: 1 / -1;
 }
 
+// Der Telegram-Abschnitt klappt inline auf — wie der Müllkalender über die
+// volle Breite der Zeile.
+app-telegram-chat-section {
+  grid-column: 1 / -1;
+}
+
 .toast {
   position: fixed;
   bottom: var(--hm-space-6);

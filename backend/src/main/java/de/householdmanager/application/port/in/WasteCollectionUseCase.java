@@ -28,6 +28,21 @@ public interface WasteCollectionUseCase {
     WasteOverview overview(String userId, long householdId);
 
     /**
+     * Die Termine eines Haushalts — der Anzeigestand des letzten
+     * erfolgreichen Laufs, aufsteigend nach Datum.
+     *
+     * <p>Dieser Zugang ist <strong>ohne Person</strong>: er gehört zum
+     * Benachrichtigungslauf, der im Namen der Anwendung läuft und nicht im
+     * Namen eines Mitglieds (ADR 0007). Die Benachrichtigung liest die
+     * Termine des Müllkalenders über diesen Port und nicht über dessen
+     * Tabellen — die Kontextgrenze bleibt damit gewahrt.
+     *
+     * <p>Ein veralteter Stand wird <em>nicht</em> verworfen: der Anzeigestand
+     * ist die Aussage der Anwendung (AC24).
+     */
+    List<WasteCollection> collectionsOf(long householdId);
+
+    /**
      * Synchronisiert einen Haushalt: das Fenster ab heute, Ersetzen des
      * Bestands, Stand (R5, R6, AC11). Ein fehlgeschlagener Abruf lässt den
      * Bestand unverändert und den Stand als veraltet (R7, AC6).

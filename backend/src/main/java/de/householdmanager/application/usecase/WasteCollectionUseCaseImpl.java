@@ -75,6 +75,23 @@ public class WasteCollectionUseCaseImpl implements WasteCollectionUseCase {
     }
 
     /**
+     * Die Termine eines Haushalts für den Benachrichtigungslauf.
+     *
+     * <p>Ohne Person: der Lauf läuft im Namen der Anwendung. Der Anzeigestand
+     * wird <em>nicht</em> verworfen, wenn er veraltet ist — ein veralteter
+     * Stand ist die Aussage der Anwendung (AC24).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<WasteCollection> collectionsOf(long householdId) {
+        requireHousehold(householdId);
+        return collectionRepository.findByHousehold(householdId).stream()
+                .sorted(Comparator.comparing(WasteCollection::getCollectionDate)
+                        .thenComparing(WasteCollection::getWasteType))
+                .toList();
+    }
+
+    /**
      * Ein Lauf für einen Haushalt: Fenster ab heute (R5), Bestand ersetzen,
      * Stand schreiben. Der Stand wird auch bei einem fehlgeschlagenen Lauf
      * geschrieben — sonst wäre der Fehler nicht sichtbar (AC6).

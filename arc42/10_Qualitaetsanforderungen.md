@@ -20,9 +20,11 @@
 | Q13 | Ein Lieferant führt eine neue Art ein | Sie erscheint in der Liste, ohne dass Code geändert werden muss | mittel | `IcsWasteCalendarFeedTest` (Adapter, ical4j) |
 | Q14 | Ein zeitgesteuerter Lauf wird geprüft | Der Test läuft ohne Wartezeit, ohne Netz und ohne Datenbank — die Zeit ist eine `Clock`, der Job ein dünner Adapter | hoch | `WasteCollectionUseCaseImplTest`, `WasteSyncJobTest` |
 | Q15 | Die Anwendung startet, obwohl eine externe Quelle nicht erreichbar ist | Der Start ist unauffällig; der Fehler erscheint erst im Lauf, je Kontext isoliert protokolliert | mittel | `WasteSyncJobTest` |
-| Q16 | Eine Benachrichtigung kann nicht zugestellt werden | Der Fehler endet als **einzelner** Zustellvermerk; der Versand an die übrigen Chats läuft weiter; nach dem dritten Versuch stellt der Lauf das **Proben** ein, ohne die Verbindung zu lösen | hoch | `NotificationDispatchUseCaseImplTest` (dritte Versuche, Isolation je Chat) |
+| Q16 | Eine Benachrichtigung kann nicht zugestellt werden | Der Fehler endet als **einzelner** Zustellvermerk; der Versand an die übrigen Chats läuft weiter; nach dem dritten Versuch stellt der Lauf das **Weiterprobieren** ein, ohne die Verbindung zu lösen | hoch | `NotificationDispatchUseCaseImplTest` (dritte Versuche, Isolation je Chat) |
 | Q17 | Der 18:00-Uhr-Lauf wird geprüft | Der Test läuft ohne Wartezeit, ohne Netz und ohne Datenbank — die Zeit ist eine `Clock`, der Job ein dünner Adapter; der Wochentag entscheidet die Nachrichtenart | hoch | `NotificationDispatchUseCaseImplTest`, `NotificationDispatchJobTest` |
 | Q18 | Eine neue fachliche Regel ändert sich | Sie berührt **eine** Klasse im `domain`/`application` des Benachrichtigungs-Kontexts; der Müllkalender und die Telegram-Adapter bleiben unberührt | hoch | Ports & Adapters, Architekturregeln (Contextgrenze) |
+| Q19 | Telegram ist nicht erreichbar oder lehnt eine Nachricht ab | Der Start ist unauffällig; ein **Zustellfehler** zählt den Versuch und wird beim nächsten stündlichen Lauf wiederholt, ein **Protokollfehler** nicht; die übrigen Chats und Haushalte laufen weiter | hoch | `NotificationDispatchUseCaseImplTest`, `TelegramBotInputAdapterTest` |
+| Q20 | Die Anwendung wird heruntergefahren | Der Long-Poll-Thread endet mit dem Shutdown und blockiert ihn nicht; ein Neustart verliert den persistenten Versuchszähler nicht | hoch | `TelegramBotInputAdapterTest`, `NotificationDeliveryRepositoryAdapterTest` |
 
 ## Nicht-funktionale Anforderungen
 

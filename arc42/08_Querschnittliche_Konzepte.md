@@ -51,22 +51,32 @@ Nachricht**, nicht den Haushalt und nicht die anderen Chats.
 | Fall | Wirkung |
 |------|---------|
 | Versand erfolgreich | der Zustellvermerk gilt als zugestellt; kein weiterer Versuch |
-| Versand fehlgeschlagen | der Fehler wird protokolliert, der Zustellvermerk zählt den Versuch; ein weiterer Versuch folgt erst **nach einer Stunde** |
+| Versand fehlgeschlagen (Zustellfehler) | der Fehler wird protokolliert, der Zustellvermerk zählt den Versuch; ein weiterer Versuch folgt beim nächsten **stündlichen** Lauf |
+| Versand fachlich abgelehnt (Protokollfehler) | der Fehler wird protokolliert, der Vermerk zählt den Versuch — aber **ohne** weiteren Versuch |
 | **dritter** Versuch fehlgeschlagen | kein weiterer Versuch; die **Verbindung des Chats bleibt bestehen** (Trennen bleibt allein der freischaltenden Person vorbehalten) |
 | ein Chat schlägt fehl | die übrigen Chats desselben Haushalts werden **trotzdem** zugestellt |
 | ein Haushalt schlägt fehl | die übrigen Haushalte werden **trotzdem** zugestellt |
+
+**Zustellfehler ≠ Protokollfehler.** Die Unterscheidung ist fachlich und
+entscheidet über die Wiederholung:
+
+| Fehler | Auslöser | Fach-Exception | Wiederholung |
+|--------|----------|----------------|--------------|
+| **Zustellfehler** | Netzwerk, Zeitüberschreitung, Telegram-Serverfehler, nicht erreichbarer Chat | `TelegramDeliveryException` | ja — der stündliche Lauf versucht es erneut |
+| **Protokollfehler** | HTTP 200 mit `ok: false` — unbekannter Chat, ungültige Kennung, abgelehnter Text | `TelegramProtocolException` | nein — ein weiterer Versuch würde beim selben Fehler scheitern |
+
+Die Abgrenzung liegt im ausgehenden Adapter (`TelegramBotAdapter`), die
+Entscheidung über die Wiederholung im Use Case. Der Adapter wirft die
+fachlichen Exceptions; die Anwendung entscheidet, was wiederholt wird.
 
 Die Versuchszählung ist **persistenter Zustand** im Fachkern
 (`NotificationDelivery`), nicht ein Zähler im Adapter: nur so überlebt sie
 einen Neustart und nur so ist „höchstens drei Versuche je Nachricht"
 überprüfbar. Der Adapter kennt nur „gesendet" oder „nicht gesendet".
 
-Die Wiederholung ist **zeitversetzt** (1 Stunde) — nicht „sofort nochmal".
-Deshalb liegt der Versuchszeitpunkt im Zustellvermerk, nicht im Adapter.
-
-> **Offen:** Wer die Wiederholung auslöst — ein stündlicher Scheduler-Tick,
-> ein `fixedDelay`-Wiederholer oder ein gespeicherter Versuchszeitpunkt
-> (ADR 0007, O2).
+Der Zustellvermerk entsteht **vor** dem Versand. Bricht der Vorgang zwischen
+Versand und Vermerk ab, bleibt der Vermerk bestehen und der Wiederholungslauf
+versucht es erneut — der Zustellzustand geht nicht verloren.
 
 ## Validierung
 
@@ -98,8 +108,8 @@ JPA-Entity.
 
 | Thema | Festlegung |
 |-------|-------------|
-| Auslöser | `@EnableScheduling` in `config/ApplicationConfig`; die Jobs `adapters/inbound/scheduler/WasteSyncJob` und `…/NotificationDispatchJob` sind **eingehende Adapter** und enthalten keine Fachlogik |
-| Taktung | einmal täglich, Uhrzeit fest im Server (Property `householdmanager.waste.sync-cron`, Vorgabe `0 0 3 * * *`) — **nicht** durch die Oberfläche einstellbar (ADR 0005). Der Benachrichtigungslauf läuft **18:00 Uhr** (Property `householdmanager.notification.cron`), sonntags mit zusätzlicher Wochenübersicht |
+| Auslöser | `@EnableScheduling` in `config/ApplicationConfig`; die Jobs `adapters/inbound/scheduler/WasteSyncJob`, `…/NotificationDispatchJob` und `…/NotificationRetryJob` sind **eingehende Adapter** und enthalten keine Fachlogik |
+| Taktung | einmal täglich, Uhrzeit fest im Server (Property `householdmanager.waste.sync-cron`, Vorgabe `0 0 3 * * *`) — **nicht** durch die Oberfläche einstellbar (ADR 0005). Der Benachrichtigungslauf läuft **18:00 Uhr** (Property `householdmanager.telegram.dispatch-cron`), sonntags mit zusätzlicher Wochenübersicht; der Wiederholungslauf läuft **stündlich** (Property `householdmanager.telegram.retry-cron`) |
 | Uhr | die Anwendung rechnet ausschließlich mit der `Clock`-Bean; kein `Instant.now()` im Fachkern. Die Fenstergrenze (42 Tage) wird aus `LocalDate.now(clock.withZone(ZoneId.of("Europe/Berlin")))` abgeleitet — der Tag des Laufs im Betriebsgebiet, nicht in UTC. Dasselbe gilt für „morgen" und „kommende Woche" im Benachrichtigungs-Kontext |
 | Testbarkeit | der Job ruft genau einen Use Case auf; die Regeln stehen im Use Case (JUnit + Mockito, `Clock` fest) — kein Test wartet auf die Tagesuhr |
 | Fehlerisolierung | ein fehlgeschlagener Lauf beendet den Job nicht; der Fehler wird je Haushalt protokolliert |
@@ -112,20 +122,22 @@ JPA-Entity.
 Planung. Würde ein Use Case oder ein Job eine Bean von ihr beziehen, entstünde
 ein Zyklus (`ApplicationConfig → Job → Use Case → ApplicationConfig`).
 
-Mit dem Benachrichtigungslauf kommt ein **zweiter** Zeitgeber dazu. Die
-Regeln daraus:
+Mit dem Benachrichtigungskontext kommen **zwei** weitere Zeitgeber dazu — der
+18:00-Uhr-Lauf und der stündliche Wiederholungslauf. Die Regeln daraus:
 
 - Die technische Verdrahtung (Clients, Bot-Token) gehört in **eigene**
-  `config/`-Klassen (`ClockConfig`, `IcsClientConfig` — analog ein
-  `TelegramConfig`), **nicht** in `ApplicationConfig`.
+  `config/`-Klassen (`ClockConfig`, `IcsClientConfig`, `TelegramConfig`),
+  **nicht** in `ApplicationConfig`.
 - `ApplicationConfig` registriert **nur** Cron-Tasks; sie bekommt die Jobs
   als Konstruktor-Parameter und gibt **keine** Bean zurück.
 - Die Zeitregeln selbst liegen **nicht** im Job, sondern im Use Case — der Job
   kennt keinen Wochentag und kein Datum (ADR 0007).
 
-> **Offen:** Wie die Wiederholung einer fehlgeschlagenen Zustellung
-> ausgelöst wird — das entscheidet, ob ein **dritter** Zeitgeber nötig wird
-> (ADR 0007, O2).
+Der Bot-Token ist kein nackter `String`-Bean, sondern ein eigener Typ
+(`config/TelegramConfig.TelegramToken`): ein `String`-Bean würde mit jeder
+anderen String-Bean im Kontext kollidieren, und der eigene Record gibt den
+Wert in keiner Logausgabe preis — `toString()` meldet nur „gesetzt" bzw.
+„nicht gesetzt".
 
 ## Security
 
@@ -152,7 +164,8 @@ eingerichteten Setups — **kein** Produktivbetrieb.
 | Bot-Token | **Secret** aus der Umgebung (`householdmanager.telegram.bot-token`, in `.env`, nie im Repository, nie in einem Issue). Es ist ein **Bot-Token**, kein Client-Secret im OIDC-Sinne — die Anwendung ist *Client* des Bot-Dienstes, nicht Identity Provider |
 | Ohne Token | der Benachrichtigungs-Kontext ist **inaktiv**: keine Chats, kein Versand, kein Fehler beim Start (analog zur Nutzerverzeichnis-Adapter-Regel) |
 | Freischalt-Code | ein Geheimnis **des Haushalts**, kein Geheimnis der Person: jedes Mitglied sieht ihn, er schaltet beliebig viele Chats frei und hat **kein** Ablaufdatum. Er wird **im Chat an den Bot** gesendet, nicht über die Oberfläche |
-| Rechte | alle Mitglieder sind gleichberechtigt; **nur wer selbst freigeschaltet hat**, darf die Verbindung trennen. Es gibt keine Admin-Rolle im Haushalt |
+| Rechte | alle Mitglieder sind gleichberechtigt; **nur wer selbst freigeschaltet hat**, darf die Verbindung trennen (`TelegramChat.activatedBy`, geprüft im Use Case → 403 `NotChatOwnerException`). Es gibt keine Admin-Rolle im Haushalt |
+| Freischaltende Person | der Bot kennt **keine Person**; der **Code** trägt sie. Der Code entsteht beim ersten Anfordern im Namen eines Mitglieds (`telegram_activation_code.activated_by`) — die Freischaltung über diesen Code gehört der Person, die ihn angefordert hat. Der Bot-Token erreicht ausschließlich den Bot-Dienst, nie die Oberfläche |
 
 **Mandantentrennung und Rollen:** die Tabelle `household_member` macht
 ernannte Zugehörigkeit sichtbar; jeder Use Case prüft vor der Fachaktion die
