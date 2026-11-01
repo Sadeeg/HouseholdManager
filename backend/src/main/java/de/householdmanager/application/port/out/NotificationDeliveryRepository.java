@@ -16,8 +16,16 @@ import java.util.List;
  */
 public interface NotificationDeliveryRepository {
 
-    /** Die Vermerke, die einen weiteren Versuch brauchen (AC26). */
-    List<NotificationDelivery> findRetryable();
+    /**
+     * Die Vermerke, die für einen weiteren Versuch <strong>in Frage</strong>
+     * kommen (AC26): offen, fehlgeschlagen und unter dem Limit von drei
+     * Versuchen.
+     *
+     * <p>Ob ein Vermerk jetzt <em>fällig</em> ist, entscheidet die
+     * Anwendung ({@code NotificationDelivery.isDueAt}) — der Adapter liefert
+     * die Daten der Quelle, nicht die Regel.
+     */
+    List<NotificationDelivery> findRetryCandidates();
 
     NotificationDelivery save(NotificationDelivery delivery);
 }

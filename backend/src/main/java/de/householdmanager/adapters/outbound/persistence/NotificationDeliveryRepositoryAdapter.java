@@ -23,7 +23,7 @@ public class NotificationDeliveryRepositoryAdapter implements NotificationDelive
     private final Clock clock;
 
     @Override
-    public List<NotificationDelivery> findRetryable() {
+    public List<NotificationDelivery> findRetryCandidates() {
         return deliveryJpaRepository
                 .findAllByCompletedFalseAndStatusAndAttemptCountLessThan(
                         NotificationDelivery.Status.FAILED,

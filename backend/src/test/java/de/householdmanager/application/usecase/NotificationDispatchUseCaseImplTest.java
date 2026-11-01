@@ -14,6 +14,7 @@ import de.householdmanager.domain.model.WasteCollection;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -61,6 +62,13 @@ class NotificationDispatchUseCaseImplTest {
     /** Der Use Case mit einer festen Zeit — der Wochentag entscheidet die Nachrichtenart. */
     private NotificationDispatchUseCaseImpl useCaseOn(LocalDate day) {
         Instant now = day.atTime(18, 0).atZone(ZONE).toInstant();
+        return new NotificationDispatchUseCaseImpl(chats, deliveries, bot, waste,
+                Clock.fixed(now, ZONE), ZONE.getId());
+    }
+
+    /** Der Use Case mit einer festen Zeit — für Tests, die den Abstand zählen. */
+    private NotificationDispatchUseCaseImpl useCaseAt(LocalDate day, LocalTime time) {
+        Instant now = day.atTime(time).atZone(ZONE).toInstant();
         return new NotificationDispatchUseCaseImpl(chats, deliveries, bot, waste,
                 Clock.fixed(now, ZONE), ZONE.getId());
     }
@@ -258,14 +266,15 @@ class NotificationDispatchUseCaseImplTest {
         useCaseOn(WEDNESDAY).dispatch();
 
         assertThat(bot.messages).isEmpty();
-        assertThat(deliveries.findRetryable()).hasSize(1);
-        assertThat(deliveries.findRetryable().getFirst().getAttemptCount()).isEqualTo(1);
+        assertThat(deliveries.findRetryCandidates()).hasSize(1);
+        assertThat(deliveries.findRetryCandidates().getFirst().getAttemptCount()).isEqualTo(1);
 
+        // Der Wiederholungslauf eine Stunde später.
         bot.failure = null;
-        useCaseOn(WEDNESDAY).retryFailed();
+        useCaseAt(WEDNESDAY, LocalTime.of(19, 0)).retryFailed();
 
         assertThat(bot.messages).hasSize(1);
-        assertThat(deliveries.findRetryable()).isEmpty();
+        assertThat(deliveries.findRetryCandidates()).isEmpty();
     }
 
     /** AC27: nach drei Fehlversuchen wird kein weiterer Versuch unternommen. */
@@ -275,14 +284,13 @@ class NotificationDispatchUseCaseImplTest {
         givenTerm(WEDNESDAY.plusDays(1), "Restmüll");
         bot.failure = new TelegramDeliveryException("Telegram ist nicht erreichbar.");
 
-        NotificationDispatchUseCaseImpl useCase = useCaseOn(WEDNESDAY);
-        useCase.dispatch();
-        useCase.retryFailed();
-        useCase.retryFailed();
+        useCaseOn(WEDNESDAY).dispatch();
+        useCaseAt(WEDNESDAY, LocalTime.of(19, 0)).retryFailed();
+        useCaseAt(WEDNESDAY, LocalTime.of(20, 0)).retryFailed();
 
         assertThat(bot.messages).isEmpty();
         // Der dritte Fehlversuch schließt den Vermerk ab.
-        assertThat(deliveries.findRetryable()).isEmpty();
+        assertThat(deliveries.findRetryCandidates()).isEmpty();
         assertThat(deliveries.all()).hasSize(1);
         assertThat(deliveries.all().getFirst().getAttemptCount()).isEqualTo(3);
         assertThat(deliveries.all().getFirst().isCompleted()).isTrue();
@@ -295,12 +303,51 @@ class NotificationDispatchUseCaseImplTest {
         givenTerm(WEDNESDAY.plusDays(1), "Restmüll");
         bot.failure = new TelegramDeliveryException("Telegram ist nicht erreichbar.");
 
-        NotificationDispatchUseCaseImpl useCase = useCaseOn(WEDNESDAY);
-        useCase.dispatch();
-        useCase.retryFailed();
-        useCase.retryFailed();
+        useCaseOn(WEDNESDAY).dispatch();
+        useCaseAt(WEDNESDAY, LocalTime.of(19, 0)).retryFailed();
+        useCaseAt(WEDNESDAY, LocalTime.of(20, 0)).retryFailed();
 
         assertThat(chats.findByHousehold(HOUSEHOLD)).hasSize(1);
+    }
+
+    /**
+     * AC26: „die Nachricht <strong>nach einer Stunde</strong> erneut
+     * versucht".
+     *
+     * <p>Ein Vermerk, dessen letzter Versuch erst wenige Minuten
+     * zurückliegt, darf <strong>noch nicht</strong> wiederholt werden. Ohne
+     * diese Grenze erschöpften sich die drei Versuche in Sekunden statt in
+     * zwei Stunden.
+     */
+    @Test
+    void retryFailed_waitsAnHourBeforeTheNextAttempt() {
+        givenChats(CHAT_ONE);
+        givenTerm(WEDNESDAY.plusDays(1), "Restmüll");
+        bot.failure = new TelegramDeliveryException("Telegram ist nicht erreichbar.");
+
+        NotificationDispatchUseCaseImpl useCase = useCaseOn(WEDNESDAY);
+        useCase.dispatch();
+
+        // Der Lauf eine halbe Stunde später: der Vermerk ist noch nicht fällig.
+        useCaseAt(WEDNESDAY, LocalTime.of(18, 30)).retryFailed();
+
+        assertThat(bot.messages).isEmpty();
+        assertThat(deliveries.findRetryCandidates().getFirst().getAttemptCount()).isEqualTo(1);
+    }
+
+    /** AC26: nach einer Stunde wird der Vermerk erneut versucht. */
+    @Test
+    void retryFailed_retriesAfterAnHour() {
+        givenChats(CHAT_ONE);
+        givenTerm(WEDNESDAY.plusDays(1), "Restmüll");
+        bot.failure = new TelegramDeliveryException("Telegram ist nicht erreichbar.");
+
+        useCaseOn(WEDNESDAY).dispatch();
+        bot.failure = null;
+
+        useCaseAt(WEDNESDAY, LocalTime.of(19, 0)).retryFailed();
+
+        assertThat(bot.messages).hasSize(1);
     }
 
     /** AC29: ein fehlgeschlagener Chat stoppt die übrigen Chats nicht. */
@@ -412,7 +459,7 @@ class NotificationDispatchUseCaseImplTest {
         private final List<NotificationDelivery> deliveries = new ArrayList<>();
 
         @Override
-        public List<NotificationDelivery> findRetryable() {
+        public List<NotificationDelivery> findRetryCandidates() {
             return deliveries.stream().filter(NotificationDelivery::isRetryable).toList();
         }
 

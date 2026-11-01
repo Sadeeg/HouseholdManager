@@ -62,38 +62,38 @@ class NotificationDeliveryRepositoryAdapterTest {
 
     /** AC26: ein fehlgeschlagener, offener Vermerk wird erneut versucht. */
     @Test
-    void findRetryable_returnsTheFailedAndOpenDeliveries() {
+    void findRetryCandidates_returnsTheFailedAndOpenDeliveries() {
         adapter.save(delivery(householdA, "chat-1", "Text", 1,
                 NotificationDelivery.Status.FAILED, "nicht erreichbar", false));
 
-        assertThat(adapter.findRetryable()).hasSize(1);
+        assertThat(adapter.findRetryCandidates()).hasSize(1);
     }
 
     /** Ein zugestellter Vermerk wird nicht erneut versucht. */
     @Test
-    void findRetryable_ignoresDeliveredDeliveries() {
+    void findRetryCandidates_ignoresDeliveredDeliveries() {
         adapter.save(delivery(householdA, "chat-1", "Text", 1,
                 NotificationDelivery.Status.DELIVERED, null, true));
 
-        assertThat(adapter.findRetryable()).isEmpty();
+        assertThat(adapter.findRetryCandidates()).isEmpty();
     }
 
     /** AC27: nach drei Fehlversuchen wird der Vermerk abgeschlossen — kein weiterer Versuch. */
     @Test
-    void findRetryable_ignoresCompletedDeliveries() {
+    void findRetryCandidates_ignoresCompletedDeliveries() {
         adapter.save(delivery(householdA, "chat-1", "Text", 3,
                 NotificationDelivery.Status.FAILED, "nicht erreichbar", true));
 
-        assertThat(adapter.findRetryable()).isEmpty();
+        assertThat(adapter.findRetryCandidates()).isEmpty();
     }
 
     /** AC27: unter dem Limit von drei Versuchen wird der Vermerk erneut versucht. */
     @Test
-    void findRetryable_keepsDeliveriesBelowTheAttemptLimit() {
+    void findRetryCandidates_keepsDeliveriesBelowTheAttemptLimit() {
         adapter.save(delivery(householdA, "chat-1", "Text", 2,
                 NotificationDelivery.Status.FAILED, "nicht erreichbar", false));
 
-        assertThat(adapter.findRetryable()).hasSize(1);
+        assertThat(adapter.findRetryCandidates()).hasSize(1);
     }
 
     /** Der Zähler steigt mit jedem Versuch — der Zustand der Wiederholung bleibt erhalten. */
@@ -109,8 +109,31 @@ class NotificationDeliveryRepositoryAdapterTest {
         assertThat(stored.getStatus()).isEqualTo(NotificationDelivery.Status.FAILED);
     }
 
+    /**
+     * AC26: ein Vermerk, dessen letzter Versuch mehr als eine Stunde
+     * zurückliegt, kommt als Kandidat in Frage.
+     *
+     * <p>Die Fälligkeit selbst entscheidet die Anwendung
+     * ({@code NotificationDelivery.isDueAt}) — der Adapter liefert die
+     * Kandidaten. Der Test steht deshalb beim Use Case.
+     */
+    @Test
+    void findRetryCandidates_returnsADeliveryThatFailedMoreThanAnHourAgo() {
+        adapter.save(delivery(householdA, "chat-1", "Text", 1,
+                NotificationDelivery.Status.FAILED, "nicht erreichbar", false,
+                Instant.now().minusSeconds(2 * 60 * 60)));
+
+        assertThat(adapter.findRetryCandidates()).hasSize(1);
+    }
+
     private NotificationDelivery delivery(long householdId, String chatId, String content,
             int attempts, NotificationDelivery.Status status, String error, boolean completed) {
+        return delivery(householdId, chatId, content, attempts, status, error, completed, null);
+    }
+
+    private NotificationDelivery delivery(long householdId, String chatId, String content,
+            int attempts, NotificationDelivery.Status status, String error, boolean completed,
+            Instant lastAttemptAt) {
         return NotificationDelivery.builder()
                 .householdId(householdId)
                 .chatId(chatId)
@@ -118,6 +141,7 @@ class NotificationDeliveryRepositoryAdapterTest {
                 .attemptCount(attempts)
                 .status(status)
                 .lastError(error)
+                .lastAttemptAt(lastAttemptAt)
                 .completed(completed)
                 .build();
     }

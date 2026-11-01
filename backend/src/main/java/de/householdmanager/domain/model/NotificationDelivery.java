@@ -1,5 +1,6 @@
 package de.householdmanager.domain.model;
 
+import java.time.Duration;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,6 +24,17 @@ public class NotificationDelivery {
 
     /** Höchstzahl der Versuche je Nachricht (AC27). */
     public static final int MAX_ATTEMPTS = 3;
+
+    /**
+     * Der Abstand zwischen zwei Versuchen (AC26): „die Nachricht <strong>nach
+     * einer Stunde</strong> erneut versucht".
+     *
+     * <p>Ohne diese Grenze könnten sich die drei Versuche in Sekunden
+     * statt in zwei Stunden erschöpfen — der stündliche Lauf würde jeden
+     * Vermerk beim ersten Takt danach erneut versuchen. Der Vermerk, dessen
+     * letzter Versuch jünger ist, wartet.
+     */
+    public static final Duration RETRY_INTERVAL = Duration.ofHours(1);
 
     /** Grenze der Spalte {@code notification_delivery.chat_id}. */
     public static final int MAX_CHAT_ID_LENGTH = 100;
@@ -99,5 +111,20 @@ public class NotificationDelivery {
     /** Steht ein weiterer Versuch aus? */
     public boolean isRetryable() {
         return !completed && attemptCount < MAX_ATTEMPTS;
+    }
+
+    /**
+     * Steht der nächste Versuch <strong>jetzt</strong> an?
+     *
+     * <p>Ein Vermerk ist fällig, wenn er noch versucht werden darf
+     * ({@link #isRetryable()}) und seit dem letzten Versuch mindestens
+     * {@link #RETRY_INTERVAL} vergangen ist. Ein Vermerk ohne Versuch ist
+     * sofort fällig.
+     */
+    public boolean isDueAt(Instant now) {
+        if (!isRetryable()) {
+            return false;
+        }
+        return lastAttemptAt == null || !lastAttemptAt.plus(RETRY_INTERVAL).isAfter(now);
     }
 }

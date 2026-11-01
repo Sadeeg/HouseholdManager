@@ -74,6 +74,12 @@ Die Versuchszählung ist **persistenter Zustand** im Fachkern
 einen Neustart und nur so ist „höchstens drei Versuche je Nachricht"
 überprüfbar. Der Adapter kennt nur „gesendet" oder „nicht gesendet".
 
+Zwischen zwei Versuchen derselben Nachricht liegt mindestens **eine Stunde**
+(`NotificationDelivery.RETRY_INTERVAL`). Die Grenze ist fachlich: ohne sie
+erschöpften sich die drei Versuche in Sekunden statt in zwei Stunden. Der
+Adapter liefert die **Kandidaten** (`findRetryCandidates()`), die Fälligkeit
+entscheidet die Anwendung (`NotificationDelivery.isDueAt(now)`).
+
 Der Zustellvermerk entsteht **vor** dem Versand. Bricht der Vorgang zwischen
 Versand und Vermerk ab, bleibt der Vermerk bestehen und der Wiederholungslauf
 versucht es erneut — der Zustellzustand geht nicht verloren.

@@ -76,10 +76,11 @@ Der dritte Zeitgeber folgt demselben Muster: `NotificationRetryJob` löst
 genau einen Use Case aus (`NotificationDispatchUseCase.retryFailed()`), der
 **keine** Fachlogik im Adapter. Der Use Case sucht alle Zustellvermerke, die
 noch einen Versuch brauchen (`attempt_count < 3`, nicht abgeschlossen), und
-versucht sie erneut. Die Auswahl der Vermerke liegt im Use Case, die
-Taktung in der Konfiguration (`householdmanager.telegram.retry-cron`,
-Vorgabe `0 0 * * * *`) — beide Läufe werden in `config/ApplicationConfig`
-neben dem Tageslauf eingetragen (ADR 0007, O2).
+versucht sie erneut — frühestens eine Stunde nach dem letzten Versuch. Die
+Auswahl der Vermerke liegt im Use Case, die Taktung in der Konfiguration
+(`householdmanager.telegram.retry-cron`, Vorgabe `0 0 * * * *`) — beide Läufe
+werden in `config/ApplicationConfig` neben dem Tageslauf eingetragen
+(ADR 0007, O2).
 
 ### Der Bot-Eingang (Long-Poll)
 

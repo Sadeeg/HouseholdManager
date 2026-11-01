@@ -480,4 +480,84 @@ describe('HouseholdsPage', () => {
 
     expect(compiled.textContent).toContain('Die Verbindung konnte nicht getrennt werden');
   });
+
+  /**
+   * AC16: wer kein Mitglied des Haushalts ist, sieht keine Telegram-Chats
+   * und bekommt keinen Freischalt-Code.
+   *
+   * <p>Das Backend antwortet mit 403. Die Oberfläche darf daraus weder einen
+   * Code noch eine Chat-Liste anzeigen — der Abschnitt zeigt den Fehler.
+   */
+  it('shows neither a code nor chats when the household access is refused (AC16)', async () => {
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      { id: 1, name: 'Haushalt Müller', createdAt: '2026-01-01T00:00:00Z', createdBy: 'alice' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'TELEGRAM-CHATS')
+      ?.click();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne('/api/households/1/telegram/code')
+      .flush(null, { status: 403, statusText: 'Forbidden' });
+    httpMock
+      .expectOne('/api/households/1/telegram/chats')
+      .flush(null, { status: 403, statusText: 'Forbidden' });
+    await tick(fixture);
+
+    const section = compiled.querySelector('app-telegram-chat-section') as HTMLElement;
+    // Kein Code, keine Chat-Zeile — nichts aus dem fremden Haushalt.
+    expect(section.querySelector('.telegram-chats__code-value')).toBeNull();
+    expect(section.querySelectorAll('.telegram-chats__row').length).toBe(0);
+    // Der Fehler wird benannt.
+    expect(section.querySelector('[role="alert"]')?.textContent).toContain(
+      'Der Freischalt-Code konnte nicht geladen werden',
+    );
+  });
+
+  /**
+   * Die Zustandstabelle: „Fehler (Chat-Liste): `role="alert"` mit „ERNEUT
+   * VERSUCHEN"“ und „Code-Bereich und Chat-Liste bleiben unabhängig nutzbar“.
+   *
+   * <p>Der Code wird geladen, die Chat-Liste nicht — der Code muss trotzdem
+   * lesbar bleiben.
+   */
+  it('keeps the code usable when only the chat list fails (AC16, Zustandstabelle)', async () => {
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      { id: 1, name: 'Haushalt Müller', createdAt: '2026-01-01T00:00:00Z', createdBy: 'alice' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'TELEGRAM-CHATS')
+      ?.click();
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/households/1/telegram/code').flush({
+      code: '123456',
+      botConfigured: true,
+    });
+    httpMock
+      .expectOne('/api/households/1/telegram/chats')
+      .flush(null, { status: 403, statusText: 'Forbidden' });
+    await tick(fixture);
+
+    const section = compiled.querySelector('app-telegram-chat-section') as HTMLElement;
+    expect(section.querySelector('[role="alert"]')?.textContent).toContain(
+      'Die Telegram-Chats konnten nicht geladen werden',
+    );
+    // Der Code bleibt unabhängig davon nutzbar.
+    expect(section.querySelector('.telegram-chats__code-value')?.textContent?.trim()).toBe('123456');
+    expect(section.querySelectorAll('.telegram-chats__row').length).toBe(0);
+  });
 });

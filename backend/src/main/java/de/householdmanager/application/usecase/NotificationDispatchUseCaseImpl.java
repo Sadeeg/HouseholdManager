@@ -145,25 +145,36 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
      * erneut versucht (AC26). Nach dem dritten Fehlversuch wird kein weiterer
      * Versuch unternommen (AC27); die Verbindung des Chats bleibt bestehen
      * (AC28).
+     *
+     * <p>Ein Vermerk wird erst <strong>nach einer Stunde</strong> erneut
+     * versucht: zwischen zwei Versuchen liegt mindestens
+     * {@link NotificationDelivery#RETRY_INTERVAL}. Ohne diese Grenze würden
+     * sich die drei Versuche in Sekunden statt in zwei Stunden erschöpfen.
      */
     @Override
     @Transactional
     public void retryFailed() {
-        for (NotificationDelivery delivery : deliveryRepository.findRetryable()) {
+        Instant now = Instant.now(clock);
+        for (NotificationDelivery delivery : deliveryRepository.findRetryCandidates()) {
+            if (!delivery.isDueAt(now)) {
+                // Der letzte Versuch ist noch zu frisch — der Vermerk wartet
+                // bis zum nächsten stündlichen Lauf (AC26).
+                continue;
+            }
             try {
                 telegramBot.sendMessage(delivery.getChatId(), delivery.getContent());
-                deliveryRepository.save(delivery.delivered(Instant.now(clock)));
+                deliveryRepository.save(delivery.delivered(now));
             } catch (TelegramDeliveryException failure) {
                 // Zustellfehler: der Vermerk zählt den Versuch, der nächste
                 // Lauf versucht es erneut (AC26).
                 log.warn("Zustellung an Chat {} fehlgeschlagen (Versuch {}): {}",
                         delivery.getChatId(), delivery.getAttemptCount() + 1, failure.getMessage());
-                deliveryRepository.save(delivery.failed(Instant.now(clock), failure.getMessage()));
+                deliveryRepository.save(delivery.failed(now, failure.getMessage()));
             } catch (TelegramProtocolException failure) {
                 // Protokollfehler: ein weiterer Versuch würde scheitern.
                 log.warn("Telegram hat die Nachricht an Chat {} abgelehnt: {}",
                         delivery.getChatId(), failure.getMessage());
-                deliveryRepository.save(delivery.failed(Instant.now(clock), failure.getMessage()));
+                deliveryRepository.save(delivery.failed(now, failure.getMessage()));
             }
         }
     }

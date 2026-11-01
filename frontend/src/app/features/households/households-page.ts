@@ -80,6 +80,44 @@ export class HouseholdsPage {
   protected readonly telegramCode = this.householdsData.telegramCode;
   protected readonly telegramChats = this.householdsData.telegramChats;
 
+  /**
+   * Der Code für die Anzeige — `null`, solange er nicht da ist.
+   *
+   * <p>Das Lesen von `value()` wirft im Fehlerzustand der Resource. Die
+   * Bedingung prüft deshalb zuerst den Fehler: im Fehlerfall gibt es
+   * keinen Wert, und der Fehler wird ohnehin über die Fehlerzeile
+   * dargestellt.
+   */
+  protected readonly telegramCodeValue = computed(() => {
+    const resource = this.telegramCode;
+    if (resource.error()) {
+      return null;
+    }
+    return resource.value()?.code ?? null;
+  });
+
+  /** Ist der Bot konfiguriert? Ohne Token lässt sich kein Chat freischalten. */
+  protected readonly telegramBotConfigured = computed(() => {
+    const resource = this.telegramCode;
+    if (resource.error()) {
+      return true;
+    }
+    return resource.value()?.botConfigured ?? true;
+  });
+
+  /**
+   * Die Chats für die Anzeige — `null`, solange sie nicht da sind.
+   *
+   * <p>Wie beim Code: im Fehlerzustand gibt es keinen Wert.
+   */
+  protected readonly telegramChatsValue = computed(() => {
+    const resource = this.telegramChats;
+    if (resource.error()) {
+      return null;
+    }
+    return resource.value()?.chats ?? null;
+  });
+
   protected readonly removeDescription = computed(() => {
     const pending = this.pendingMemberRemove();
     if (pending === null) {
