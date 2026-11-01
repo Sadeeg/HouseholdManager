@@ -13,9 +13,10 @@ export interface TelegramChat {
   readonly chatName: string;
   /** Die Chat-Art: „GRUPPE" oder „EINZELCHAT". */
   readonly chatKind: string;
-  /** Die Kennung des freischaltenden Mitglieds. */
-  readonly activatedBy: string;
-  /** Der Anzeigename des freischaltenden Mitglieds — fällt auf die Kennung zurück. */
+  /**
+   * Der Anzeigename des freischaltenden Mitglieds — fällt auf die Kennung
+   * zurück, wenn der Name nicht auflösbar ist.
+   */
   readonly activatedByName: string;
   /** True, wenn die Verbindung die eigene ist — nur dann darf getrennt werden. */
   readonly ownConnection: boolean;

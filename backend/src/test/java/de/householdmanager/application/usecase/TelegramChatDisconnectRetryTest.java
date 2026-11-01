@@ -294,6 +294,11 @@ class TelegramChatDisconnectRetryTest {
         }
 
         @Override
+        public Optional<String> displayNameOf(String userId) {
+            return Optional.empty();
+        }
+
+        @Override
         public MemberView addMember(String currentUserId, long householdId, String userId) {
             return null;
         }

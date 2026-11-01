@@ -581,6 +581,11 @@ class TaskUseCaseImplTest {
         }
 
         @Override
+        public Optional<String> displayNameOf(String userId) {
+            return Optional.empty();
+        }
+
+        @Override
         public MemberView addMember(String currentUserId, long householdId, String userId) {
             members.add(userId);
             return new MemberView(userId, userId, false);

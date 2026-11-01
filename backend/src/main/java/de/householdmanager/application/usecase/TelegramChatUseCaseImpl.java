@@ -116,10 +116,15 @@ public class TelegramChatUseCaseImpl implements TelegramChatUseCase {
         // Nur die Chats dieses Haushalts (AC12) — der Port filtert bereits.
         List<TelegramChat> chats = chatRepository.findByHousehold(householdId);
 
-        Map<String, String> names = membershipUseCase.listMembers(userId, householdId).stream()
-                .filter(member -> member.displayName() != null && !member.displayName().isBlank())
-                .collect(Collectors.toMap(MembershipUseCase.MemberView::userId,
-                        MembershipUseCase.MemberView::displayName, (first, second) -> first));
+        // Nur die Kennungen der tatsächlich gelieferten Chats werden
+        // aufgelöst — nicht alle Mitglieder des Haushalts.
+        Map<String, String> names = chats.stream()
+                .map(TelegramChat::getActivatedBy)
+                .distinct()
+                .collect(Collectors.toMap(
+                        id -> id,
+                        id -> membershipUseCase.displayNameOf(id).orElse(id),
+                        (first, second) -> first));
 
         return chats.stream()
                 .map(chat -> new TelegramChatUseCase.ChatView(

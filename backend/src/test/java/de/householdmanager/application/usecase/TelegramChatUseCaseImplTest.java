@@ -536,6 +536,11 @@ class TelegramChatUseCaseImplTest {
         }
 
         @Override
+        public Optional<String> displayNameOf(String userId) {
+            return Optional.ofNullable(names.get(userId));
+        }
+
+        @Override
         public MemberView addMember(String currentUserId, long householdId, String userId) {
             return null;
         }

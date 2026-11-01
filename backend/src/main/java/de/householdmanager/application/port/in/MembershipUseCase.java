@@ -1,6 +1,7 @@
 package de.householdmanager.application.port.in;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Eingehender Port: Mitgliedschaft in einem Haushalt.
@@ -19,6 +20,14 @@ public interface MembershipUseCase {
 
     /** Mitglieder des Haushalts, Haushaltsleitung zuerst. */
     List<MemberView> listMembers(String currentUserId, long householdId);
+
+    /**
+     * Der Anzeigename einer Person — leer, wenn er sich nicht auflösen lässt.
+     *
+     * <p>Für Fälle, in denen nur einzelne Personen benannt werden müssen:
+     * das spart die Auflösung aller Mitglieder.
+     */
+    Optional<String> displayNameOf(String userId);
 
     /** Ernennt eine Person des Nutzerverzeichnisses zum Mitglied (nur Haushaltsleitung). */
     MemberView addMember(String currentUserId, long householdId, String userId);

@@ -22,8 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code WasteCollectionController} — ohne führenden Slash.
  *
  * <p>Die Chat-Kennung bei Telegram ist Teil des Pfades: sie ist der Zugriffsweg
- * auf den Chat. Sie wird <strong>nicht</strong> in der Antwort ausgegeben
- * (Out of Scope des Issues).
+ * auf den Chat. Sie steht auch in der Antwort — die Oberfläche braucht sie für
+ * den Trennaufruf. <strong>Angezeigt</strong> wird sie nicht (Out of Scope des
+ * Issues).
  */
 @RestController
 @RequestMapping("api/households/{householdId}/telegram")

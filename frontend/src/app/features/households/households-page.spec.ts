@@ -335,7 +335,6 @@ describe('HouseholdsPage', () => {
       chatId: string;
       chatName: string;
       chatKind: string;
-      activatedBy: string;
       activatedByName?: string;
       ownConnection: boolean;
     }[] = [],
@@ -371,7 +370,6 @@ describe('HouseholdsPage', () => {
         chatId: '-100',
         chatName: 'WG Flur',
         chatKind: 'GRUPPE',
-        activatedBy: 'alice',
         activatedByName: 'Alice Muster',
         ownConnection: true,
       },
@@ -429,7 +427,6 @@ describe('HouseholdsPage', () => {
         chatId: '-100',
         chatName: 'WG Flur',
         chatKind: 'GRUPPE',
-        activatedBy: 'alice',
         activatedByName: 'Alice Muster',
         ownConnection: true,
       },
@@ -465,7 +462,6 @@ describe('HouseholdsPage', () => {
         chatId: '-100',
         chatName: 'WG Flur',
         chatKind: 'GRUPPE',
-        activatedBy: 'alice',
         activatedByName: 'Alice Muster',
         ownConnection: true,
       },
