@@ -165,6 +165,7 @@ gesammelt, damit der Test nicht daran scheitert:
 | Test auf der Data-Ebene **ohne Component** | der `httpResource`-Effekt läuft nie, `expectOne` findet keinen Request | Effekt ausdrücklich auslösen: `TestBed.flushEffects()` vor dem `expectOne` |
 | Formularmeldung hängt an `touched()` | im Test fehlt die Fehlermeldung, obwohl das Feld ungültig ist | nach der Eingabe `input.dispatchEvent(new Event('blur'))`, dann erst die Assertion |
 | Datumsanzeige hängt von der Zeitzone ab | derselbe Test schlägt auf einer anderen Maschine fehl | Ganztagsdaten aus dem ISO-Wert lesen (kein `DatePipe`-Parse); ein Test leitet sein erwartetes Bild aus demselben Zeitpunkt ab, nicht aus einem festen Zeichenstring |
+| Testumgebung ist blind für Geometrie | die CDK-Fokusfalle fokussiert größenlose Elemente nicht — Fokus-Tests sind blind und der CDK warnt bei jeder Öffnung | Die Testumgebung einmal einrichten, nicht pro Datei: Vitest-Setup über `test.options.setupFiles` in `angular.json` (`shared/testing/vitest-setup.ts` gibt den Elementen eine Größe). Die Aussage des Tests muss der des Browsers entsprechen — und die Geometrie **im Browser** ist zusätzlich per Sichtprüfung zu prüfen (Regel 2) |
 
 ## Drei Regeln, die in diesem Projekt Fehler gefunden haben
 

@@ -89,14 +89,15 @@ find frontend/src/app/shared/components -maxdepth 1 -type d     # wiederverwendb
   benutzt — auch wenn das eigene „einfacher" wirkt.
 - **Ein Overlay ist ein Muster mit drei Teilen:** Backdrop, Panel
   (`role="alertdialog"`, `aria-modal="true"`, `Esc` schließt) und Fokus auf
-  dem Panel — Letzteres ist im Muster `confirm-dialog` **noch nicht
-  umgesetzt** (kein `cdkFocusInitial`), §5 fordert es aber; die Abweichung
-  wird nicht behauptet, sondern benannt. Das Overlay gehört auf den
-  **Wrapper** (nicht auf den Backdrop-Knopf), Backdrop und Panel liegen in
-  derselben Gitterzelle (`grid-area: 1 / 1`), das Panel bekommt
-  `max-height: 100%; overflow-y: auto`. Offen ist außerdem eine **Fokusfalle**
-  (Tab bleibt im Dialog) — beides gehört als Folge-Issue notiert
-  (Issue #9: „Fokusverhalten der Overlays").
+  dem Panel. Der Fokus ist umgesetzt (Issue #9): die **Fokusfalle** liegt auf
+  dem Wrapper (`cdkTrapFocus` mit `cdkTrapFocusAutoCapture`), das Panel trägt
+  `cdkFocusInitial` und `tabindex="-1"` — dadurch bekommt es den initialen
+  Fokus, der Tab bleibt im Dialog, und beim Schließen kehrt der Fokus auf das
+  auslösende Element zurück. Das Overlay gehört auf den **Wrapper** (nicht auf
+  den Backdrop-Knopf), Backdrop und Panel liegen in derselben Gitterzelle
+  (\`grid-area: 1 / 1\`), das Panel bekommt \`max-height: 100%; overflow-y:
+  auto\`. Der Backdrop-Knopf steht **nicht** in der Tab-Reihenfolge
+  (\`tabindex="-1"\`) — \`Esc\` schließt ohnehin.
 - **Ein neues Muster wird in die Design-DNA aufgenommen** (Schritt 7), sonst
   fehlt es beim nächsten Feature wieder.
 

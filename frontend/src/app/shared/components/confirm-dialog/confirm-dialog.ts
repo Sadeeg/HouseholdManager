@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 /**
@@ -7,9 +8,14 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
  *
  * Dumb Component: Titel, Beschreibung und Aktion kommen per Input, das
  * Ergebnis per Output. Der Aufrufer führt die Aktion aus.
+ *
+ * Fokus (Issue #9): das Panel bekommt beim Öffnen den initialen Fokus, der
+ * Tab bleibt im Dialog (Fokusfalle), und beim Schließen kehrt der Fokus auf
+ * das auslösende Element zurück.
  */
 @Component({
   selector: 'app-confirm-dialog',
+  imports: [CdkTrapFocus],
   templateUrl: './confirm-dialog.html',
   styleUrl: './confirm-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

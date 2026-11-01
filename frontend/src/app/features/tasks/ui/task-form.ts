@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormField, form, maxLength, required, submit, validate } from '@angular/forms/signals';
 
@@ -13,10 +14,13 @@ import { Task, TaskFormData, formatDueDate, isoDate, normalizeLabel, parseDueDat
  * Nutzerverzeichnis (AC8). Labels werden groß-/kleinschreibungsunabhängig
  * zusammengeführt: „bad" wird zu „Bad", wenn „Bad" schon existiert (AC20).
  * Ausgegeben werden die Formulardaten — der Aufrufer speichert.
+ *
+ * Fokus (Issue #9): dasselbe Muster wie im Bestätigungsdialog — initialer
+ * Fokus auf dem Panel, Fokusfalle, Fokus zurück auf das auslösende Element.
  */
 @Component({
   selector: 'app-task-form',
-  imports: [FormField, MarkdownView, UserPicker],
+  imports: [CdkTrapFocus, FormField, MarkdownView, UserPicker],
   templateUrl: './task-form.html',
   styleUrl: './task-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

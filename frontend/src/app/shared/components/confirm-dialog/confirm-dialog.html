@@ -1,10 +1,13 @@
 <!-- Der Backdrop-Button schließt den Dialog durch Klick außerhalb;
-     Escape schließt ihn über den Key-Handler des Dialogs. -->
-<div class="confirm-dialog">
+     Escape schließt ihn über den Key-Handler des Dialogs.
+     Die Fokusfalle liegt auf dem Wrapper: das Panel trägt `cdkFocusInitial`
+     und bekommt damit den initialen Fokus (Issue #9). -->
+<div class="confirm-dialog" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
   <button
     type="button"
     class="confirm-dialog__backdrop"
     aria-label="Dialog schließen"
+    tabindex="-1"
     (click)="cancelled.emit()"
   ></button>
   <div
@@ -12,6 +15,8 @@
     role="alertdialog"
     aria-modal="true"
     aria-labelledby="confirm-dialog-title"
+    tabindex="-1"
+    cdkFocusInitial
     (keydown.escape)="cancelled.emit()"
   >
     <h3 id="confirm-dialog-title" class="confirm-dialog__title">{{ title() }}</h3>
