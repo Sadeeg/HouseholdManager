@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.householdmanager.application.port.out.UserDirectory;
 import de.householdmanager.domain.model.UserAccount;
+import de.householdmanager.domain.model.UserDirectoryUnavailableException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 /**
  * Ausgehender Adapter: Nextcloud als Nutzerverzeichnis (OCS-User-API).
@@ -69,6 +71,9 @@ public class NextcloudUserDirectory implements UserDirectory {
             return Optional.of(toAccount(envelope.ocs().data()));
         } catch (RuntimeException exception) {
             log.warn("Nextcloud-Nutzer {} konnte nicht geladen werden: {}", id, exception.getMessage());
+            // Bleibt bewusst tolerant: ein nicht ladbarer Einzelnutzer führt zu
+            // „unbekannt", nicht zu einem Verzeichnisfehler — anders als der
+            // Suchpfad (Issue #21).
             return Optional.empty();
         }
     }
@@ -101,8 +106,23 @@ public class NextcloudUserDirectory implements UserDirectory {
             return accounts;
         } catch (RuntimeException exception) {
             log.warn("Nextcloud-User-Suche nach '{}' fehlgeschlagen: {}", query, exception.getMessage());
-            return List.of();
+            // Kein stilles „niemand gefunden": der Client muss den Ausfall des
+            // Verzeichnisses vom Fall „keine Treffer" unterscheiden können
+            // (Issue #21).
+            throw new UserDirectoryUnavailableException(reasonOf(exception), exception);
         }
+    }
+
+    /**
+     * Der konkrete Grund des Ausfalls — ohne interne Adresse und ohne
+     * Stacktrace: die Meldung geht an den Client (Issue #21, AC2).
+     */
+    private String reasonOf(RuntimeException failure) {
+        if (failure instanceof RestClientResponseException response) {
+            return "Das Nutzerverzeichnis ist nicht erreichbar: Nextcloud antwortete mit HTTP "
+                    + response.getStatusCode().value() + ".";
+        }
+        return "Das Nutzerverzeichnis ist nicht erreichbar: Die Verbindung ist fehlgeschlagen.";
     }
 
     private UserAccount toAccount(OcsUser user) {

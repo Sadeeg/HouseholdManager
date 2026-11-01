@@ -7,6 +7,7 @@ import de.householdmanager.domain.model.InvalidWasteCalendarUrlException;
 import de.householdmanager.domain.model.MembershipRequiredException;
 import de.householdmanager.domain.model.NotHouseholdAdminException;
 import de.householdmanager.domain.model.TaskNotFoundException;
+import de.householdmanager.domain.model.UserDirectoryUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -47,6 +48,19 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, exception.getMessage());
         problem.setTitle("Ungültige ICS-Adresse");
+        return problem;
+    }
+
+    /**
+     * Das Nutzerverzeichnis (Nextcloud) ist nicht erreichbar — ein technischer
+     * Ausfall, kein Eingabefehler. 503, damit der Client den Ausfall vom Fall
+     * „keine Treffer" unterscheiden kann (Issue #21).
+     */
+    @ExceptionHandler(UserDirectoryUnavailableException.class)
+    public ProblemDetail handleUserDirectoryUnavailable(UserDirectoryUnavailableException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+        problem.setTitle("Nutzerverzeichnis nicht erreichbar");
         return problem;
     }
 

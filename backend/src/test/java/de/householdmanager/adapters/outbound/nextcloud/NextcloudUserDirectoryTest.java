@@ -1,13 +1,17 @@
 package de.householdmanager.adapters.outbound.nextcloud;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import de.householdmanager.domain.model.UserAccount;
+import de.householdmanager.domain.model.UserDirectoryUnavailableException;
+import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,6 +89,72 @@ class NextcloudUserDirectoryTest {
     void search_isEmpty_forShortQuery() {
         assertThat(directory.search("a", 10)).isEmpty();
         server.verify();
+    }
+
+    @Test
+    void search_reportsUnreachableDirectory_insteadOfAnEmptyResult() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=sas")))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThatThrownBy(() -> directory.search("sascha", 10))
+                .isInstanceOf(UserDirectoryUnavailableException.class)
+                .hasMessageContaining("nicht erreichbar")
+                .hasMessageContaining("503");
+    }
+
+    @Test
+    void search_namesTheReason_withoutLeakingTheInternalUrl() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=sas")))
+                .andRespond(withStatus(HttpStatus.UNAUTHORIZED));
+
+        assertThatThrownBy(() -> directory.search("sascha", 10))
+                .isInstanceOf(UserDirectoryUnavailableException.class)
+                .hasMessageContaining("401")
+                .hasMessageNotContaining("cloud.example.org");
+    }
+
+    @Test
+    void search_namesAFailedConnection_asTheReason() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=sas")))
+                .andRespond(withException(new IOException("Verbindung abgelehnt")));
+
+        assertThatThrownBy(() -> directory.search("sascha", 10))
+                .isInstanceOf(UserDirectoryUnavailableException.class)
+                .hasMessageContaining("Verbindung ist fehlgeschlagen")
+                .hasMessageNotContaining("cloud.example.org");
+    }
+
+    /**
+     * AC3 (tiefste Ebene): Das Verzeichnis ist erreichbar, es gibt nur keine
+     * Treffer. Nextcloud antwortet dann mit HTTP 200 und leerer Trefferliste —
+     * das ist ein fachlich leeres Ergebnis, kein Ausfall. Der Unterschied zum
+     * Ausfall muss hier schon sichtbar sein, sonst ist er an der Grenze
+     * „leere Liste vs. Fehler" nicht mehr prüfbar.
+     */
+    @Test
+    void search_returnsAnEmptyResult_whenTheDirectoryIsReachableButHasNoMatches() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith(
+                        "https://cloud.example.org/ocs/v2.php/cloud/users?search=zzz")))
+                .andRespond(withSuccess("""
+                        {"ocs":{"meta":{"status":"ok","statuscode":200},"data":{"users":[]}}}""",
+                        MediaType.APPLICATION_JSON));
+
+        assertThat(directory.search("zzz", 10)).isEmpty();
+    }
+
+    /**
+     * Out of Scope von Issue #21: {@code findById} bleibt tolerant — ein nicht
+     * ladbarer Einzelnutzer bedeutet „unbekannt", nicht Verzeichnisfehler.
+     */
+    @Test
+    void findById_staysTolerant_whenTheDirectoryIsUnavailable() {
+        server.expect(requestTo("https://cloud.example.org/ocs/v2.php/cloud/users/sascha"))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThat(directory.findById("sascha")).isEmpty();
     }
 
     @Test

@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import de.householdmanager.application.port.in.UserSearchUseCase;
 import de.householdmanager.application.port.in.UserSearchUseCase.UserRef;
+import de.householdmanager.domain.model.UserDirectoryUnavailableException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,5 +49,19 @@ class UserSearchControllerTest {
         mockMvc.perform(get("/api/users/search"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void search_withUnreachableDirectory_isServiceUnavailable() throws Exception {
+        when(userSearchUseCase.searchUsers("car"))
+                .thenThrow(new UserDirectoryUnavailableException(
+                        "Das Nutzerverzeichnis ist nicht erreichbar: Nextcloud antwortete mit HTTP 503."));
+
+        mockMvc.perform(get("/api/users/search").param("q", "car"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.title").value("Nutzerverzeichnis nicht erreichbar"))
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("HTTP 503")))
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.is("Nutzerverzeichnis nicht erreichbar"))));
     }
 }
