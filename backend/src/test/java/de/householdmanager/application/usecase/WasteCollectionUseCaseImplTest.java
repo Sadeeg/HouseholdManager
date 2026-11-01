@@ -221,6 +221,44 @@ class WasteCollectionUseCaseImplTest {
                 .containsExactly("Bio", "Restmüll", "Papier");
     }
 
+    /**
+     * AC24: der Benachrichtigungslauf liest die Termine über
+     * {@code collectionsOf} — den Stand des letzten erfolgreichen Laufs.
+     *
+     * <p>Der Weg ist der einzige, über den die Benachrichtigung an die
+     * Termine kommt. Nach einem fehlgeschlagenen Lauf bleibt der Stand
+     * (veraltet) erhalten — und die Benachrichtigung rechnet mit genau
+     * diesen Terminen, nicht mit einer leeren Liste.
+     */
+    @Test
+    void collectionsOf_afterAFailedRun_stillReturnsTheTermsOfTheLastSuccessfulRun() {
+        givenHouseholdWithSource();
+        givenTerm(TODAY.plusDays(3), "Restmüll");
+        feed.failure = new WasteFeedUnavailableException("nicht erreichbar");
+
+        useCase.syncHousehold(HOUSEHOLD);
+
+        // Der Stand ist veraltet — der Inhalt ist aber der des letzten
+        // erfolgreichen Laufs.
+        assertThat(useCase.overview(MEMBER, HOUSEHOLD).calendar().isStale()).isTrue();
+        assertThat(useCase.collectionsOf(HOUSEHOLD))
+                .extracting(WasteCollection::getWasteType)
+                .containsExactly("Restmüll");
+    }
+
+    /** AC24: nach einem erfolgreichen Lauf stehen die neuen Termine da. */
+    @Test
+    void collectionsOf_afterASuccessfulRun_returnsTheTermsOfThatRun() {
+        givenHouseholdWithSource();
+        feed.terms = List.of(new FeedTerm(TODAY.plusDays(4), "Papier", "uid-4"));
+
+        useCase.syncHousehold(HOUSEHOLD);
+
+        assertThat(useCase.collectionsOf(HOUSEHOLD))
+                .extracting(WasteCollection::getWasteType)
+                .containsExactly("Papier");
+    }
+
     // --- AC10: nur Mitglieder -----------------------------------------------
 
     @Test

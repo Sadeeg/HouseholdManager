@@ -2,6 +2,7 @@ package de.householdmanager.application.port.in;
 
 import de.householdmanager.domain.model.TelegramChat;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Eingehender Port: die Telegram-Chats eines Haushalts.
@@ -30,8 +31,15 @@ public interface TelegramChatUseCase {
      * Der Freischalt-Code eines Haushalts. Beim ersten Anfordern wird er
      * erzeugt; danach bleibt er unverändert (AC1, AC2). Der Code ist für
      * jedes Mitglied sichtbar.
+     *
+     * <p>Ohne konfigurierten Bot wird <strong>kein</strong> Code erzeugt:
+     * der Code liefe ins Leere, weil kein Bot ihn annimmt. In dem Fall ist
+     * das Ergebnis leer — die Oberfläche weist stattdessen auf den fehlenden
+     * Bot-Token hin.
+     *
+     * @return der Code des Haushalts oder leer, wenn kein Bot konfiguriert ist.
      */
-    String code(String userId, long householdId);
+    Optional<String> code(String userId, long householdId);
 
     /** Die freigeschalteten Chats des Haushalts (AC11, AC12). */
     List<TelegramChat> listChats(String userId, long householdId);

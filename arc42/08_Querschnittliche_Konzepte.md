@@ -53,9 +53,25 @@ Nachricht**, nicht den Haushalt und nicht die anderen Chats.
 | Versand erfolgreich | der Zustellvermerk gilt als zugestellt; kein weiterer Versuch |
 | Versand fehlgeschlagen (Zustellfehler) | der Fehler wird protokolliert, der Zustellvermerk zählt den Versuch; ein weiterer Versuch folgt beim nächsten **stündlichen** Lauf |
 | Versand fachlich abgelehnt (Protokollfehler) | der Fehler wird protokolliert, der Vermerk zählt den Versuch — aber **ohne** weiteren Versuch |
+| Ziel-Chat inzwischen getrennt | der Vermerk wird abgebrochen; **kein** Versuch an den getrennten Chat |
 | **dritter** Versuch fehlgeschlagen | kein weiterer Versuch; die **Verbindung des Chats bleibt bestehen** (Trennen bleibt allein der freischaltenden Person vorbehalten) |
 | ein Chat schlägt fehl | die übrigen Chats desselben Haushalts werden **trotzdem** zugestellt |
 | ein Haushalt schlägt fehl | die übrigen Haushalte werden **trotzdem** zugestellt |
+
+Der Zustellvermerk kennt fünf Zustände — die Wiederholung hängt allein am
+Zustand `FAILED`:
+
+| Zustand | Bedeutung | wiederholbar |
+|---------|-----------|--------------|
+| `PENDING` | der Versuch läuft oder das Ergebnis steht aus | nein |
+| `DELIVERED` | zugestellt | nein |
+| `FAILED` | der letzte Versuch schlug fehl (Zustellfehler) | ja — bis zum dritten Versuch |
+| `REJECTED` | Telegram hat die Nachricht fachlich abgelehnt | nein |
+| `CANCELLED` | der Ziel-Chat wurde getrennt | nein |
+
+Ein getrennter Chat wird auch über den **Wiederholungslauf** erkannt: der
+Wiederholungslauf prüft die Chat-Bindung des Vermerks und bricht den Vermerk
+ab, statt an einen getrennten Chat zu senden (AC15).
 
 **Zustellfehler ≠ Protokollfehler.** Die Unterscheidung ist fachlich und
 entscheidet über die Wiederholung:

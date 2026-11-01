@@ -53,7 +53,7 @@ class TelegramChatControllerTest {
     @Test
     void code_forMemberReturnsTheCode() throws Exception {
         givenSignedInAs("alice");
-        when(telegramChatUseCase.code("alice", 1L)).thenReturn("123456");
+        when(telegramChatUseCase.code("alice", 1L)).thenReturn(Optional.of("123456"));
         when(telegramChatUseCase.isBotConfigured()).thenReturn(true);
 
         mockMvc.perform(get("/api/households/1/telegram/code"))
@@ -62,15 +62,19 @@ class TelegramChatControllerTest {
                 .andExpect(jsonPath("$.botConfigured").value(true));
     }
 
-    /** Ohne Bot-Token lässt sich kein Chat freischalten — die Oberfläche weist darauf hin. */
+    /**
+     * Ohne Bot-Token lässt sich kein Chat freischalten — die Oberfläche weist
+     * darauf hin und bekommt keinen Code (Zustandstabelle).
+     */
     @Test
     void code_reportsThatTheBotIsNotConfigured() throws Exception {
         givenSignedInAs("alice");
-        when(telegramChatUseCase.code("alice", 1L)).thenReturn("123456");
+        when(telegramChatUseCase.code("alice", 1L)).thenReturn(Optional.empty());
         when(telegramChatUseCase.isBotConfigured()).thenReturn(false);
 
         mockMvc.perform(get("/api/households/1/telegram/code"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").doesNotExist())
                 .andExpect(jsonPath("$.botConfigured").value(false));
     }
 

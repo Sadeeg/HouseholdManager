@@ -222,12 +222,18 @@ Im Benachrichtigungs-Kontext liegen dieselben Regeln: die **Versuchszählung**
 fachliche Grenze und steht im Fachmodell, nicht im Adapter.
 
 Die **Codeform** hat zwei Seiten, und die liegen an verschiedenen Orten: die
-**Erzeugung** des Codes (Ziffern, nicht vorhersagbar) liegt im Persistenz-
-Adapter `TelegramChatRepositoryAdapter`, die **Erkennung** im Chat (eine
-Nachricht aus Ziffern oder `/code <Code>`) liegt im Use Case
+**Erzeugung** des Codes (Ziffern, nicht vorhersagbar) liegt beim
+`ActivationCodeGenerator` im Persistenz-Adapter, die **Erkennung** im Chat
+(eine Nachricht aus Ziffern oder `/code <Code>`) liegt im Use Case
 `TelegramChatUseCaseImpl` — sie ist eine fachliche Entscheidung („ist das
 eine Freischaltung?"), keine Telegram-Kenntnis. Beide Seiten sprechen
 dieselbe Form (Ziffern), sonst entsteht ein Code, den der Bot nicht erkennt.
+
+Der Generator liefert einen Code, den **noch kein Haushalt trägt**: der Code
+ist über alle Haushalte eindeutig, ein zufälliger Treffer wäre ein Fehler des
+Servers. Ohne konfigurierten Bot-Token wird **gar kein** Code erzeugt — der
+Code liefe ins Leere; die Oberfläche weist stattdessen auf den fehlenden
+Token hin.
 
 **Der Freischalt-Code trägt die freischaltende Person.** Der Bot kennt keine
 Person; deshalb entsteht der Code beim ersten Anfordern **im Namen** eines

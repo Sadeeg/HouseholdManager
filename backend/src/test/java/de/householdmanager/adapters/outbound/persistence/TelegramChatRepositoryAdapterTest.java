@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.householdmanager.config.ClockConfig;
 import de.householdmanager.domain.model.TelegramChat;
+import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +28,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * Haushalts über den Code (AC3).
  */
 @DataJpaTest
-@Import({TelegramChatRepositoryAdapter.class, ClockConfig.class})
+@Import({TelegramChatRepositoryAdapter.class, ActivationCodeGenerator.class, ClockConfig.class})
 @ImportTestcontainers
 class TelegramChatRepositoryAdapterTest {
 
@@ -42,6 +44,12 @@ class TelegramChatRepositoryAdapterTest {
 
     @Autowired
     private TelegramChatJpaRepository chatJpaRepository;
+
+    @Autowired
+    private TelegramActivationCodeJpaRepository codeJpaRepository;
+
+    @Autowired
+    private Clock clock;
 
     private long householdA;
     private long householdB;
@@ -76,6 +84,46 @@ class TelegramChatRepositoryAdapterTest {
         String codeB = adapter.ensureCode(householdB, "bob");
 
         assertThat(codeB).isNotEqualTo(codeA);
+    }
+
+    /**
+     * Ein Code, der schon vergeben ist, wird übersprungen: die Erzeugung
+     * liefert keinen Fehler, sondern einen freien Code.
+     */
+    @Test
+    void ensureCode_skipsACodeThatIsAlreadyTaken() {
+        // Der erste Haushalt nimmt den Code „111111" — der zweite Haushalt
+        // darf ihn nicht bekommen.
+        String taken = adapter.ensureCode(householdA, "alice");
+
+        // Der Generator liefert zuerst den belegten Code, danach einen freien.
+        TelegramChatRepositoryAdapter colliding = new TelegramChatRepositoryAdapter(
+                chatJpaRepository,
+                codeJpaRepository,
+                new SequenceCodeGenerator(taken, "222222"),
+                clock);
+
+        String codeB = colliding.ensureCode(householdB, "bob");
+
+        assertThat(codeB).isEqualTo("222222");
+    }
+
+    /**
+     * Der Generator, der eine feste Folge von Codes liefert — damit der
+     * Test die Kollision erzwingen kann.
+     */
+    private static final class SequenceCodeGenerator extends ActivationCodeGenerator {
+
+        private final List<String> codes;
+
+        SequenceCodeGenerator(String... codes) {
+            this.codes = new ArrayList<>(List.of(codes));
+        }
+
+        @Override
+        public String next() {
+            return codes.size() == 1 ? codes.get(0) : codes.remove(0);
+        }
     }
 
     /** AC3: über den Code lässt sich der Haushalt finden — mit der anfordernden Person. */

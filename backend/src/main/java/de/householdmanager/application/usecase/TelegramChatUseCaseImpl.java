@@ -76,13 +76,25 @@ public class TelegramChatUseCaseImpl implements TelegramChatUseCase {
         return telegramBot.isConfigured();
     }
 
+    /**
+     * Der Code des Haushalts — er entsteht beim ersten Anfordern und bleibt
+     * danach unverändert (AC1, AC2).
+     *
+     * <p>Ohne konfigurierten Bot wird <strong>kein</strong> Code erzeugt: der
+     * Code liefe ins Leere, weil kein Bot ihn annimmt. Die Oberfläche weist
+     * stattdessen auf den fehlenden Bot-Token hin — eine wirkungslose Aktion
+     * (ein Code ohne Bot) entfällt damit.
+     */
     @Override
     @Transactional
-    public String code(String userId, long householdId) {
+    public Optional<String> code(String userId, long householdId) {
         membershipUseCase.requireMembership(householdId, userId);
         requireHousehold(householdId);
+        if (!telegramBot.isConfigured()) {
+            return Optional.empty();
+        }
         // Der Code entsteht beim ersten Anfordern und bleibt danach unverändert.
-        return chatRepository.ensureCode(householdId, userId);
+        return Optional.of(chatRepository.ensureCode(householdId, userId));
     }
 
     @Override

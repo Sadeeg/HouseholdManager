@@ -167,7 +167,7 @@ gesammelt, damit der Test nicht daran scheitert:
 | Datumsanzeige hängt von der Zeitzone ab | derselbe Test schlägt auf einer anderen Maschine fehl | Ganztagsdaten aus dem ISO-Wert lesen (kein `DatePipe`-Parse); ein Test leitet sein erwartetes Bild aus demselben Zeitpunkt ab, nicht aus einem festen Zeichenstring |
 | Testumgebung ist blind für Geometrie | die CDK-Fokusfalle fokussiert größenlose Elemente nicht — Fokus-Tests sind blind und der CDK warnt bei jeder Öffnung | Die Testumgebung einmal einrichten, nicht pro Datei: Vitest-Setup über `test.options.setupFiles` in `angular.json` (`shared/testing/vitest-setup.ts` gibt den Elementen eine Größe). Die Aussage des Tests muss der des Browsers entsprechen — und die Geometrie **im Browser** ist zusätzlich per Sichtprüfung zu prüfen (Regel 2) |
 
-## Drei Regeln, die in diesem Projekt Fehler gefunden haben
+## Fünf Regeln, die in diesem Projekt Fehler gefunden haben
 
 1. **Zwischenstand vor der Antwort prüfen.** Bei Interaktionen, die eine
    Serverantwort abwarten (Verschieben, Sortieren), prüft der Test den
@@ -181,6 +181,15 @@ gesammelt, damit der Test nicht daran scheitert:
    Grenze ohne Meldung an den Nutzer fallengelassen, ist das ein Defekt:
    Der Grenzwert braucht einen Test auf der Ebene, die die Grenze setzt
    (Fachmodell oder Use Case), und die Oberfläche braucht eine Rückmeldung.
+4. **Jeder Weg zum Ziel prüft die Bindung.** Wenn ein Zustand über mehr
+   Wege erreicht wird (z. B. ein Zustellvermerk über den Sende- und über den
+   Wiederholungslauf), muss **jeder** Weg die Bindung zum Ziel prüfen. Ein
+   Test, der nur den einen Weg abdeckt, lässt den anderen offen.
+5. **„Startet die Anwendung noch?" braucht einen Kontext-Test.** Kein
+   Unit-Test bootet den Spring-Kontext — ein Fehler in der Verdrahtung
+   (zwei Beans vom selben Typ, zwei Konstruktoren) fällt erst im Betrieb
+   auf. Wer Beans, Qualifizier oder Konstruktoren ändert, ergänzt einen
+   `@SpringBootTest`, der die Anwendung startet.
 
 ## Anti-Patterns
 

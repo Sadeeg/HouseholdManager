@@ -2,7 +2,6 @@ package de.householdmanager.adapters.outbound.persistence;
 
 import de.householdmanager.application.port.out.TelegramChatRepository;
 import de.householdmanager.domain.model.TelegramChat;
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -23,22 +22,19 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
 
-    /** Länge des Codes: sechs Ziffern — genug für einen Haushalt, kurz genug zum Abtippen. */
-    private static final int CODE_LENGTH = 6;
-
-    /** Die Zufallsquelle des Codes — kryptografisch, nicht vorhersagbar. */
-    private final SecureRandom random = new SecureRandom();
-
     private final TelegramChatJpaRepository chatJpaRepository;
     private final TelegramActivationCodeJpaRepository codeJpaRepository;
+    private final ActivationCodeGenerator codeGenerator;
     private final Clock clock;
 
     public TelegramChatRepositoryAdapter(
             TelegramChatJpaRepository chatJpaRepository,
             TelegramActivationCodeJpaRepository codeJpaRepository,
+            ActivationCodeGenerator codeGenerator,
             Clock clock) {
         this.chatJpaRepository = chatJpaRepository;
         this.codeJpaRepository = codeJpaRepository;
+        this.codeGenerator = codeGenerator;
         this.clock = clock;
     }
 
@@ -83,7 +79,9 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
     }
 
     private String createCode(long householdId, String userId) {
-        String code = newCode();
+        // Der Code ist über alle Haushalte eindeutig (UNIQUE in V6): ein
+        // belegter Code wird übersprungen, statt einen Fehler auszulösen.
+        String code = codeGenerator.nextUnused(existing -> codeJpaRepository.findByCode(existing).isPresent());
         codeJpaRepository.save(TelegramActivationCodeJpaEntity.builder()
                 .householdId(householdId)
                 .code(code)
@@ -91,15 +89,6 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
                 .createdAt(Instant.now(clock))
                 .build());
         return code;
-    }
-
-    /** Ein Code aus Ziffern — nicht vorhersagbar (SecureRandom). */
-    private String newCode() {
-        StringBuilder digits = new StringBuilder();
-        for (int position = 0; position < CODE_LENGTH; position++) {
-            digits.append(random.nextInt(10));
-        }
-        return digits.toString();
     }
 
     /**

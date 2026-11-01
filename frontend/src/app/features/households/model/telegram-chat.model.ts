@@ -23,8 +23,13 @@ export interface TelegramChat {
 
 /** Antwort des Backends beim Anfordern des Freischalt-Codes. */
 export interface TelegramCode {
-  /** Der Code — Ziffern, dauerhaft gültig. */
-  readonly code: string;
+  /**
+   * Der Code — Ziffern, dauerhaft gültig.
+   *
+   * `null`, wenn der Bot nicht konfiguriert ist: ohne Bot-Token wird kein
+   * Code erzeugt — ein Code liefe ins Leere.
+   */
+  readonly code: string | null;
   /** False, wenn der Bot nicht konfiguriert ist — ohne Bot lassen sich keine Chats freischalten. */
   readonly botConfigured: boolean;
 }

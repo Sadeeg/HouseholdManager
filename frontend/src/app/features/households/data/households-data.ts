@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { HouseholdApi, HOUSEHOLDS_RESOURCE_URL } from './household-api';
 import { Household } from '../model/household.model';
 import { Member } from '../model/member.model';
-import { TelegramChatList } from '../model/telegram-chat.model';
+import { TelegramChatList, TelegramCode } from '../model/telegram-chat.model';
 
 /**
  * Reaktiver Lesezugriff auf die Haushalte und ihre Mitglieder.
@@ -54,7 +54,7 @@ export class HouseholdsData {
     this.telegramHouseholdId.set(householdId);
   }
 
-  readonly telegramCode = httpResource<{ code: string; botConfigured: boolean }>(() => {
+  readonly telegramCode = httpResource<TelegramCode>(() => {
     const householdId = this.telegramHouseholdId();
     if (householdId === null) {
       return undefined;

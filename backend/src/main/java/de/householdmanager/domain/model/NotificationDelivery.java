@@ -68,12 +68,26 @@ public class NotificationDelivery {
 
     /** Der Zustand eines Zustellvermerks. */
     public enum Status {
-        /** Noch nicht versucht. */
+        /**
+         * Der Versuch läuft oder das Ergebnis steht noch aus — der Vermerk
+         * wurde angelegt, aber es liegt noch kein Ergebnis des Versuchs vor.
+         */
         PENDING,
         /** Der letzte Versuch war erfolgreich — der Vermerk ist erledigt. */
         DELIVERED,
         /** Der letzte Versuch ist fehlgeschlagen — ein neuer Versuch steht aus. */
-        FAILED
+        FAILED,
+        /**
+         * Telegram hat die Nachricht abgelehnt (Protokollfehler) — der Versuch
+         * wird <strong>nicht</strong> wiederholt: dieselbe Nachricht würde
+         * wieder abgelehnt.
+         */
+        REJECTED,
+        /**
+         * Der Ziel-Chat ist nicht mehr verbunden — der Versuch wird
+         * <strong>nicht</strong> wiederholt (AC15).
+         */
+        CANCELLED
     }
 
     /**
@@ -108,9 +122,50 @@ public class NotificationDelivery {
                 .build();
     }
 
-    /** Steht ein weiterer Versuch aus? */
+    /**
+     * Der Vermerk nach einer Ablehnung durch Telegram (Protokollfehler).
+     *
+     * <p>Ein weiterer Versuch wäre sinnlos: Telegram lehnt dieselbe Nachricht
+     * im selben Chat wieder ab (der Bot wurde aus der Gruppe entfernt, die
+     * Chat-ID ist ungültig). Der Vermerk wird deshalb abgeschlossen — er
+     * zählt als Versuch, wird aber nicht wiederholt.
+     */
+    public NotificationDelivery rejected(Instant attemptAt, String reason) {
+        return toBuilder()
+                .attemptCount(attemptCount + 1)
+                .status(Status.REJECTED)
+                .lastError(reason)
+                .lastAttemptAt(attemptAt)
+                .completed(true)
+                .build();
+    }
+
+    /**
+     * Der Vermerk, dessen Ziel-Chat nicht mehr verbunden ist (AC15).
+     *
+     * <p>Der Chat wurde getrennt — die Nachricht erreicht ihn nicht mehr und
+     * wird nicht wiederholt. Der Versuchszähler bleibt: es gab keinen
+     * weiteren Versuch.
+     */
+    public NotificationDelivery cancelled(Instant attemptAt, String reason) {
+        return toBuilder()
+                .status(Status.CANCELLED)
+                .lastError(reason)
+                .lastAttemptAt(attemptAt)
+                .completed(true)
+                .build();
+    }
+
+    /**
+     * Steht ein weiterer Versuch aus?
+     *
+     * <p>Nur ein <strong>Zustellfehler</strong> wird wiederholt: der letzte
+     * Versuch ist fehlgeschlagen, der Vermerk ist offen und unter dem Limit
+     * von drei Versuchen. Eine Ablehnung durch Telegram ({@code REJECTED})
+     * und ein getrennter Chat ({@code CANCELLED}) werden nicht wiederholt.
+     */
     public boolean isRetryable() {
-        return !completed && attemptCount < MAX_ATTEMPTS;
+        return status == Status.FAILED && !completed && attemptCount < MAX_ATTEMPTS;
     }
 
     /**

@@ -62,17 +62,29 @@ class TelegramChatUseCaseImplTest {
     /** AC1: ein Mitglied kann den Code anfordern. */
     @Test
     void code_returnsTheCodeOfTheHousehold() {
-        assertThat(useCase.code(MEMBER, HOUSEHOLD)).isEqualTo(CODE);
+        assertThat(useCase.code(MEMBER, HOUSEHOLD)).contains(CODE);
     }
 
     /** AC2: der Code bleibt dauerhaft gültig — ein zweites Anfordern ändert ihn nicht. */
     @Test
     void code_staysTheSameOnASecondRequest() {
-        String first = useCase.code(MEMBER, HOUSEHOLD);
-        String second = useCase.code(MEMBER, HOUSEHOLD);
+        Optional<String> first = useCase.code(MEMBER, HOUSEHOLD);
+        Optional<String> second = useCase.code(MEMBER, HOUSEHOLD);
 
         assertThat(second).isEqualTo(first);
         assertThat(chats.codes).hasSize(1);
+    }
+
+    /**
+     * Ohne Bot-Token wird kein Code erzeugt: ein Code liefe ins Leere, weil
+     * kein Bot ihn annimmt (Zustandstabelle der Oberfläche).
+     */
+    @Test
+    void code_withoutConfiguredBot_createsNoCode() {
+        bot.configured = false;
+
+        assertThat(useCase.code(MEMBER, HOUSEHOLD)).isEmpty();
+        assertThat(chats.codes).isEmpty();
     }
 
     /** AC16: wer kein Mitglied ist, bekommt keinen Code. */
@@ -246,6 +258,42 @@ class TelegramChatUseCaseImplTest {
         assertThat(chats.findByHouseholdAndChatId(OTHER_HOUSEHOLD, CHAT_ID)).isEmpty();
     }
 
+    // --- AC11, AC12, AC16: die Chat-Liste ------------------------------------
+
+    /**
+     * AC11, AC12: die Liste nennt nur die Chats des angefragten Haushalts —
+     * ein Chat eines anderen Haushalts taucht nicht auf.
+     */
+    @Test
+    void listChats_returnsOnlyTheChatsOfTheHousehold() {
+        chats.save(chatOf(HOUSEHOLD, CHAT_ID, "WG Flur"));
+        chats.save(chatOf(OTHER_HOUSEHOLD, "-999", "Fremde Gruppe"));
+
+        List<TelegramChat> listed = useCase.listChats(MEMBER, HOUSEHOLD);
+
+        assertThat(listed).extracting(TelegramChat::getChatId).containsExactly(CHAT_ID);
+        assertThat(listed).extracting(TelegramChat::getChatName).containsExactly("WG Flur");
+    }
+
+    /** AC16: wer kein Mitglied ist, sieht keine Chats des Haushalts. */
+    @Test
+    void listChats_forNonMember_throwsMembershipRequired() {
+        membership.members = List.of(OTHER_MEMBER);
+        chats.save(chatOf(HOUSEHOLD, CHAT_ID, "WG Flur"));
+
+        assertThatThrownBy(() -> useCase.listChats(MEMBER, HOUSEHOLD))
+                .isInstanceOf(MembershipRequiredException.class);
+    }
+
+    /** Ein unbekannter Haushalt wird abgelehnt — die Liste bleibt nicht leer. */
+    @Test
+    void listChats_forUnknownHousehold_throwsHouseholdNotFound() {
+        households.known = false;
+
+        assertThatThrownBy(() -> useCase.listChats(MEMBER, HOUSEHOLD))
+                .isInstanceOf(HouseholdNotFoundException.class);
+    }
+
     // --- AC13, AC14: das Trennen --------------------------------------------
 
     /** AC13: die freischaltende Person kann die Verbindung trennen. */
@@ -290,6 +338,17 @@ class TelegramChatUseCaseImplTest {
     /** Der Code des Haushalts — angefordert von der angegebenen Person. */
     private void givenCodeForHousehold(String userId) {
         chats.ensureCode(HOUSEHOLD, userId);
+    }
+
+    /** Ein bereits freigeschalteter Chat — für die Listen-Prüfung. */
+    private TelegramChat chatOf(long householdId, String chatId, String chatName) {
+        return TelegramChat.builder()
+                .householdId(householdId)
+                .chatId(chatId)
+                .chatName(chatName)
+                .kind(TelegramChat.ChatKind.GROUP)
+                .activatedBy(MEMBER)
+                .build();
     }
 
     // --- HELPERS ------------------------------------------------------------

@@ -61,7 +61,9 @@ Der Benachrichtigungslauf läuft nach **demselben Muster** wie der Tageslauf
    versendet ihn über den TelegramBot-Port
 5. Fehlgeschlagener Versand: Fehler wird protokolliert, der Vermerk zählt
    den Versuch; ein weiterer Versuch folgt beim nächsten stündlichen Lauf
-6. Nach dem dritten Fehlversuch: kein weiterer Versuch — die Verbindung
+6. Von Telegram fachlich abgelehnte Nachricht: der Fehler wird protokolliert,
+   der Vermerk zählt den Versuch, wird aber **nicht** wiederholt
+7. Nach dem dritten Fehlversuch: kein weiterer Versuch — die Verbindung
    des Chats bleibt bestehen
 ```
 
@@ -75,8 +77,12 @@ Fehlerisolierung je Haushalt aus ADR 0005.
 Der dritte Zeitgeber folgt demselben Muster: `NotificationRetryJob` löst
 genau einen Use Case aus (`NotificationDispatchUseCase.retryFailed()`), der
 **keine** Fachlogik im Adapter. Der Use Case sucht alle Zustellvermerke, die
-noch einen Versuch brauchen (`attempt_count < 3`, nicht abgeschlossen), und
-versucht sie erneut — frühestens eine Stunde nach dem letzten Versuch. Die
+noch einen Versuch brauchen (`attempt_count < 3`, nicht abgeschlossen, letzter
+Zustand `FAILED`), und
+versucht sie erneut — frühestens eine Stunde nach dem letzten Versuch. Vor
+jedem Versuch prüft er die **Chat-Bindung** des Vermerks: ein inzwischen
+getrennter Chat bekommt keine weitere Nachricht — der Vermerk wird abgebrochen
+(`CANCELLED`) statt wiederholt (AC15). Die
 Auswahl der Vermerke liegt im Use Case, die Taktung in der Konfiguration
 (`householdmanager.telegram.retry-cron`, Vorgabe `0 0 * * * *`) — beide Läufe
 werden in `config/ApplicationConfig` neben dem Tageslauf eingetragen

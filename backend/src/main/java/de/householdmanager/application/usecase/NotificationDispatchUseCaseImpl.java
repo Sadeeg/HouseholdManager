@@ -19,7 +19,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -44,7 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseCase {
 
     /** Das Datum in der Nachricht: „12.03.2026" (dt. Format). */
@@ -61,6 +59,14 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
     private final Clock clock;
     private final ZoneId zone;
 
+    /**
+     * Der einzige Konstruktor — der Container muss die Klasse ohne weitere
+     * Hinweise bauen können.
+     *
+     * <p>Die Zone kommt als Zeichenkette aus der Konfiguration und wird hier
+     * in eine {@link ZoneId} übersetzt: die Anwendung rechnet in einer Zone,
+     * die Telegram-API kennt keine.
+     */
     public NotificationDispatchUseCaseImpl(
             TelegramChatRepository chatRepository,
             NotificationDeliveryRepository deliveryRepository,
@@ -68,8 +74,12 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
             WasteCollectionUseCase wasteCollectionUseCase,
             Clock clock,
             @Value("${householdmanager.telegram.zone:Europe/Berlin}") String zone) {
-        this(chatRepository, deliveryRepository, telegramBot, wasteCollectionUseCase,
-                clock, ZoneId.of(zone));
+        this.chatRepository = chatRepository;
+        this.deliveryRepository = deliveryRepository;
+        this.telegramBot = telegramBot;
+        this.wasteCollectionUseCase = wasteCollectionUseCase;
+        this.clock = clock;
+        this.zone = ZoneId.of(zone);
     }
 
     // --- Der 18:00-Uhr-Lauf --------------------------------------------------
@@ -161,6 +171,14 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
                 // bis zum nächsten stündlichen Lauf (AC26).
                 continue;
             }
+            if (!isChatStillConnected(delivery)) {
+                // Der Chat wurde getrennt (AC15): die Nachricht erreicht ihn
+                // nicht mehr — der Vermerk wird abgebrochen, nicht wiederholt.
+                log.info("Vermerk für Chat {} wird abgebrochen — der Chat ist nicht mehr verbunden.",
+                        delivery.getChatId());
+                deliveryRepository.save(delivery.cancelled(now, "Der Ziel-Chat ist nicht mehr verbunden."));
+                continue;
+            }
             try {
                 telegramBot.sendMessage(delivery.getChatId(), delivery.getContent());
                 deliveryRepository.save(delivery.delivered(now));
@@ -174,9 +192,23 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
                 // Protokollfehler: ein weiterer Versuch würde scheitern.
                 log.warn("Telegram hat die Nachricht an Chat {} abgelehnt: {}",
                         delivery.getChatId(), failure.getMessage());
-                deliveryRepository.save(delivery.failed(now, failure.getMessage()));
+                deliveryRepository.save(delivery.rejected(now, failure.getMessage()));
             }
         }
+    }
+
+    /**
+     * Ist der Ziel-Chat des Vermerks noch mit dem Haushalt verbunden?
+     *
+     * <p>Ein getrennter Chat darf keine Nachricht mehr bekommen (AC15) — auch
+     * nicht über den Wiederholungslauf. Die Bindung wird über den
+     * Haushalt des Vermerks geprüft, nicht über eine Suche nach der
+     * Chat-ID allein: der Vermerk gehört zu einem Haushalt, und nur dessen
+     * Chat zählt.
+     */
+    private boolean isChatStillConnected(NotificationDelivery delivery) {
+        return chatRepository.findByHouseholdAndChatId(delivery.getHouseholdId(), delivery.getChatId())
+                .isPresent();
     }
 
     // --- Nachrichtenaufbau ---------------------------------------------------
@@ -231,9 +263,16 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
 
     /**
      * Der Versand einer Nachricht an einen Chat. Der Vermerk entsteht
-     * <strong>vor</strong> dem Versand — so geht bei einem Absturz zwischen
-     * Versand und Vermerk nichts verloren: der Vermerk bleibt und der
-     * Wiederholungslauf versucht es erneut (AC26).
+     * <strong>vor</strong> dem Versand — so ist der Zustand des Versuchs
+     * jederzeit nachvollziehbar.
+     *
+     * <p>Bricht der Versand zwischen dem Speichern des Vermerks und dem
+     * Abschluss ab, bleibt der Vermerk im Zustand {@code PENDING} stehen.
+     * Ein solcher Vermerk wird <strong>nicht</strong> erneut versucht: Telegram
+     * könnte die Nachricht schon angenommen haben, und ein zweiter Versand
+     * liefe auf eine doppelte Zustellung hinaus. Der Wiederholungslauf
+     * nimmt nur Vermerke im Zustand {@code FAILED} auf — also solche, bei
+     * denen der Versand <em>nachweislich</em> fehlgeschlagen ist (AC26).
      */
     private void send(long householdId, String chatId, String message) {
         NotificationDelivery delivery = deliveryRepository.save(NotificationDelivery.builder()
@@ -254,9 +293,10 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
             log.warn("Zustellung an Chat {} fehlgeschlagen: {}", chatId, failure.getMessage());
             deliveryRepository.save(delivery.failed(Instant.now(clock), failure.getMessage()));
         } catch (TelegramProtocolException failure) {
-            // Protokollfehler: protokolliert, aber nicht wiederholt.
+            // Protokollfehler: protokolliert, aber nicht wiederholt — dieselbe
+            // Nachricht würde von Telegram wieder abgelehnt.
             log.warn("Telegram hat die Nachricht an Chat {} abgelehnt: {}", chatId, failure.getMessage());
-            deliveryRepository.save(delivery.failed(Instant.now(clock), failure.getMessage()));
+            deliveryRepository.save(delivery.rejected(Instant.now(clock), failure.getMessage()));
         }
     }
 

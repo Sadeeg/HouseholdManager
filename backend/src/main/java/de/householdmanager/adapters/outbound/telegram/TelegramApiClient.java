@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.householdmanager.config.TelegramConfig;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -42,7 +43,9 @@ public class TelegramApiClient {
     private final RestClient http;
     private final TelegramConfig.TelegramToken token;
 
-    public TelegramApiClient(RestClient telegramRestClient, TelegramConfig.TelegramToken token) {
+    public TelegramApiClient(
+            @Qualifier(TelegramConfig.TELEGRAM_CLIENT) RestClient telegramRestClient,
+            TelegramConfig.TelegramToken token) {
         this.http = telegramRestClient;
         this.token = token;
     }

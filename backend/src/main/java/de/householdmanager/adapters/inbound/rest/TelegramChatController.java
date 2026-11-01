@@ -33,10 +33,17 @@ public class TelegramChatController {
     private final TelegramChatUseCase telegramChatUseCase;
     private final CurrentUserPort currentUserPort;
 
-    /** Der Freischalt-Code; beim ersten Aufruf wird er erzeugt (AC1, AC2). */
+    /**
+     * Der Freischalt-Code; beim ersten Aufruf wird er erzeugt (AC1, AC2).
+     *
+     * <p>Ohne konfigurierten Bot wird kein Code erzeugt — die Antwort trägt
+     * dann {@code code = null} und {@code botConfigured = false}. Die
+     * Oberfläche weist dann auf den fehlenden Bot-Token hin, statt einen
+     * wirkungslosen Code zu zeigen.
+     */
     @GetMapping("code")
     public TelegramCodeResponse code(@PathVariable long householdId) {
-        String code = telegramChatUseCase.code(currentUserId(), householdId);
+        String code = telegramChatUseCase.code(currentUserId(), householdId).orElse(null);
         return new TelegramCodeResponse(code, telegramChatUseCase.isBotConfigured());
     }
 

@@ -23,6 +23,16 @@ import org.springframework.web.client.RestClient;
 public class TelegramConfig {
 
     /**
+     * Der Qualifizier des Telegram-Clients — zugleich sein Bean-Name.
+     *
+     * <p>Die Anwendung hat zwei HTTP-Clients: den der Telegram-Bot-API und
+     * den der ICS-Quelle ({@link IcsClientConfig}). Beide sind vom Typ
+     * {@link RestClient}. Ohne Qualifizier findet Spring für die Abhängigkeit
+     * keinen eindeutigen Kandidaten und der Start der Anwendung bricht ab.
+     */
+    public static final String TELEGRAM_CLIENT = "telegramRestClient";
+
+    /**
      * Der Bot-Token als eigener Typ — kein nackter {@code String} als Bean.
      *
      * <p>Ein {@code String}-Bean würde mit jeder anderen String-Bean im

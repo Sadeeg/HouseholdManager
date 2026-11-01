@@ -57,8 +57,8 @@ CREATE TABLE notification_delivery (
 
 COMMENT ON TABLE notification_delivery IS 'Zustellvermerk einer Benachrichtigung: Ziel, Inhalt, Versuchszählung und letzter Zustand.';
 COMMENT ON COLUMN notification_delivery.attempt_count IS 'Wie oft versucht wurde; höchstens drei Versuche je Nachricht.';
-COMMENT ON COLUMN notification_delivery.status IS 'PENDING, DELIVERED oder FAILED.';
-COMMENT ON COLUMN notification_delivery.completed IS 'TRUE, wenn kein weiterer Versuch erfolgt (Zustellung gelungen oder drei Fehlversuche).';
+COMMENT ON COLUMN notification_delivery.status IS 'PENDING, DELIVERED, FAILED, REJECTED oder CANCELLED.';
+COMMENT ON COLUMN notification_delivery.completed IS 'TRUE, wenn kein weiterer Versuch erfolgt (Zustellung gelungen, drei Fehlversuche, Ablehnung durch Telegram oder getrennter Chat).';
 
 -- Deckt den stündlichen Wiederholungslauf (offene Vermerke).
 CREATE INDEX notification_delivery_retry_idx ON notification_delivery (completed, status, attempt_count);

@@ -156,6 +156,14 @@ describe('TelegramChatSection', () => {
     expect(rows[1].textContent).toContain('bob');
   });
 
+  it('never shows the technical chat id (Out of Scope des Issues)', () => {
+    const fixture = open();
+
+    const text = compiled(fixture).textContent ?? '';
+    expect(text).not.toContain('-100');
+    expect(text).not.toContain('-200');
+  });
+
   it('shows an empty hint when no chat is activated (Zustandstabelle)', () => {
     const fixture = open({ chats: [] });
 
@@ -235,5 +243,23 @@ describe('TelegramChatSection', () => {
     const fixture = open({ botConfigured: true });
 
     expect(compiled(fixture).textContent).not.toContain('Der Telegram-Bot ist nicht konfiguriert');
+  });
+
+  it('offers no code without a configured bot (Zustandstabelle)', () => {
+    // Ohne Bot-Token wird kein Code erzeugt — der Code-Bereich entfällt
+    // ganz, damit keine wirkungslose Aktion angeboten wird.
+    const fixture = open({ botConfigured: false, code: '123456' });
+
+    expect(compiled(fixture).querySelector('.telegram-chats__code')).toBeNull();
+    expect(compiled(fixture).querySelector('.telegram-chats__code-value')).toBeNull();
+    expect(compiled(fixture).querySelector('.telegram-chats__copy')).toBeNull();
+  });
+
+  it('shows no chat list without a configured bot (Zustandstabelle)', () => {
+    // Die Chat-Liste ist ohne Bot leer: eine Freischaltung wäre unmöglich.
+    const fixture = open({ botConfigured: false });
+
+    expect(compiled(fixture).querySelector('.telegram-chats__list')).toBeNull();
+    expect(compiled(fixture).querySelector('.telegram-chats__rows')).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 package de.householdmanager.adapters.outbound.ics;
 
 import de.householdmanager.application.port.out.WasteCalendarFeed;
+import de.householdmanager.config.IcsClientConfig;
 import de.householdmanager.domain.model.WasteFeedUnavailableException;
 import java.io.IOException;
 import java.io.StringReader;
@@ -22,6 +23,7 @@ import net.fortuna.ical4j.model.Recur;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.RRule;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -59,7 +61,7 @@ public class IcsWasteCalendarFeed implements WasteCalendarFeed {
      * Adapter nimmt den fertigen Client — dadurch ist er im Test über
      * {@code MockRestServiceServer} prüfbar.
      */
-    public IcsWasteCalendarFeed(RestClient http) {
+    public IcsWasteCalendarFeed(@Qualifier(IcsClientConfig.ICS_CLIENT) RestClient http) {
         this.http = http;
     }
 
