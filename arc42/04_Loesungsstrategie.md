@@ -33,6 +33,8 @@ sind in einem Repository enthalten (Modulith mit getrennten Builds).
 | Scheduler als eingehender Adapter | `adapters/inbound/scheduler/` — löst einen Use Case aus, enthält keine Fachlogik |
 | Fremdprotokoll im Adapter | ICS-Format in `adapters/outbound/ics/` (ADR 0006), Telegram-Bot-API in `adapters/outbound/telegram/` (ADR 0007) — die Ports bleiben protokollfrei |
 | Zustellvermerk | Versuchszählung und Fehlerzustand liegen **persistent** in der Anwendung, nicht im Adapter — der Adapter kennt nur „gesendet / nicht gesendet" |
+| Fachfehler als eigener Typ | `TelegramDeliveryException` (Zustellfehler, wird wiederholt) und `TelegramProtocolException` (Protokollfehler, wird nicht wiederholt) — die Unterscheidung entscheidet über die Wiederholung |
+| Geheimnis als eigener Typ | `config/TelegramConfig.TelegramToken` statt eines nackten `String`-Bean — verhindert Kollision und Preisgabe über `toString()` |
 
 ## Technologieentscheidungen im Detail
 
@@ -91,6 +93,17 @@ Die Telegram-Kenntnis (Chat-IDs, Bot-Token, `sendMessage`, Polling) bleibt im
 Adapter — dasselbe Muster wie das ICS-Format in ADR 0006. Der Port bleibt
 protokollfrei: die Anwendung weiß, dass sie „einen Chat benachrichtigt", nicht
 wie Telegram das tut.
+
+Der **Empfang** läuft über Long-Poll, nicht über einen Webhook: die
+Anwendung fragt Telegram aktiv ab. Das hält die Betriebsannahme ein — nur
+Egress, kein öffentlich erreichbarer Endpunkt, kein Zertifikat, kein
+zusätzlicher Ingress (ADR 0007, O1).
+
+Der Bot kennt **keine Person**. Damit die Trennberechtigung trotzdem
+eindeutig bleibt, trägt der **Freischalt-Code** die anfordernde Person: der
+Code entsteht beim ersten Anfordern im Namen eines Mitglieds, und die
+Freischaltung über diesen Code gehört dieser Person. Der Bot sieht nur den
+Code (ADR 0007).
 
 ### Warum der Tageslauf in derselben Anwendung?
 

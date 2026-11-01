@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { HouseholdApi, HOUSEHOLDS_RESOURCE_URL } from './household-api';
 import { Household } from '../model/household.model';
 import { Member } from '../model/member.model';
+import { TelegramChatList, TelegramCode } from '../model/telegram-chat.model';
 
 /**
  * Reaktiver Lesezugriff auf die Haushalte und ihre Mitglieder.
@@ -42,6 +43,40 @@ export class HouseholdsData {
     }
     return `${HOUSEHOLDS_RESOURCE_URL}/${householdId}/members`;
   });
+
+  // Telegram-Chats: der Abschnitt folgt dem geöffneten Haushalt — ohne
+  // offenen Abschnitt läuft kein Request. Code und Chat-Liste werden
+  // getrennt gelesen: sie haben eigene Lade- und Fehlerzustände.
+  private readonly telegramHouseholdId = signal<number | null>(null);
+
+  /** Öffnet (null: schließt) den Telegram-Abschnitt eines Haushalts. */
+  showTelegram(householdId: number | null): void {
+    this.telegramHouseholdId.set(householdId);
+  }
+
+  readonly telegramCode = httpResource<TelegramCode>(() => {
+    const householdId = this.telegramHouseholdId();
+    if (householdId === null) {
+      return undefined;
+    }
+    return `${HOUSEHOLDS_RESOURCE_URL}/${householdId}/telegram/code`;
+  });
+
+  readonly telegramChats = httpResource<TelegramChatList>(() => {
+    const householdId = this.telegramHouseholdId();
+    if (householdId === null) {
+      return undefined;
+    }
+    return `${HOUSEHOLDS_RESOURCE_URL}/${householdId}/telegram/chats`;
+  });
+
+  /** Lädt Code und Chat-Liste erneut — nach einem Trennen und nach einem Fehler. */
+  reloadTelegram(): void {
+    if (this.telegramHouseholdId() !== null) {
+      this.telegramCode.reload();
+      this.telegramChats.reload();
+    }
+  }
 
   reload(): void {
     this.households.reload();
@@ -82,5 +117,15 @@ export class HouseholdsData {
   async removeWasteSource(householdId: number): Promise<void> {
     await firstValueFrom(this.householdApi.removeWasteSource(householdId));
     this.households.reload();
+  }
+
+  /**
+   * Trennt eine eigene Telegram-Verbindung (AC13). Die Chat-Liste wird
+   * danach neu geladen — der getrennte Chat darf nicht mehr erscheinen
+   * (AC15).
+   */
+  async disconnectTelegramChat(householdId: number, chatId: string): Promise<void> {
+    await firstValueFrom(this.householdApi.disconnectTelegramChat(householdId, chatId));
+    this.telegramChats.reload();
   }
 }

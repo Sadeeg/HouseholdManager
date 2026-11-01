@@ -323,4 +323,241 @@ describe('HouseholdsPage', () => {
 
     expect(compiled.textContent).toContain('Müllkalender entfernt');
   });
+
+  // --- Der Abschnitt „Telegram-Chats" (Issue #35) ---------------------------
+
+  /**
+   * Öffnet den Telegram-Abschnitt und beantwortet die beiden Requests
+   * (Code und Chat-Liste).
+   */
+  async function openTelegramSection(
+    chats: {
+      chatId: string;
+      chatName: string;
+      chatKind: string;
+      activatedByName?: string;
+      ownConnection: boolean;
+    }[] = [],
+  ): Promise<{ fixture: ReturnType<typeof TestBed.createComponent>; compiled: HTMLElement }> {
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      { id: 1, name: 'Haushalt Müller', createdAt: '2026-01-01T00:00:00Z', createdBy: 'alice' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'TELEGRAM-CHATS')
+      ?.click();
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/households/1/telegram/code').flush({
+      code: '123456',
+      botConfigured: true,
+    });
+    httpMock.expectOne('/api/households/1/telegram/chats').flush({ chats });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    return { fixture, compiled };
+  }
+
+  it('opens the Telegram section and shows the code and the chats (AC1, AC11)', async () => {
+    const { compiled } = await openTelegramSection([
+      {
+        chatId: '-100',
+        chatName: 'WG Flur',
+        chatKind: 'GRUPPE',
+        activatedByName: 'Alice Muster',
+        ownConnection: true,
+      },
+    ]);
+
+    const section = compiled.querySelector('app-telegram-chat-section') as HTMLElement;
+    expect(section).not.toBeNull();
+    expect(section.querySelector('.telegram-chats__code-value')?.textContent?.trim()).toBe('123456');
+    expect(section.querySelectorAll('.telegram-chats__row').length).toBe(1);
+  });
+
+  it('runs no request for the Telegram section while it is closed', async () => {
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      { id: 1, name: 'Haushalt Müller', createdAt: '2026-01-01T00:00:00Z', createdBy: 'alice' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Ohne offenen Abschnitt läuft kein Request — der httpMock.verify() im
+    // afterEach würde ihn sonst als unerwarteten Request melden.
+    expect(fixture.nativeElement.querySelector('app-telegram-chat-section')).toBeNull();
+  });
+
+  it('warns when the bot is not configured', async () => {
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      { id: 1, name: 'Haushalt Müller', createdAt: '2026-01-01T00:00:00Z', createdBy: 'alice' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'TELEGRAM-CHATS')
+      ?.click();
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/households/1/telegram/code').flush({
+      code: '123456',
+      botConfigured: false,
+    });
+    httpMock.expectOne('/api/households/1/telegram/chats').flush({ chats: [] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(compiled.textContent).toContain('Der Telegram-Bot ist nicht konfiguriert');
+  });
+
+  it('disconnects a chat only after the confirmation (AC13)', async () => {
+    const { fixture, compiled } = await openTelegramSection([
+      {
+        chatId: '-100',
+        chatName: 'WG Flur',
+        chatKind: 'GRUPPE',
+        activatedByName: 'Alice Muster',
+        ownConnection: true,
+      },
+    ]);
+
+    const section = compiled.querySelector('app-telegram-chat-section') as HTMLElement;
+    (section.querySelector('.telegram-chats__disconnect') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    // Der Dialog fragt nach — es geht noch nichts raus.
+    expect(compiled.querySelector('app-confirm-dialog')).not.toBeNull();
+    httpMock.expectNone('/api/households/1/telegram/chats/-100');
+
+    const confirm = compiled.querySelector('.hm-button--danger') as HTMLButtonElement;
+    confirm.click();
+    fixture.detectChanges();
+
+    const request = httpMock.expectOne('/api/households/1/telegram/chats/-100');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    await tick(fixture);
+
+    // Die Chat-Liste wird neu geladen — der getrennte Chat verschwindet.
+    httpMock.expectOne('/api/households/1/telegram/chats').flush({ chats: [] });
+    await tick(fixture);
+
+    expect(compiled.textContent).toContain('Telegram-Chat getrennt');
+  });
+
+  it('shows the error when the disconnect fails (Zustandstabelle)', async () => {
+    const { fixture, compiled } = await openTelegramSection([
+      {
+        chatId: '-100',
+        chatName: 'WG Flur',
+        chatKind: 'GRUPPE',
+        activatedByName: 'Alice Muster',
+        ownConnection: true,
+      },
+    ]);
+
+    const section = compiled.querySelector('app-telegram-chat-section') as HTMLElement;
+    (section.querySelector('.telegram-chats__disconnect') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (compiled.querySelector('.hm-button--danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne('/api/households/1/telegram/chats/-100')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    await tick(fixture);
+
+    expect(compiled.textContent).toContain('Die Verbindung konnte nicht getrennt werden');
+  });
+
+  /**
+   * AC16: wer kein Mitglied des Haushalts ist, sieht keine Telegram-Chats
+   * und bekommt keinen Freischalt-Code.
+   *
+   * <p>Das Backend antwortet mit 403. Die Oberfläche darf daraus weder einen
+   * Code noch eine Chat-Liste anzeigen — der Abschnitt zeigt den Fehler.
+   */
+  it('shows neither a code nor chats when the household access is refused (AC16)', async () => {
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      { id: 1, name: 'Haushalt Müller', createdAt: '2026-01-01T00:00:00Z', createdBy: 'alice' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'TELEGRAM-CHATS')
+      ?.click();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne('/api/households/1/telegram/code')
+      .flush(null, { status: 403, statusText: 'Forbidden' });
+    httpMock
+      .expectOne('/api/households/1/telegram/chats')
+      .flush(null, { status: 403, statusText: 'Forbidden' });
+    await tick(fixture);
+
+    const section = compiled.querySelector('app-telegram-chat-section') as HTMLElement;
+    // Kein Code, keine Chat-Zeile — nichts aus dem fremden Haushalt.
+    expect(section.querySelector('.telegram-chats__code-value')).toBeNull();
+    expect(section.querySelectorAll('.telegram-chats__row').length).toBe(0);
+    // Der Fehler wird benannt.
+    expect(section.querySelector('[role="alert"]')?.textContent).toContain(
+      'Der Freischalt-Code konnte nicht geladen werden',
+    );
+  });
+
+  /**
+   * Die Zustandstabelle: „Fehler (Chat-Liste): `role="alert"` mit „ERNEUT
+   * VERSUCHEN"“ und „Code-Bereich und Chat-Liste bleiben unabhängig nutzbar“.
+   *
+   * <p>Der Code wird geladen, die Chat-Liste nicht — der Code muss trotzdem
+   * lesbar bleiben.
+   */
+  it('keeps the code usable when only the chat list fails (AC16, Zustandstabelle)', async () => {
+    const fixture = TestBed.createComponent(HouseholdsPage);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/households').flush([
+      { id: 1, name: 'Haushalt Müller', createdAt: '2026-01-01T00:00:00Z', createdBy: 'alice' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    [...compiled.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'TELEGRAM-CHATS')
+      ?.click();
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/households/1/telegram/code').flush({
+      code: '123456',
+      botConfigured: true,
+    });
+    httpMock
+      .expectOne('/api/households/1/telegram/chats')
+      .flush(null, { status: 403, statusText: 'Forbidden' });
+    await tick(fixture);
+
+    const section = compiled.querySelector('app-telegram-chat-section') as HTMLElement;
+    expect(section.querySelector('[role="alert"]')?.textContent).toContain(
+      'Die Telegram-Chats konnten nicht geladen werden',
+    );
+    // Der Code bleibt unabhängig davon nutzbar.
+    expect(section.querySelector('.telegram-chats__code-value')?.textContent?.trim()).toBe('123456');
+    expect(section.querySelectorAll('.telegram-chats__row').length).toBe(0);
+  });
 });

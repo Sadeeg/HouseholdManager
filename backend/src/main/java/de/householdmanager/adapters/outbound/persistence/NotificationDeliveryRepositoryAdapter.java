@@ -1,0 +1,84 @@
+package de.householdmanager.adapters.outbound.persistence;
+
+import de.householdmanager.application.port.out.NotificationDeliveryRepository;
+import de.householdmanager.domain.model.NotificationDelivery;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
+/**
+ * Ausgehender Adapter: setzt den ausgehenden Port auf JPA um.
+ *
+ * <p>Hier — und nur hier — wird zwischen Persistenzmodell und Fachmodell
+ * übersetzt. Der Versuchszähler und der letzte Zustand sind persistent — sie
+ * sind der Zustand der Wiederholung (AC26, AC27).
+ */
+@Repository
+@RequiredArgsConstructor
+public class NotificationDeliveryRepositoryAdapter implements NotificationDeliveryRepository {
+
+    private final NotificationDeliveryJpaRepository deliveryJpaRepository;
+    private final Clock clock;
+
+    @Override
+    public List<NotificationDelivery> findRetryCandidates() {
+        return deliveryJpaRepository
+                .findAllByCompletedFalseAndStatusAndAttemptCountLessThan(
+                        NotificationDelivery.Status.FAILED,
+                        NotificationDelivery.MAX_ATTEMPTS)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public NotificationDelivery save(NotificationDelivery delivery) {
+        NotificationDeliveryJpaEntity entity = deliveryJpaRepository.save(NotificationDeliveryJpaEntity.builder()
+                .id(delivery.getId())
+                .householdId(delivery.getHouseholdId())
+                .chatId(delivery.getChatId())
+                .content(delivery.getContent())
+                .attemptCount(delivery.getAttemptCount())
+                .status(delivery.getStatus())
+                .lastError(delivery.getLastError())
+                .lastAttemptAt(delivery.getLastAttemptAt())
+                .completed(delivery.isCompleted())
+                .createdAt(createdAtOf(delivery))
+                .build());
+        return toDomain(entity);
+    }
+
+    /**
+     * Der Erstellzeitpunkt — beim Anlegen des Vermerks gesetzt, beim Update
+     * <strong>unverändert</strong>.
+     *
+     * <p>Der Vermerk wird beim Versand angelegt und danach mehrfach
+     * fortgeschrieben (Zustellung, Fehlversuch). Jedes Update schreibt den
+     * Vermerk vollständig — der Erstellzeitpunkt bliebe sonst bei jedem
+     * Versuch neu.
+     */
+    private Instant createdAtOf(NotificationDelivery delivery) {
+        if (delivery.getId() == null) {
+            return Instant.now(clock);
+        }
+        return deliveryJpaRepository.findById(delivery.getId())
+                .map(NotificationDeliveryJpaEntity::getCreatedAt)
+                .orElseGet(() -> Instant.now(clock));
+    }
+
+    private NotificationDelivery toDomain(NotificationDeliveryJpaEntity entity) {
+        return NotificationDelivery.builder()
+                .id(entity.getId())
+                .householdId(entity.getHouseholdId())
+                .chatId(entity.getChatId())
+                .content(entity.getContent())
+                .attemptCount(entity.getAttemptCount() == null ? 0 : entity.getAttemptCount())
+                .status(entity.getStatus())
+                .lastError(entity.getLastError())
+                .lastAttemptAt(entity.getLastAttemptAt())
+                .completed(Boolean.TRUE.equals(entity.getCompleted()))
+                .build();
+    }
+}

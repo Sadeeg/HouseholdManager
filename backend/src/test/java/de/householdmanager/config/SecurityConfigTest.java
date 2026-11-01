@@ -58,6 +58,9 @@ class SecurityConfigTest {
     @MockitoBean
     private de.householdmanager.application.port.in.WorkspaceUseCase workspaceUseCase;
 
+    @MockitoBean
+    private de.householdmanager.application.port.in.TelegramChatUseCase telegramChatUseCase;
+
     @Test
     void apiWithoutToken_isUnauthorized() throws Exception {
         mockMvc.perform(get("/api/households"))

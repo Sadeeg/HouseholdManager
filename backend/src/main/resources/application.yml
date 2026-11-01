@@ -69,6 +69,23 @@ householdmanager:
     # Abruf der öffentlichen Quelle; ein hängender Entsorger darf den Lauf und
     # das Speichern nicht blockieren (Annahme 7).
     timeout: ${HOUSEHOLDMANAGER_WASTE_TIMEOUT:5s}
+  telegram:
+    # Bot-Token des Telegram-Bots — ein Geheimnis aus der .env. Ohne Token
+    # läuft kein Bot: der Bot-Eingang startet nicht, und die Oberfläche
+    # weist darauf hin (ADR 0007).
+    bot-token: ${TELEGRAM_BOT_TOKEN:}
+    # Benachrichtigungslauf (18:00 Uhr) und stündlicher Wiederholungslauf.
+    # Die Sendezeiten sind fest — für den Nutzer nicht einstellbar.
+    dispatch-cron: ${HOUSEHOLDMANAGER_TELEGRAM_DISPATCH_CRON:0 0 18 * * *}
+    retry-cron: ${HOUSEHOLDMANAGER_TELEGRAM_RETRY_CRON:0 0 * * * *}
+    # Die Zone der Benachrichtigung: „morgen" und „kommende Woche" rechnen in
+    # dieser Zone.
+    zone: ${HOUSEHOLDMANAGER_TELEGRAM_ZONE:Europe/Berlin}
+    # Abstand zwischen zwei Abfragen des Long-Polls; die Zeitgrenze des
+    # HTTP-Clients verhindert, dass ein hängender Telegram-Server den Lauf
+    # blockiert.
+    poll-interval-ms: ${HOUSEHOLDMANAGER_TELEGRAM_POLL_INTERVAL_MS:5000}
+    timeout: ${HOUSEHOLDMANAGER_TELEGRAM_TIMEOUT:10s}
 
 management:
   endpoints:

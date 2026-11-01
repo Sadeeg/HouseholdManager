@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,6 +114,11 @@ class WasteSyncLeavesTasksUntouchedTest {
         @Override
         public List<MemberView> listMembers(String currentUserId, long householdId) {
             return List.of(new MemberView("alice", "Alice", true));
+        }
+
+        @Override
+        public Optional<String> displayNameOf(String userId) {
+            return "alice".equals(userId) ? Optional.of("Alice") : Optional.empty();
         }
 
         @Override

@@ -59,6 +59,9 @@ class SecurityConfigWithoutIssuerTest {
     @MockitoBean
     private de.householdmanager.application.port.in.WorkspaceUseCase workspaceUseCase;
 
+    @MockitoBean
+    private de.householdmanager.application.port.in.TelegramChatUseCase telegramChatUseCase;
+
     @Test
     void noJwtDecoder_isCreated() {
         assertThat(context.getBeanNamesForType(JwtDecoder.class)).isEmpty();

@@ -15,6 +15,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -112,5 +113,16 @@ public class MembershipUseCaseImpl implements MembershipUseCase {
     private MemberView toView(String userId, String adminId) {
         String displayName = userDirectory.findById(userId).map(UserAccount::displayName).orElse(null);
         return new MemberView(userId, displayName, userId.equals(adminId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<String> displayNameOf(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return Optional.empty();
+        }
+        return userDirectory.findById(userId)
+                .map(UserAccount::displayName)
+                .filter(name -> !name.isBlank());
     }
 }

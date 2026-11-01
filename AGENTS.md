@@ -101,7 +101,12 @@ Ein Feature ist **erst fertig**, wenn **alle sechs** Punkte erfüllt sind:
    Abnahme-Gate prüft sie unabhängig.
 4. **Architektur-Review OK** — `architektur-reviewer` hat geprüft. Bei
    `KORREKTUREN` wird der Korrekturauftrag an den Implementierer delegiert
-   und erneut geprüft — bis `OK` oder nach spätestens 3 Runden.
+   und erneut geprüft — bis `OK` oder nach **spätestens 3 Runden insgesamt**
+   (Zählung über den Befund-Kommentar am Issue, nicht pro Aufruf).
+   Runde 1 ist die **Vollerhebung** und liefert eine geschlossene
+   Befundliste; Runden 2–3 prüfen **nur** die offenen blockierenden
+   Befunde (`K`-Nummern) plus Regressionen im Korrektur-Diff — keine neue
+   NIT-Jagd. MINOR/NIT blockieren nie und werden zu Follow-up-Issues.
 5. **Abnahme PASS** — `kritischer-tester` hat adversarial gegen die
    Akzeptanzkriterien geprüft und `PASS` gemeldet.
 6. **Nachbereitung** — Erfahrungen in `docs/erkenntnisse-issue-<n>.md`,
@@ -115,6 +120,9 @@ Ein Feature ist **erst fertig**, wenn **alle sechs** Punkte erfüllt sind:
 
 Urteile werden als Kommentar am Issue protokolliert
 (`<!-- review: status=OK … -->`, `<!-- abnahme: status=PASS … -->`).
+Der **Befundstand jeder Runde** steht im Marker
+`<!-- review-findings: runde=<n> … -->` am Issue — er ist die einzige
+Quelle für die Folgerunde; der Chatverlauf zählt nicht.
 
 **Ein Feature ohne beide Gates ist nicht fertig** — auch wenn alle Tests grün
 sind. Ein selbst erteiltes Urteil zählt nicht: Urteile kommen von den

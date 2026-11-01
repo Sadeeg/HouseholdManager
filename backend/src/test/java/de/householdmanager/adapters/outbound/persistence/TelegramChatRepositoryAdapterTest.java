@@ -1,0 +1,251 @@
+package de.householdmanager.adapters.outbound.persistence;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import de.householdmanager.config.ClockConfig;
+import de.householdmanager.domain.model.TelegramChat;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.testcontainers.context.ImportTestcontainers;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+
+/**
+ * Test des ausgehenden Adapters gegen eine echte PostgreSQL-Instanz
+ * (Testcontainers). Prüft das Mapping, die Unveränderlichkeit des Codes
+ * (AC2), die Eindeutigkeit über Haushalt und Chat (AC7) und das Finden des
+ * Haushalts über den Code (AC3).
+ */
+@DataJpaTest
+@Import({TelegramChatRepositoryAdapter.class, ActivationCodeGenerator.class, ClockConfig.class})
+@ImportTestcontainers
+class TelegramChatRepositoryAdapterTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
+
+    @Autowired
+    private TelegramChatRepositoryAdapter adapter;
+
+    @Autowired
+    private HouseholdJpaRepository householdJpaRepository;
+
+    @Autowired
+    private TelegramChatJpaRepository chatJpaRepository;
+
+    @Autowired
+    private TelegramActivationCodeJpaRepository codeJpaRepository;
+
+    @Autowired
+    private Clock clock;
+
+    private long householdA;
+    private long householdB;
+
+    @BeforeEach
+    void createHouseholds() {
+        householdA = householdJpaRepository.save(HouseholdJpaEntity.builder()
+                .name("Haus A").createdAt(Instant.now()).createdBy("alice").build()).getId();
+        householdB = householdJpaRepository.save(HouseholdJpaEntity.builder()
+                .name("Haus B").createdAt(Instant.now()).createdBy("alice").build()).getId();
+    }
+
+    /** AC2: der Code entsteht beim ersten Anfordern und bleibt danach unverändert. */
+    @Test
+    void ensureCode_returnsTheSameCodeOnASecondRequest() {
+        String first = adapter.ensureCode(householdA, "alice");
+        String second = adapter.ensureCode(householdA, "bob");
+
+        assertThat(second).isEqualTo(first);
+    }
+
+    /** Der Code besteht aus Ziffern — er wird im Chat abgetippt. */
+    @Test
+    void ensureCode_producesDigitsOnly() {
+        assertThat(adapter.ensureCode(householdA, "alice")).matches("\\d+");
+    }
+
+    /** Zwei Haushalte bekommen verschiedene Codes. */
+    @Test
+    void ensureCode_givesEachHouseholdItsOwnCode() {
+        String codeA = adapter.ensureCode(householdA, "alice");
+        String codeB = adapter.ensureCode(householdB, "bob");
+
+        assertThat(codeB).isNotEqualTo(codeA);
+    }
+
+    /**
+     * Ein Code, der schon vergeben ist, wird übersprungen: die Erzeugung
+     * liefert keinen Fehler, sondern einen freien Code.
+     */
+    @Test
+    void ensureCode_skipsACodeThatIsAlreadyTaken() {
+        // Der erste Haushalt nimmt den Code „111111" — der zweite Haushalt
+        // darf ihn nicht bekommen.
+        String taken = adapter.ensureCode(householdA, "alice");
+
+        // Der Generator liefert zuerst den belegten Code, danach einen freien.
+        TelegramChatRepositoryAdapter colliding = new TelegramChatRepositoryAdapter(
+                chatJpaRepository,
+                codeJpaRepository,
+                new SequenceCodeGenerator(taken, "222222"),
+                clock);
+
+        String codeB = colliding.ensureCode(householdB, "bob");
+
+        assertThat(codeB).isEqualTo("222222");
+    }
+
+    /**
+     * Der Generator, der eine feste Folge von Codes liefert — damit der
+     * Test die Kollision erzwingen kann.
+     */
+    private static final class SequenceCodeGenerator extends ActivationCodeGenerator {
+
+        private final List<String> codes;
+
+        SequenceCodeGenerator(String... codes) {
+            this.codes = new ArrayList<>(List.of(codes));
+        }
+
+        @Override
+        public String next() {
+            return codes.size() == 1 ? codes.get(0) : codes.remove(0);
+        }
+    }
+
+    /** AC3: über den Code lässt sich der Haushalt finden — mit der anfordernden Person. */
+    @Test
+    void findCodeOwner_returnsTheHouseholdAndTheRequestingMember() {
+        String code = adapter.ensureCode(householdA, "alice");
+
+        assertThat(adapter.findCodeOwner(code))
+                .isPresent()
+                .get()
+                .satisfies(owner -> {
+                    assertThat(owner.householdId()).isEqualTo(householdA);
+                    assertThat(owner.userId()).isEqualTo("alice");
+                });
+    }
+
+    /** Ein unbekannter Code gehört zu keinem Haushalt (AC9, AC10). */
+    @Test
+    void findCodeOwner_forAnUnknownCode_isEmpty() {
+        assertThat(adapter.findCodeOwner("000000")).isEmpty();
+    }
+
+    /** AC11: Name und Art werden gespeichert und zurückgegeben. */
+    @Test
+    void save_storesNameAndKindOfTheChat() {
+        adapter.save(chat(householdA, "-100", "WG Flur", TelegramChat.ChatKind.GROUP, "alice"));
+
+        TelegramChat stored = adapter.findByHouseholdAndChatId(householdA, "-100").orElseThrow();
+        assertThat(stored.getChatName()).isEqualTo("WG Flur");
+        assertThat(stored.getKind()).isEqualTo(TelegramChat.ChatKind.GROUP);
+        assertThat(stored.getActivatedBy()).isEqualTo("alice");
+    }
+
+    /**
+ * AC7: derselbe Chat wird für einen Haushalt nicht doppelt angelegt. Die
+ * Eindeutigkeit sichert der Unique-Index über (Haushalt, Chat-ID) — der
+ * Anwendungscode prüft es zusätzlich, bevor er anlegt.
+ */
+    @Test
+    void save_rejectsASecondChatForTheSameHouseholdAndChatId() {
+        adapter.save(chat(householdA, "-100", "WG Flur", TelegramChat.ChatKind.GROUP, "alice"));
+
+        // Der zweite Versuch verletzt den Unique-Index. Der Verstoß wird erst
+        // beim Flush der Transaktion sichtbar — deshalb wird er hier
+        // ausgelöst und die Anzahl der Chats **vorher** geprüft.
+        assertThatThrownBy(() -> {
+            adapter.save(chat(householdA, "-100", "WG Flur neu", TelegramChat.ChatKind.GROUP, "alice"));
+            chatJpaRepository.flush();
+        }).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /** Ein Chat wird für einen Haushalt genau einmal angelegt. */
+    @Test
+    void save_storesOneChatForTheHouseholdAndChatId() {
+        adapter.save(chat(householdA, "-100", "WG Flur", TelegramChat.ChatKind.GROUP, "alice"));
+
+        assertThat(adapter.findByHousehold(householdA)).hasSize(1);
+    }
+
+    /** AC12: die Chats eines Haushalts gehören nur diesem Haushalt. */
+    @Test
+    void findByHousehold_returnsOnlyTheChatsOfThatHousehold() {
+        adapter.save(chat(householdA, "-100", "Gruppe A", TelegramChat.ChatKind.GROUP, "alice"));
+        adapter.save(chat(householdB, "-200", "Gruppe B", TelegramChat.ChatKind.GROUP, "bob"));
+
+        assertThat(adapter.findByHousehold(householdA))
+                .extracting(TelegramChat::getChatName)
+                .containsExactly("Gruppe A");
+    }
+
+    /** Die Liste der Anzeige ist aufsteigend nach Anzeigename. */
+    @Test
+    void findByHousehold_sortsByChatName() {
+        adapter.save(chat(householdA, "-2", "Zebra", TelegramChat.ChatKind.GROUP, "alice"));
+        adapter.save(chat(householdA, "-1", "Alpha", TelegramChat.ChatKind.GROUP, "alice"));
+
+        assertThat(adapter.findByHousehold(householdA))
+                .extracting(TelegramChat::getChatName)
+                .containsExactly("Alpha", "Zebra");
+    }
+
+    /** Der Lauf geht von den Verbindungen aus — ohne Chat kein Haushalt (AC25). */
+    @Test
+    void findHouseholdsWithChats_returnsOnlyHouseholdsWithAChat() {
+        adapter.save(chat(householdA, "-100", "Gruppe A", TelegramChat.ChatKind.GROUP, "alice"));
+
+        assertThat(adapter.findHouseholdsWithChats()).containsExactly(householdA);
+    }
+
+    /** Der Haushalt eines Chats — er wird gebraucht, um einen fremden Code abzuweisen (AC10). */
+    @Test
+    void findHouseholdByChatId_returnsTheHouseholdOfTheChat() {
+        adapter.save(chat(householdA, "-100", "Gruppe A", TelegramChat.ChatKind.GROUP, "alice"));
+
+        assertThat(adapter.findHouseholdByChatId("-100")).contains(householdA);
+    }
+
+    /** Ein noch nicht freigeschalteter Chat gehört zu keinem Haushalt. */
+    @Test
+    void findHouseholdByChatId_forAnUnknownChat_isEmpty() {
+        assertThat(adapter.findHouseholdByChatId("-100")).isEmpty();
+    }
+
+    /** AC15: nach dem Trennen ist der Chat weg — er bekommt keine weiteren Nachrichten. */
+    @Test
+    void delete_removesTheChatOfThatHousehold() {
+        adapter.save(chat(householdA, "-100", "Gruppe A", TelegramChat.ChatKind.GROUP, "alice"));
+
+        adapter.delete(householdA, "-100");
+
+        assertThat(adapter.findByHousehold(householdA)).isEmpty();
+        assertThat(adapter.findByHouseholdAndChatId(householdA, "-100")).isEmpty();
+    }
+
+    private TelegramChat chat(long householdId, String chatId, String name,
+            TelegramChat.ChatKind kind, String activatedBy) {
+        return TelegramChat.builder()
+                .householdId(householdId)
+                .chatId(chatId)
+                .chatName(name)
+                .kind(kind)
+                .activatedBy(activatedBy)
+                .build();
+    }
+}

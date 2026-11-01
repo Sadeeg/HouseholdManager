@@ -129,6 +129,7 @@ Architektur verletzt.
 | `application` | Use Case gegen gemockten Port | JUnit + Mockito, **ohne Spring** |
 | `adapters/inbound` | Protokoll-Mapping | `@WebMvcTest` + `@MockitoBean` (Port mocken) |
 | `adapters/outbound` | Persistenz & Migration | `@DataJpaTest` + Testcontainers-Postgres |
+| **Start der Anwendung** | Verdrahtung, Bean-Eindeutigkeit | `@SpringBootTest` + Testcontainers-Postgres |
 | Ende zu Ende | Use Journey | `@SpringBootTest` ( sparsam einsetzen ) |
 
 ```text
@@ -143,6 +144,19 @@ braucht deshalb zusätzlich den Socket:
 ## Fallen
 
 - **`@MockBean` ist tot** — in Boot 4 `@MockitoBean` verwenden.
+- **Zwei Beans vom selben Typ brauchen einen Qualifizier an BEIDEN
+  Stellen** — an der `@Bean`-Methode **und** an der Injektionsstelle. Spring
+  löst die Abhängigkeit am Injektionspunkt auf; ein Qualifizier nur an der
+  `@Bean`-Methode genügt dort nicht. Die Konstante des Qualifiziers sollte
+  zugleich der Bean-Name sein — dann greift auch der Namens-Fallback.
+- **`@RequiredArgsConstructor` und ein eigener Konstruktor dürfen nicht
+  nebeneinander stehen** — Spring wählt nur bei genau einem Konstruktor
+  (oder einem mit `@Autowired`) einen aus; sonst braucht die Klasse einen
+  Standardkonstruktor und der Start bricht ab. Braucht ein Use Case einen
+  Konfigurationswert, schreibt er den Konstruktor selbst.
+- **Verdrahtung prüft kein Einzeltest** — kein Test bootet von sich aus den
+  Spring-Kontext. Wer eine Bean, einen Qualifizier oder einen Konstruktor
+  ändert, braucht einen `@SpringBootTest`, der die Anwendung startet.
 - **`@DataJpaTest` braucht eine echte Datenbank**: Ohne H2 auf dem Classpath
   schlägt der Test fehl; hier kommt Postgres per Testcontainers.
 - **Lombok im `domain`**: `@Getter`/`@Builder` sind unkritisch, aber **kein**
