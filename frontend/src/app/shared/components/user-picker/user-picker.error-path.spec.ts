@@ -198,6 +198,45 @@ describe('UserPicker — Erneut versuchen (Issue #20)', () => {
 
     expect(element(fixture).textContent).toContain('Carl Vogel');
     expect(element(fixture).textContent).not.toContain('Nutzerverzeichnis nicht erreichbar.');
+    // Genau ein Request je Versuch: `expectOne` nimmt alle Treffer derselben
+    // URL mit, ein zweiter Request mit derselben URL bliebe sonst unentdeckt.
+    httpMock.verify();
+  });
+
+  /**
+   * Der Zwischenzustand beim selben Begriff: die Meldung verschwindet, solange
+   * der Versuch läuft, und der Such-Indikator steht. Getestet wird der Weg
+   * "Fehler → Knopf → derselbe Begriff" — der bisher nur für eine geänderte
+   * Query belegt war (Zeile 74). Ohne den Guard in `failed()` wäre diese
+   * Assertion rot: `reload()` behält bei gleicher URL den alten Stream.
+   */
+  it('hides the message while the attempt with the same term runs', async () => {
+    const fixture = TestBed.createComponent(UserPicker);
+    fixture.detectChanges();
+
+    await typeQuery(fixture, 'car');
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 500,
+      statusText: 'Server Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(element(fixture).textContent).toContain('Nutzerverzeichnis nicht erreichbar.');
+
+    retryButton(fixture).click();
+    fixture.detectChanges();
+
+    // Noch kein Request beantwortet — die Meldung ist weg, der Indikator steht.
+    expect(element(fixture).textContent).not.toContain('Nutzerverzeichnis nicht erreichbar.');
+    expect(element(fixture).textContent).toContain('Personen werden gesucht …');
+    expect(element(fixture).querySelector('.user-picker__retry')).toBeNull();
+
+    httpMock.expectOne('/api/users/search?q=car').flush([{ id: 'carl', displayName: 'Carl Vogel' }]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(element(fixture).textContent).toContain('Carl Vogel');
   });
 
   it('keeps the message when the retry fails as well', async () => {
@@ -224,5 +263,18 @@ describe('UserPicker — Erneut versuchen (Issue #20)', () => {
     // Die Meldung bleibt sichtbar — und die Komponente lebt noch.
     expect(element(fixture).querySelector('[role="alert"]')).not.toBeNull();
     expect(element(fixture).textContent).toContain('Nutzerverzeichnis nicht erreichbar.');
+
+    // Der Knopf muss wieder da sein: sonst gibt es keinen dritten Versuch.
+    expect(retryButton(fixture)).not.toBeNull();
+
+    // Und der dritte Versuch startet wieder — genau einen Request.
+    retryButton(fixture).click();
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush([{ id: 'carl', displayName: 'Carl Vogel' }]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(element(fixture).textContent).toContain('Carl Vogel');
+    httpMock.verify();
   });
 });

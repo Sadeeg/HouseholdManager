@@ -77,8 +77,15 @@ export class UserSearch {
     return this.searchResource.value() ?? NO_USERS;
   });
   readonly searching = computed(() => this.query().trim().length >= 2 && this.searchResource.isLoading());
+  // Die Meldung zeigt nur einen Fehler, wenn gerade kein Versuch läuft.
+  // `reload()` setzt den Fehlerzustand nicht zurück: bei gleicher URL bleibt
+  // der bisherige Stream erhalten, `error()` liefert den alten Fehler. Ohne
+  // diesen Guard bliebe die Meldung sichtbar, obwohl der Nutzer gerade sucht.
   readonly failed = computed(
-    () => this.query().trim().length >= 2 && this.searchResource.error() != null,
+    () =>
+      this.query().trim().length >= 2 &&
+      this.searchResource.error() != null &&
+      !this.searchResource.isLoading(),
   );
 
   search(query: string): void {
@@ -89,14 +96,12 @@ export class UserSearch {
    * Erneut versuchen: derselbe Begriff, ein neuer Request (Issue #20).
    *
    * <p>`httpResource` feuert nur bei URL-Änderung — das Setzen desselben
-   * Begriffs löst keinen Request aus. `reload()` holt dieselbe URL erneut:
-   * der Fehlerzustand wird dabei zurückgesetzt, die Meldung verschwindet,
-   * während der neue Versuch läuft.
+   * Begriffs löst keinen Request aus. `reload()` holt dieselbe URL erneut.
+   * Der Fehlerzustand wird dabei **nicht** zurückgesetzt (gleiche URL, gleicher
+   * Stream) — die Meldung verschwindet, weil `failed()` einen laufenden
+   * Versuch ausschließt, nicht weil der Fehler gelöscht wäre.
    */
   retry(): void {
-    if (this.query().trim().length < 2) {
-      return;
-    }
     this.searchResource.reload();
   }
 

@@ -217,6 +217,14 @@ und ein grüner Lauf bedeutet dann nichts.
 
 - **Zoneless:** Effekte laufen erst nach `detectChanges()`. Im Test den
   HTTP-Request **nach** `fixture.detectChanges()` erwarten.
+- **Ein Fehlerzustand braucht eine sichtbare Handlung.** „Dieselbe Eingabe
+  noch einmal" ist keine Handlung, die der Nutzer kennen kann — der
+  Zustand braucht einen Knopf, der ihn verlässt (z. B. „Erneut versuchen").
+- **`httpResource` feuert nur bei URL-Änderung.** Für einen erneuten Versuch
+  mit derselben URL `reload()` benutzen, nicht auf ein Signal warten. Achtung:
+  `reload()` setzt den Fehlerzustand **nicht** zurück — bei gleicher URL
+  bleibt der alte Stream; die Fehlermeldung blendet man über einen laufenden
+  Versuch aus (`!isLoading()`), nicht über einen gelöschten Fehler.
 - **Feature-Service in der Route providen**, sonst lebt der Zustand in der
   App und überlebt das Verlassen des Features.
 - **`shared` ist kein Ablageort.** „Wird vielleicht später gebraucht" heißt
