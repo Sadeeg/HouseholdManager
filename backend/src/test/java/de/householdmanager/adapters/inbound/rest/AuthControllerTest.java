@@ -2,6 +2,7 @@ package de.householdmanager.adapters.inbound.rest;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,7 +39,11 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("sascha"))
                 .andExpect(jsonPath("$.displayName").value("Sascha Deeg"))
-                .andExpect(jsonPath("$.email").value("sascha@example.org"));
+                .andExpect(jsonPath("$.email").value("sascha@example.org"))
+                // Der Vertrag ist genau diese drei Felder (Issue #5, AC2).
+                .andExpect(content().json(
+                        "{\"id\":\"sascha\",\"displayName\":\"Sascha Deeg\",\"email\":\"sascha@example.org\"}",
+                        true));
     }
 
     @Test
