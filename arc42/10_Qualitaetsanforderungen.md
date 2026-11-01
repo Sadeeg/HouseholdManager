@@ -20,6 +20,9 @@
 | Q13 | Ein Lieferant führt eine neue Art ein | Sie erscheint in der Liste, ohne dass Code geändert werden muss | mittel | `IcsWasteCalendarFeedTest` (Adapter, ical4j) |
 | Q14 | Ein zeitgesteuerter Lauf wird geprüft | Der Test läuft ohne Wartezeit, ohne Netz und ohne Datenbank — die Zeit ist eine `Clock`, der Job ein dünner Adapter | hoch | `WasteCollectionUseCaseImplTest`, `WasteSyncJobTest` |
 | Q15 | Die Anwendung startet, obwohl eine externe Quelle nicht erreichbar ist | Der Start ist unauffällig; der Fehler erscheint erst im Lauf, je Kontext isoliert protokolliert | mittel | `WasteSyncJobTest` |
+| Q16 | Eine Benachrichtigung kann nicht zugestellt werden | Der Fehler endet als **einzelner** Zustellvermerk; der Versand an die übrigen Chats läuft weiter; nach dem dritten Versuch stellt der Lauf das **Proben** ein, ohne die Verbindung zu lösen | hoch | `NotificationDispatchUseCaseImplTest` (dritte Versuche, Isolation je Chat) |
+| Q17 | Der 18:00-Uhr-Lauf wird geprüft | Der Test läuft ohne Wartezeit, ohne Netz und ohne Datenbank — die Zeit ist eine `Clock`, der Job ein dünner Adapter; der Wochentag entscheidet die Nachrichtenart | hoch | `NotificationDispatchUseCaseImplTest`, `NotificationDispatchJobTest` |
+| Q18 | Eine neue fachliche Regel ändert sich | Sie berührt **eine** Klasse im `domain`/`application` des Benachrichtigungs-Kontexts; der Müllkalender und die Telegram-Adapter bleiben unberührt | hoch | Ports & Adapters, Architekturregeln (Contextgrenze) |
 
 ## Nicht-funktionale Anforderungen
 

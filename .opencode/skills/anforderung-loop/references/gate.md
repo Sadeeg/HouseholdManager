@@ -3,7 +3,21 @@
 Prüft das **GitHub-Issue**. Eingabe: `issue_read` `get` (Body mit Marker, z. B.
 `<!-- anforderung: runde=2 status=IN_PROGRESS issue=129 -->`) und
 `get_comments` (Array direkt, kein `comments`). Marker fehlt → `FORMAT` → 1.
-`runde`: 1/2/3/final.
+`runde`: 1/2/3/final. `final` prüft den **redigierten** Body (Runde 4).
+
+## Gate Runde 4 — Redaktion (Ziel 4)
+
+- [ ] Body ist **kürzer** als vor der Redaktion · Ziel: unter 40 % der Zeilen
+- [ ] **Kein Verlust:** kein AC, kein Fehlerfall, keine Zustandsangabe, kein
+      Token-Name, kein API-Pfad, kein Dateipfad, keine V-Nummer fehlt
+- [ ] `## Acceptance Criteria` unverändert vollständig · `## Tests` je AC
+      eine Zeile · `## Verify` mit Kommandos und manuellem Satz
+- [ ] `## UX` trägt Elemente, Zustände, Labels, Token-Namen, Reihenfolge
+- [ ] `## Files` nur neu/geändert, je Pfad eine Zeile
+- [ ] `## Implementation` nur Stellen mit Alternativen
+- [ ] Lesehinweis vorhanden: „Body allein; Kommentare nur, wenn hier etwas
+      nicht ermittelbar ist"
+- [ ] Keine Prosa ohne Handlungsfolge · keine Wiederholung aus Goal/Scope
 
 ## Ausgabeformat
 
@@ -88,6 +102,10 @@ KORREKTUREN:
 - [ ] **Release gedeckt** (Bump, Tag, Image in `AGENTS.md`) → sonst `FORMAT` → 1
 - [ ] Body enthält **kein** Protokoll · Simulation: Dateien, API und Fertigsein
       ohne Rückfrage
+- [ ] **Redaktion** (Runde 4): Body ist kürzer als vor der Redaktion, kein AC
+      / Fehlerfall / Zustand / Token / API-Pfad / Dateipfad verloren · Lesehinweis
+      („Body allein, Kommentare nur bei nicht Ermittelbarem") vorhanden →
+      sonst `FORMAT` → 4
 
 ## Arbeitsweise
 

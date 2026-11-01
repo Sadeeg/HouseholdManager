@@ -208,3 +208,10 @@ pre {
   background: var(--hm-accent-soft);
   color: var(--hm-accent-3);
 }
+
+// Neutrale Kennzeichnung ohne Aussage (z. B. die Chat-Art eines
+// Telegram-Chats). Trägt keine Bedeutung, nur eine Eigenschaft.
+.hm-badge--neutral {
+  background: var(--hm-surface-3);
+  color: var(--hm-text-muted);
+}

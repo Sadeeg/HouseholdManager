@@ -42,6 +42,32 @@ ausgehenden Adapter, das Fachmodell bleibt **ganztägig**.
 Die Toleranz betrifft den aktuellen Feed des Entsorgers nicht (dort sind alle
 Ereignisse Ganztagsdaten) — sie ist Robustheit für andere Quellen.
 
+### Fehler bei der Zustellung einer Benachrichtigung
+
+Auch der Versand an einen Kanal ist ein **Hintergrundereignis**: er endet
+nie als HTTP-Fehler der Oberfläche. Ein Fehlschlag betrifft **eine
+Nachricht**, nicht den Haushalt und nicht die anderen Chats.
+
+| Fall | Wirkung |
+|------|---------|
+| Versand erfolgreich | der Zustellvermerk gilt als zugestellt; kein weiterer Versuch |
+| Versand fehlgeschlagen | der Fehler wird protokolliert, der Zustellvermerk zählt den Versuch; ein weiterer Versuch folgt erst **nach einer Stunde** |
+| **dritter** Versuch fehlgeschlagen | kein weiterer Versuch; die **Verbindung des Chats bleibt bestehen** (Trennen bleibt allein der freischaltenden Person vorbehalten) |
+| ein Chat schlägt fehl | die übrigen Chats desselben Haushalts werden **trotzdem** zugestellt |
+| ein Haushalt schlägt fehl | die übrigen Haushalte werden **trotzdem** zugestellt |
+
+Die Versuchszählung ist **persistenter Zustand** im Fachkern
+(`NotificationDelivery`), nicht ein Zähler im Adapter: nur so überlebt sie
+einen Neustart und nur so ist „höchstens drei Versuche je Nachricht"
+überprüfbar. Der Adapter kennt nur „gesendet" oder „nicht gesendet".
+
+Die Wiederholung ist **zeitversetzt** (1 Stunde) — nicht „sofort nochmal".
+Deshalb liegt der Versuchszeitpunkt im Zustellvermerk, nicht im Adapter.
+
+> **Offen:** Wer die Wiederholung auslöst — ein stündlicher Scheduler-Tick,
+> ein `fixedDelay`-Wiederholer oder ein gespeicherter Versuchszeitpunkt
+> (ADR 0007, O2).
+
 ## Validierung
 
 | Ort | Was |
@@ -72,13 +98,34 @@ JPA-Entity.
 
 | Thema | Festlegung |
 |-------|-------------|
-| Auslöser | `@EnableScheduling` in `config/ApplicationConfig`; der Job `adapters/inbound/scheduler/WasteSyncJob` ist ein **eingehender Adapter** und enthält keine Fachlogik |
-| Taktung | einmal täglich, Uhrzeit fest im Server (Property `householdmanager.waste.sync-cron`, Vorgabe `0 0 3 * * *`) — **nicht** durch die Oberfläche einstellbar (ADR 0005) |
-| Uhr | die Anwendung rechnet ausschließlich mit der `Clock`-Bean; kein `Instant.now()` im Fachkern. Die Fenstergrenze (42 Tage) wird aus `LocalDate.now(clock.withZone(ZoneId.of("Europe/Berlin")))` abgeleitet — der Tag des Laufs im Betriebsgebiet, nicht in UTC |
+| Auslöser | `@EnableScheduling` in `config/ApplicationConfig`; die Jobs `adapters/inbound/scheduler/WasteSyncJob` und `…/NotificationDispatchJob` sind **eingehende Adapter** und enthalten keine Fachlogik |
+| Taktung | einmal täglich, Uhrzeit fest im Server (Property `householdmanager.waste.sync-cron`, Vorgabe `0 0 3 * * *`) — **nicht** durch die Oberfläche einstellbar (ADR 0005). Der Benachrichtigungslauf läuft **18:00 Uhr** (Property `householdmanager.notification.cron`), sonntags mit zusätzlicher Wochenübersicht |
+| Uhr | die Anwendung rechnet ausschließlich mit der `Clock`-Bean; kein `Instant.now()` im Fachkern. Die Fenstergrenze (42 Tage) wird aus `LocalDate.now(clock.withZone(ZoneId.of("Europe/Berlin")))` abgeleitet — der Tag des Laufs im Betriebsgebiet, nicht in UTC. Dasselbe gilt für „morgen" und „kommende Woche" im Benachrichtigungs-Kontext |
 | Testbarkeit | der Job ruft genau einen Use Case auf; die Regeln stehen im Use Case (JUnit + Mockito, `Clock` fest) — kein Test wartet auf die Tagesuhr |
 | Fehlerisolierung | ein fehlgeschlagener Lauf beendet den Job nicht; der Fehler wird je Haushalt protokolliert |
 | Sofort-Sync nach dem Speichern | **zweiter Use-Case-Aufruf im Controller** nach dem Commit der Speicherung — eigene Transaktion, eigener HTTP-Timeout (5 s); kein Ereignis, kein Listener, kein `@Async`. Die Antwort **wartet** auf den Lauf; ein Lauf-Fehler ist isoliert, das Speichern bleibt erfolgreich (ADR 0005) |
 | Sperren | keine — der Lauf **ersetzt** den Bestand je Haushalt; ein doppelter Lauf (mehrere Instanzen) ist unkritisch |
+
+### Registrierung mehrerer Zeitgeber — Zyklusrisiko
+
+`config/ApplicationConfig` **liefert keine Beans**; die Klasse trägt nur die
+Planung. Würde ein Use Case oder ein Job eine Bean von ihr beziehen, entstünde
+ein Zyklus (`ApplicationConfig → Job → Use Case → ApplicationConfig`).
+
+Mit dem Benachrichtigungslauf kommt ein **zweiter** Zeitgeber dazu. Die
+Regeln daraus:
+
+- Die technische Verdrahtung (Clients, Bot-Token) gehört in **eigene**
+  `config/`-Klassen (`ClockConfig`, `IcsClientConfig` — analog ein
+  `TelegramConfig`), **nicht** in `ApplicationConfig`.
+- `ApplicationConfig` registriert **nur** Cron-Tasks; sie bekommt die Jobs
+  als Konstruktor-Parameter und gibt **keine** Bean zurück.
+- Die Zeitregeln selbst liegen **nicht** im Job, sondern im Use Case — der Job
+  kennt keinen Wochentag und kein Datum (ADR 0007).
+
+> **Offen:** Wie die Wiederholung einer fehlgeschlagenen Zustellung
+> ausgelöst wird — das entscheidet, ob ein **dritter** Zeitgeber nötig wird
+> (ADR 0007, O2).
 
 ## Security
 
@@ -97,6 +144,15 @@ JPA-Entity.
 **Ohne konfigurierten Issuer läuft die API ohne Authentifizierung** (lauter
 Warnhinweis im Log). Das ist der Zustand eines frischen, noch nicht
 eingerichteten Setups — **kein** Produktivbetrieb.
+
+### Zugangsdaten für den Bot
+
+| Thema | Festlegung |
+|-------|-----------|
+| Bot-Token | **Secret** aus der Umgebung (`householdmanager.telegram.bot-token`, in `.env`, nie im Repository, nie in einem Issue). Es ist ein **Bot-Token**, kein Client-Secret im OIDC-Sinne — die Anwendung ist *Client* des Bot-Dienstes, nicht Identity Provider |
+| Ohne Token | der Benachrichtigungs-Kontext ist **inaktiv**: keine Chats, kein Versand, kein Fehler beim Start (analog zur Nutzerverzeichnis-Adapter-Regel) |
+| Freischalt-Code | ein Geheimnis **des Haushalts**, kein Geheimnis der Person: jedes Mitglied sieht ihn, er schaltet beliebig viele Chats frei und hat **kein** Ablaufdatum. Er wird **im Chat an den Bot** gesendet, nicht über die Oberfläche |
+| Rechte | alle Mitglieder sind gleichberechtigt; **nur wer selbst freigeschaltet hat**, darf die Verbindung trennen. Es gibt keine Admin-Rolle im Haushalt |
 
 **Mandantentrennung und Rollen:** die Tabelle `household_member` macht
 ernannte Zugehörigkeit sichtbar; jeder Use Case prüft vor der Fachaktion die

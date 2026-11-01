@@ -35,13 +35,45 @@ Fachlogik:
 
 | Art | Beispiel | Auslöser |
 |-----|----------|----------|
-| **HTTP-Controller** | `HouseholdController`, `TaskController`, `WasteCollectionController` | Request |
+| **HTTP-Controller** | `HouseholdController`, `TaskController`, `WasteCollectionController`, `TelegramChatController` | Request |
 | **Scheduler** | `WasteSyncJob` | Cron, konfiguriert im Composition Root (ADR 0005) |
 | **Geplanter Abruf** | Teil des `WasteSyncJob` | je Haushalt, isoliert |
+| **Bot-Eingang** | `TelegramBotInboundAdapter` | Chat-Nachricht aus Telegram |
 
 **Fehlerisolierung:** ein fehlerhafter Haushalt stoppt den Lauf nicht. Der
 Adapter protokolliert, fährt mit dem nächsten fort und beendet den Job ohne
 Fehler.
+
+### Der Benachrichtigungslauf (18:00 Uhr)
+
+Der zweite Zeitgeber läuft nach **demselben Muster** wie der Tageslauf
+(ADR 0005, ADR 0007):
+
+```text
+1. NotificationDispatchJob (Cron 18:00 Europe/Berlin) löst genau einen
+   Use Case aus — keine Fachlogik im Adapter
+2. Use Case bestimmt den Tag aus der Clock: „morgen" und „kommende Woche"
+   (Montag–Sonntag); sonntags zusätzlich der Montag
+3. Use Case liest die Termine über den In-Port des Müllkalender-Kontexts
+   (Anzeigestand des letzten erfolgreichen Laufs — ein veralteter Stand
+   wird nicht verworfen)
+4. Use Case legt je Haushalt und Nachricht einen Zustellvermerk an und
+   versendet ihn über den TelegramBot-Port
+5. Fehlgeschlagener Versand: Fehler wird protokolliert, der Vermerk zählt
+   den Versuch; ein weiterer Versuch folgt erst nach einer Stunde
+6. Nach dem dritten Fehlversuch: kein weiterer Versuch — die Verbindung
+   des Chats bleibt bestehen
+```
+
+**Fehlerisolierung auf zwei Ebenen:** ein fehlgeschlagener **Chat** stoppt
+die übrigen Chats desselben Haushalts nicht; ein fehlgeschlagener
+**Haushalt** stoppt die übrigen Haushalte nicht. Das Vorbild ist die
+Fehlerisolierung je Haushalt aus ADR 0005.
+
+> **Offen:** Wie die Wiederholung nach einer Stunde ausgelöst wird — eigener
+> stündlicher Scheduler-Tick, `@Scheduled(fixedDelay)` oder ein gespeicherter
+> Versuchszeitpunkt (ADR 0007, O2). Der Zähler selbst liegt in jedem Fall
+> persistent in `notification_delivery`.
 
 ## Ausgehende Adapter
 
@@ -50,6 +82,7 @@ Fehler.
 | **Persistenz** | `HouseholdRepositoryAdapter` | Mapping im Adapter, Entity nie außerhalb |
 | **HTTP** | `NextcloudUserDirectory`, `IcsWasteCalendarFeed` | `RestClient` mit Timeout; Fehler → Fachfehler |
 | **Fremdbibliothek** | `ical4j` in `IcsWasteCalendarFeed` | Bibliothek endet an der Adaptergrenze, der Port bleibt bibliotheksfrei (ADR 0006) |
+| **Nachrichtenkanal** | `TelegramBotAdapter` | Bot-API endet an der Adaptergrenze, der Port bleibt protokollfrei (ADR 0007) |
 
 ## Zugriff zwischen Kontexten
 
@@ -68,6 +101,21 @@ MembershipUseCase.requireMembership()      (In-Port des Haushalt-Kontexts)
 
 Diese eine Richtung ist **einseitig** (ADR 0003): Müllkalender → Haushalt,
 nie umgekehrt.
+
+Der Benachrichtigungs-Kontext schließt sich diesem Muster an: er liest die
+Termine über den **In-Port des Müllkalender-Kontexts**, nicht über dessen
+Tabellen (ADR 0007). Die Richtung ist einseitig — Benachrichtigung →
+Müllkalender. Der Müllkalender weiß nichts von Telegram.
+
+```text
+NotificationDispatchUseCase
+      │ liest die Termine des Anzeigestands
+      ▼
+WasteCollectionUseCase (In-Port des Müllkalender-Kontexts)
+      │
+      ▼
+… keine gemeinsame Tabelle, kein Join über Context-Grenzen
+```
 
 ## Lesen und Anzeigen
 

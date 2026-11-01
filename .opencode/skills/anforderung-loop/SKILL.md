@@ -141,6 +141,69 @@ runde=1. `status=PASS` = keine Lücke (Korrekturen werden still mitgenommen),
 Prosa, der Orchestrator wertet `status` und Zielrunde. Ausgabeformat,
 Kategorien, Checklisten, Arbeitsweise: `references/gate.md`.
 
+## Runde 4 — Redaktion (nach dem finalen Gate)
+
+**Zweck:** Der Body ist die einzige Quelle, die der Umsetzungs-Agent liest.
+Jedes Wort darin kostet Kontext. Nach dem finalen Gate wird der Body
+deshalb **auf das für die Umsetzung Nötige reduziert** — nicht auf das
+Verständlichste, sondern auf das *Ausreichende*.
+
+Reihenfolge: finalen Gate `PASS` abwarten → Redaktion → erst dann
+`issue-github` **Teil C** (Titel, Labels, Typ, Abschlusskommentar).
+
+### Was bleibt
+
+- `## Goal` — ein Satz, was der Nutzer danach kann.
+- `## Scope` / `## Out of Scope` — die Abgrenzung, in Kurzform.
+- `## UX` — **nur** die umsetzungsrelevanten Festlegungen: Elemente,
+  Zustände, Labels, Token-Namen, Reihenfolge. Begründungen, Design-Begründung
+  und Prosa entfallen; die Design-DNA steht in `docs/design/design-dna.md`.
+- `## Files` — nur die Pfade, die neu sind oder geändert werden, je Pfad
+  eine Zeile mit Zweck. Die Description hinter dem Pfad entfällt.
+- `## Implementation` — nur die Stellen, an denen es **Alternativen** gibt
+  (Berechnung, Zustände, Reihenfolge, Abweichung vom Naheliegenden).
+  Kein Schema-Dump, keine Spaltentabelle, keine Port-Aufzählung — das steht
+  in `AGENTS.md` und den Skills.
+- `## Acceptance Criteria` — **unverändert und vollständig**. ACs sind das
+  Abnahmekriterium; hier wird nichts gekürzt.
+- `## Tests` — je AC **eine** Zeile: Testart und Ort. Die Fallbeschreibung
+  wandert in den Testcode, nicht ins Issue.
+- `## Verify` — unverändert, plus manueller Satz.
+- `## Gotchas` — nur die Fallen, die nicht in `AGENTS.md` stehen.
+
+### Was entfällt
+
+- `## Context` — der Bestand steht im Repo; der Agent liest ihn dort.
+- `## Referenz`, `## Abweichungen`, `## Begriffe`, `## Offene Punkte` —
+  nur wenn sie **Handlungsanweisungen** enthalten. Reine Herleitungen,
+  Begründungen und Annahmen ohne Folge entfallen.
+- Jede Begründung, die kein "das würde der Agent sonst anders machen" verhindert.
+- Wiederholungen desselben Sachverhalts in Goal, Scope und AC.
+
+### Messregel
+
+Nach der Redaktion gilt: der Body ist **kürzer als vorher**, und jeder
+Abschnitt beantwortet eine Frage, die der Agent sonst stellen müsste.
+Ziel: **unter 40 %** der Zeilen des Vorzustands, **ohne** ein AC, einen
+Fehlerfall, eine Zustandsangabe, ein Token, einen API-Pfad oder einen
+Dateipfad zu verlieren. Wird das nicht erreicht, ist zu viel gestrichen —
+lieber zurücknehmen als wegkürzen.
+
+### Lesehinweis für den Umsetzungs-Agenten
+
+Der Body wird **allein** gelesen. Die **Kommentare** (Grilling-Protokolle je
+Runde) werden **nur** gelesen, wenn im Body etwas **nicht ermittelbar**
+ist — eine Frage, die der Agent aus dem Body heraus nicht beantworten
+kann. Sie sind Begründung und Historie, keine Spezifikation.
+
+Diese Regel gehört in **jeden** finalisierten Body:
+
+```markdown
+> **Lesen:** Dieser Body ist die vollständige Spezifikation. Die
+> Kommentare enthalten das Grilling-Protokoll (Begründung, Historie) und
+> werden nur gelesen, wenn hier etwas nicht ermittelbar ist.
+```
+
 ## Epic und Phasen
 
 **Epic** = unabhängig lieferbare, je allein nutzbare Teile; R1 erzeugt die
@@ -187,6 +250,7 @@ Runde 1: Epic <ja/nein>, Phase <N.M>, User-Entscheidungen <n>
 Runde 2: Kriterien <n> (AC1–AC<n>), Eingaben ohne Pflegeort <n>,
          Referenz <n>, Abweichungen <n>
 Runde 3: AC <n>, technisch geprüft <n>, AC ohne Test <n>, Begriffe <n>
+Redaktion: <n> → <m> Zeilen (<p> %), AC <n>/<n>, Fehlerfälle <n>/<n>
 GATE: runde=<n> status=<PASS|GAPS>
 LÜCKEN:
 - …

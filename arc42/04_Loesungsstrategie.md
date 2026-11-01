@@ -19,6 +19,7 @@ sind in einem Repository enthalten (Modulith mit getrennten Builds).
 | Teststrategie | Tests je Schicht, Testcontainers für die DB | Fehler auf der tiefsten Ebene finden | — |
 | Tageslauf externer Quellen | **Serverseitiger Scheduler** in derselben Anwendung (`@Scheduled`), kein Worker, keine Queue | Eine Deploymenteinheit (ADR 0003); geplanter und sofortiger Lauf teilen einen Use Case | [ADR 0005](../docs/adr/0005-taeglicher-serverlauf-fuer-externe-quellen.md) |
 | ICS-Auswertung | **iCalendar-Bibliothek** `org.mnode.ical4j:ical4j` 4.4.0, ausschließlich im ausgehenden Adapter | Formatwissen (Zeilenfaltung, Maskierung, Zeitzonen) wird nicht im Projekt gepflegt; die Anwendung bleibt frei von Fremdformaten | [ADR 0006](../docs/adr/0006-ical4j-fuer-die-ics-auswertung.md) |
+| Haushaltsbenachrichtigung | **Eigener Fach-Kontext** „Benachrichtigung"; Telegram-Transport nur als Adapter, Müllkalender bleibt read-only | Zustellzustand und Chat-Verwaltung sind eigenes Fachmodell; Kontextgrenzen laufen über In-Ports | [ADR 0007](../docs/adr/0007-telegram-benachrichtigung-als-eigener-kontext.md) |
 
 ## Muster
 
@@ -30,6 +31,8 @@ sind in einem Repository enthalten (Modulith mit getrennten Builds).
 | Feature-Slices / vertical slices | Ein Issue = ein Branch = ein Feature |
 | Gate-Pattern | Subagenten `architektur-reviewer` und `kritischer-tester` |
 | Scheduler als eingehender Adapter | `adapters/inbound/scheduler/` — löst einen Use Case aus, enthält keine Fachlogik |
+| Fremdprotokoll im Adapter | ICS-Format in `adapters/outbound/ics/` (ADR 0006), Telegram-Bot-API in `adapters/outbound/telegram/` (ADR 0007) — die Ports bleiben protokollfrei |
+| Zustellvermerk | Versuchszählung und Fehlerzustand liegen **persistent** in der Anwendung, nicht im Adapter — der Adapter kennt nur „gesendet / nicht gesendet" |
 
 ## Technologieentscheidungen im Detail
 
@@ -69,6 +72,25 @@ Die Bibliothek bleibt **vollständig im ausgehenden Adapter**
 übersetzt die Bibliothekstypen in das Fachmodell (`WasteEvent`) und hält die
 fachliche Grenze: nur Ganztagsdaten sind Termine, ein unlesbares Dokument ist
 ein **Fehler** (Bestand bleibt) und kein Leerfall (Bestand wird geleert).
+
+### Warum die Benachrichtigung ein eigener Kontext ist?
+
+Der Müllkalender ist read-only und endet an seiner Grenze. Die Benachrichtigung
+braucht ein eigenes Fachmodell: **Chat** (Kennung, Anzeigename, Art,
+Haushalt, freischaltende Person), **Freischalt-Code** und **Zustellvermerk**
+(Ziel, Inhalt, Versuchszählung, Fehler). Keines dieser Begriffe gehört zum
+Mülltermin — sie gehören zum **Zustellvorgang**.
+
+Der Kontext liest die Termine deshalb über den **In-Port des
+Müllkalender-Kontexts** und fasst dessen Tabellen nicht an (ADR 0003, 0007).
+Damit bleibt der Müllkalender unangetastet: ein späterer Kanal (E-Mail) oder
+ein späteres Ereignis (Aufgaben) ergänzt den Benachrichtigungs-Kontext, ohne
+den Müllkalender zu berühren.
+
+Die Telegram-Kenntnis (Chat-IDs, Bot-Token, `sendMessage`, Polling) bleibt im
+Adapter — dasselbe Muster wie das ICS-Format in ADR 0006. Der Port bleibt
+protokollfrei: die Anwendung weiß, dass sie „einen Chat benachrichtigt", nicht
+wie Telegram das tut.
 
 ### Warum der Tageslauf in derselben Anwendung?
 

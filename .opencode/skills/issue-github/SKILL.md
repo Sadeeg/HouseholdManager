@@ -156,6 +156,10 @@ add_issue_comment({
 
 ## Teil C — Finalisieren (nach dem finalen Gate)
 
+**Vorher: Runde 4 (Redaktion).** Der Body wird auf das für die Umsetzung
+Nötige reduziert (`anforderung-loop` → Runde 4). Teil C bekommt den
+**redigierten** Body, nicht den vollen Runde-3-Text.
+
 Nur bei `status=READY_FOR_AGENT`:
 
 ```text
@@ -165,10 +169,18 @@ issue_write({
   repo: "HouseholdManager",
   issue_number: <N>,
   title: "<Titel ohne [WIP]>",
-  body: "<!-- anforderung-loop: runde=final status=READY_FOR_AGENT -->\n\n<Issue-Text>",
+  body: "<!-- anforderung-loop: runde=final status=READY_FOR_AGENT -->\n\n<Redigierter Issue-Text mit Lesehinweis>",
   labels: [<geprüfte finale Labels>],
   type: "Task"
 })
+```
+
+Der redigierte Body beginnt mit dem Marker, danach der Lesehinweis:
+
+```markdown
+> **Lesen:** Dieser Body ist die vollständige Spezifikation. Die
+> Kommentare enthalten das Grilling-Protokoll (Begründung, Historie) und
+> werden nur gelesen, wenn hier etwas nicht ermittelbar ist.
 ```
 
 Dann ein Abschlusskommentar:
@@ -181,6 +193,10 @@ PASS. Das Issue ist umsetzungsbereit.
 
 **Regeln:** R1–R18 · **Akzeptanzkriterien:** 30 · **Tests:** 7 Testdateien
 ```
+
+Der Kommentar nennt zusätzlich die **Redaktion**: von wie vielen auf wie
+viele Zeilen der Body gekürzt wurde und dass die Kommentare nur bei
+nicht Ermittelbarem gelesen werden.
 
 ## Wiederaufnahme
 
@@ -209,6 +225,9 @@ gelaufen, Runde 3 fehlt).
 - **Nie** das Protokoll in den Body schreiben — es gehört in Kommentare.
 - **Nie** den Body ergänzen statt ersetzen. Der Body ist immer der
   vollständige aktuelle Issue-Text.
+- **Nie** finalisieren ohne Redaktion (Runde 4). Der Body ist die einzige
+  Quelle des Umsetzungs-Agenten — Kommentare werden nur bei nicht
+  Ermittelbarem gelesen.
 - Der `[WIP]`-Präfix bleibt, bis das finale Gate `PASS` ist.
 - Bestehende Issues werden nicht automatisch geschlossen oder editiert.
 - Wird ein Epic angelegt, passiert es **vor** seinen Phasen. Die Phasen

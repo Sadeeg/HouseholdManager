@@ -23,6 +23,11 @@ trägt der ARC-Agent hier ein.
 | **Stand** | Der Zeitpunkt des letzten **erfolgreichen** Synchronisationslaufs eines Haushalts (`waste_sync_state.last_synced_at`); ohne solchen Lauf: „Noch keine Synchronisation". |
 | **Veraltet** | Der Zustand, in dem seit dem letzten erfolgreichen Lauf ein Lauf fehlgeschlagen ist: die gespeicherten Termine bleiben sichtbar, der Stand wird als veraltet ausgewiesen (R13). |
 | **Invariante** | Fachregel, die immer gilt (z. B. Name nicht leer, höchstens 120 Zeichen). |
+| **Telegram-Chat** | Ein über Telegram verbundener Chat — entweder eine **Gruppe** oder ein **Einzelchat** mit dem Bot. Beide heißen gemeinsam „Telegram-Chat". |
+| **Freischalt-Code** | Die dauerhaft gültige Kennung eines Haushalts, mit der ein Telegram-Chat diesem Haushalt zugeordnet wird. Kein Ablaufdatum, mehrfach verwendbar, für alle Mitglieder sichtbar. |
+| **Zustellvermerk** | Das fachliche Protokoll eines Benachrichtigungsversands: Ziel, Inhalt, Versuchszählung, Fehler, Status. Er ist persistent und damit Grundlage der Wiederholungsregel. |
+| **Erinnerung** | Die Nachricht am Abend vor einem Mülltermin mit dessen Abfalltyp und Datum; fasst alle Abfalltypen des Folgetags in **einer** Nachricht zusammen. |
+| **Wochenübersicht** | Die Nachricht mit allen Müllterminen der kommenden Woche (Montag–Sonntag), aufsteigend nach Datum. |
 
 ## Architektur
 
@@ -48,6 +53,9 @@ trägt der ARC-Agent hier ein.
 | **Dev Services** | Boot-4-Funktion: Spring Boot startet die Compose-Datei selbst — im Projekt nur im Profil `local` aktiv. |
 | **Vertikaler Schnitt** | Feature als durchgehender Schnitt von der Oberfläche bis zur Persistenz. |
 | **Scheduler (eingehender Adapter)** | Zeitgesteuerter Auslöser in `adapters/inbound/scheduler/` — er ruft genau einen Use Case auf und enthält keine Fachlogik (ADR 0005). |
+| **Bot-Eingang (eingehender Adapter)** | Adapter, der Nachrichten eines Chat-Dienstes entgegennimmt und daraus einen Use Case auslöst — die Entsprechung des Controllers für einen externen Kanal (ADR 0007). |
+| **Zustellvermerk** (Architektur) | Persistenter Zustand je Nachricht im Fachkern; trägt die Versuchszählung, damit „höchstens drei Versuche" über einen Neustart hinweg gilt (ADR 0007). |
+| **Fremdprotokoll** | Das Format oder die API eines externen Dienstes (ICS, Bot-API) — bleibt vollständig im ausgehenden Adapter, der Port bleibt protokollfrei (ADR 0006, ADR 0007). |
 | **ICS** | Das Austauschformat der Abholtermine (iCalendar): `VCALENDAR` mit `VEVENT`-Ereignissen; ausgewertet wird es mit `ical4j` **im ausgehenden Adapter** — die Anwendung kennt das Format nicht (ADR 0006). |
 
 ## Prozess

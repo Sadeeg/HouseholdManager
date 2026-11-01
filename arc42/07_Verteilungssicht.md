@@ -54,6 +54,9 @@
 | `HOUSEHOLDMANAGER_WASTE_SYNC_CRON` | `0 0 3 * * *` | Tageslauf des Müllkalenders — ADR 0005 |
 | `HOUSEHOLDMANAGER_WASTE_SYNC_ZONE` | `Europe/Berlin` | Zeitzone des Tageslaufs (`householdmanager.waste.sync-zone`) — ADR 0005 |
 | `HOUSEHOLDMANAGER_WASTE_TIMEOUT` | 5 s | Zeitlimit für den Abruf einer ICS-Quelle (`householdmanager.waste.timeout`, auch im Sofort-Sync, ADR 0005) |
+| `HOUSEHOLDMANAGER_TELEGRAM_BOT_TOKEN` | — | **Secret** des Telegram-Bots (`householdmanager.telegram.bot-token`); ohne Wert ist der Benachrichtigungs-Kontext inaktiv (ADR 0007) |
+| `HOUSEHOLDMANAGER_NOTIFICATION_CRON` | `0 0 18 * * *` | 18:00-Uhr-Lauf der Benachrichtigung (`householdmanager.notification.cron`) — ADR 0007 |
+| `HOUSEHOLDMANAGER_NOTIFICATION_ZONE` | `Europe/Berlin` | Zeitzone der Benachrichtigung (`householdmanager.notification.zone`) |
 
 ## Ausgehende Verbindungen (Egress)
 
@@ -64,6 +67,20 @@ der Abruf läuft über den vorhandenen `RestClient` (ADR 0005, ADR 0006).
 
 Ein Container-Image muss das Zertifikat des Entsorgers vertrauen; in der
 Entwicklungsumgebung genügt das System-Truststore des Basis-Images.
+
+### Telegram
+
+Für den Versand von Benachrichtigungen braucht der Backend-Container
+zusätzlich **ausgehenden** Netzzugriff zur Telegram-Bot-API (`HTTPS`).
+
+Der Empfang läuft über **Long-Poll**: die Anwendung fragt Telegram aktiv
+nach Nachrichten ab. Damit braucht der Container **keinen eingehenden**
+Port, kein TLS-Zertifikat und keinen öffentlich erreichbaren Endpunkt
+(ADR 0007, O1).
+
+Es kommen **keine** neuen Container, **keine** neuen Ports und **keine**
+neuen Abhängigkeiten dazu — die Benachrichtigung läuft in derselben
+Anwendung (ADR 0003, ADR 0007).
 
 ## Betrieb
 
