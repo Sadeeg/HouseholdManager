@@ -231,3 +231,20 @@ und ein grüner Lauf bedeutet dann nichts.
 - **Layout ist nicht testbar.** jsdom sieht keine Geometrie — Position,
   Überlappung und Verdeckung brauchen eine Sichtprüfung (Screenshot), keinen
   Unit-Test.
+- **Eine Zeile ohne Umbruchstrategie läuft aus.** Jede **neue oder geänderte**
+  Kopfzeile bricht unter 768 px um: die Navigation kommt in eine eigene
+  Zeile, ein datenabhängiger Anzeigetext (z. B. der Name im Wähler) wird
+  gekürzt. Sonst wird die Dokumentbreite größer als der Viewport — die Seite
+  scrollt waagerecht, auf **jeder** Seite. Die Umbruchregel steht am **Ende**
+  der SCSS-Datei (sonst gewinnen die Basisregeln). Gemessen wird am laufenden
+  Stack: Dokumentbreite bei 375 px und die Geometrie bei 1280 px (darf sich
+  nicht ändern).
+- **Eine Messung belegt eine Breite.** Die Sichtprüfung misst eine **Reihe**
+  um den Bruchpunkt (z. B. 320, 375, 767, 768, 800, 1280 px) und vergleicht
+  mit dem Stand vor dem Issue — eine Regression, die nur **neben** dem
+  Messpunkt liegt (z. B. direkt über der Bruchstelle), sieht man sonst nicht.
+- **`max-width` wirkt bei Flex-Items erst mit `min-width: 0`.** Als Flex-Item
+  gilt `min-width: auto` = Mindestinhalt; ein unumbrochener Text (ein Name
+  aus den Daten!) sprengt die Zeile trotz `max-width`. Wer Inhalt anzeigt,
+  dessen Länge von Daten abhängt, setzt `min-width: 0` **und** `max-width` —
+  und prüft beides im Browser (Ellipse statt Abschneiden).

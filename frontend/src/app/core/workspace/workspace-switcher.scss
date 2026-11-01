@@ -2,6 +2,15 @@
 :host {
   position: relative;
   display: inline-block;
+  // Der Wähler darf die Kopfzeile nicht breiter machen als der Platz
+  // (Issue #14, AC-k1): ein langer Haushaltsname wird gekürzt.
+  max-width: 100%;
+  // `min-width: auto` ist als Flex-Item der automatische Mindestinhalt — der
+  // min-content des unumbrochenen Namens (293 px). Das überschreibt die
+  // `max-width`-Schranke und ließ den Kopf ab 768 px überlaufen, obwohl die
+  // Umbruchregel dort gar nicht greift. `min-width: 0` erlaubt dem Item, unter
+  // die Schranke zu schrumpfen; gekürzt wird der Name dann im Trigger.
+  min-width: 0;
 }
 
 .workspace-switcher__trigger {
@@ -9,6 +18,7 @@
   align-items: center;
   gap: var(--hm-space-2);
   height: 2rem;
+  max-width: 100%;
   padding: 0 var(--hm-space-3);
   background: transparent;
   border: 1px solid var(--hm-border-strong);
@@ -25,6 +35,12 @@
   &--empty {
     color: var(--hm-text-faint);
   }
+}
+
+.workspace-switcher__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workspace-switcher__marker {
