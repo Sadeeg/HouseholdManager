@@ -64,5 +64,23 @@ die Regel benennen und die Lehre überführen.
 - Architektur-Review: **OK** (keine korrekturpflichtigen Befunde; die
   Dokumentations-Lücke wurde in diesem Schritt nachgezogen).
 - Abnahme: siehe Kommentar am Issue #8.
-- Belege: Backend 182 Tests grün, Frontend 27 Dateien / 124 Tests grün,
-  Lint und Sheriff ohne Beanstandung, Production-Build erfolgreich.
+- Belege (Stand nach dem Rebase auf `main`): Backend **209 Tests** grün
+  (BUILD SUCCESS), Frontend **25 Dateien / 174 Tests** grün, Type-Check
+  (`tsc` app + spec) grün, Lint und Sheriff ohne Beanstandung,
+  Production-Build erfolgreich, Images über `docker compose build` gebaut.
+
+### Manueller Pfad (Browser, Chrome)
+
+Am laufenden Stack gespielt (Playwright, `channel: chrome`; die API auf
+HTTP-Ebene gestubt — das Backend antwortet auf das Speichern mit 400 und
+dem `ProblemDetail`):
+
+| Schritt | Beobachtung |
+|---|---|
+| 61 Zeichen ins Label-Feld | Meldung „Ein Label darf höchstens 60 Zeichen lang sein." steht an der Label-Eingabe ✓ |
+| `aria-describedby` der Eingabe | verweist auf `task-label-error` ✓ |
+| Speichern | Ablehnung bleibt sichtbar, die Aufgabe wird nicht angelegt ✓ |
+| Titel „Einkaufen gehen" | bleibt in der Eingabe stehen ✓ |
+| Label-Eingabe | bleibt mit 61 Zeichen stehen (nicht geleert) ✓ |
+
+Beleg: `docs/images/issue-8-label-limit.png`.
