@@ -108,4 +108,35 @@ Abnahme festhalten und die Lehren als Regeln überführen.
 - Der Freischalt-Code ist sechsstellig und hat **kein Rate-Limit**: über den
   Bot ließen sich Codes erraten. Das ist bewusst offengelassen, weil eine
   Sperre eine eigene fachliche Regel mit Zählern je Chat wäre — sie gehört
-  in ein eigenes Issue, nicht in die Reparatur.
+  in ein eigenes Issue, nicht in die Reparatur. → **Issue #36**
+  (`fix(telegram): Freischalt-Code gegen Durchprobieren härten`).
+- Die drei nicht blockierenden Befunde der Review-Runde 3 (M1 Namensauflösung
+  je Chat, M2 Controller-Javadoc, N1 totes Feld `activatedBy`) sind bereits
+  in `3fbb171` umgesetzt und brauchen kein eigenes Issue.
+
+## 4. Lehren aus dem Gate-Lauf
+
+Das Feature hat fünf Review- und drei Abnahme-Runden gebraucht, mit 29 vollen
+`mvn test`-, 20 `npm test`-Läufen und sechs Kontext-Kompaktierungen. Zwei
+Ursachen:
+
+1. **Der Befundstand lebte nur im Chat.** Nach einer Kompaktierung war die
+   Liste der offenen Befunde weg, der Reviewer begann wieder bei null und
+   fand neue NITs statt die alten zu schließen. Deshalb steht der Stand jetzt
+   als Marker `<!-- review-findings: runde=<n> … -->` am Issue und ist die
+   einzige Quelle der Folgerunde.
+2. **Runden ohne Grenze und ohne Delta.** Jede Runde prüfte wieder alles.
+
+Überführte Regeln (AGENTS.md DoD 4, `.opencode/README.md`,
+`/review`, `/abnahme`, beide Gate-Agenten, Commit `69055d7`):
+
+| Lehre | Regel |
+|---|---|
+| Ein Befundstand im Chat überlebt keine Kompaktierung | Der Stand steht am Issue, nicht im Verlauf |
+| Eine Vollerhebung findet beliebig viele NITs | Runde 1 erhebt geschlossen, Runden 2–3 prüfen nur offene `K`-Befunde und Regressionen im Korrektur-Diff |
+| Ein Gate ohne Rundengrenze ist ein Kostenrisiko | Höchstens drei Review-Runden insgesamt, gezählt am Issue-Marker; die Abnahme wird höchstens einmal wiederholt |
+| Urteile gehören an das Issue, nicht in den Chat | `review:`- und `abnahme:`-Marker als Kommentar, mit Rundennummer und geprüftem Commit |
+
+Zusätzlich: MINOR/NIT blockieren nie und werden zu Follow-up-Issues — sonst
+wird eine Korrekturrunde zur NIT-Jagd, während die eigentliche Freigabe
+wartet.
