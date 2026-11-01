@@ -98,12 +98,11 @@ JPA-Entity.
 Warnhinweis im Log). Das ist der Zustand eines frischen, noch nicht
 eingerichteten Setups — **kein** Produktivbetrieb.
 
-Mandantentrennung und Rollen — Zielbild aus Issue #1: die Tabelle
-`household_member` macht ernannte Zugehörigkeit sichtbar; jeder Task-Use-Case
-prüft vor der Fachaktion die Mitgliedschaft der angemeldeten Person
-(`CurrentUserPort` + `HouseholdMemberRepository`, sonst 403). Haushaltsleitung
-= Ersteller/in des Haushalts; diese Information fehlt in der Schema-Entwurf
-von V1 und wird mit Issue #1 ergänzt (siehe 11).
+**Mandantentrennung und Rollen:** die Tabelle `household_member` macht
+ernannte Zugehörigkeit sichtbar; jeder Use Case prüft vor der Fachaktion die
+Mitgliedschaft der angemeldeten Person (`CurrentUserPort` +
+`HouseholdMemberRepository`, sonst 403). Haushaltsleitung = Ersteller/in des
+Haushalts — diese Information ist im Schema noch nicht persistiert (siehe 11).
 
 ## Logging und Observability
 

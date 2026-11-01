@@ -24,23 +24,12 @@ Entscheidung — **keine** Dublette.
 | `open-in-view: false` | verhindert Lazy-Lazy-Lad-Fehler und N+1 | — (dauerhafte Festlegung) |
 | Route-scoped Provider werden beim Verlassen der Route zerstört (`withAutoCleanupInjectors()`) | ein Feature liest beim erneuten Betreten erneut; ohne die Option überlebt die Instanz den Wegwechsel und `httpResource` feuert bei gleicher URL nicht (Anzeige zeigte den alten Stand) | ein Feature Zustand über Navigationswechsel hinweg halten muss |
 
-## ADR-Vorschläge — entschieden (2026-10-29)
-
-Die aus Issue #1 abgeleiteten Vorschläge sind als **ADR 0003** und
-**ADR 0004** angenommen (siehe Tabelle oben).
-
-## Entscheidungen aus Issue #10 (2026-10-31)
-
-Aus Issue #10 („Mülltermine") sind zwei Architekturentscheidungen entstanden;
-beide sind vom Auftraggeber bestätigt und als ADR festgehalten.
-
-| ADR | Entscheidung | Auswirkung |
-|-----|--------------|------------|
-| [0005](../docs/adr/0005-taeglicher-serverlauf-fuer-externe-quellen.md) | Tageslauf **03:00 Europe/Berlin** im Backend (`@Scheduled`), `Clock` als einzige Zeitquelle, Fehler je Haushalt isoliert, kein Worker und kein zweiter Container; der Sofort-Sync ist ein **zweiter Use-Case-Aufruf im Controller** (eigene Transaktion, 5-s-Grenze) | Lauf und Sofort-Sync teilen einen Use Case; die Antwort wartet auf den Lauf (AC11) |
-| [0006](../docs/adr/0006-ical4j-fuer-die-ics-auswertung.md) | ICS-Auswertung mit `org.mnode.ical4j:ical4j` **4.4.0**, vollständig im ausgehenden Adapter; `WasteCalendarFeed` bleibt bibliotheksfrei | Keine eigene Formatlogik im Projekt; kein `javax.mail`/`jakarta.mail`-Konflikt; Formatfehler bleibt vom Leerfall getrennt |
-
 > **Offen:** Mandantenfähigkeit im Sinne „Context pro Haushalt/Mieter" und
 > Monorepo-Tooling (Nx?) — jeweils als ADR, sobald entschieden.
+
+**Hinweis:** Die Auswirkungen der ADRs stehen in den betroffenen Kapiteln
+(03, 05, 06, 07, 08). Dieses Kapitel listet sie auf — es wiederholt sie
+nicht.
 
 ## Wie Entscheidungen entstehen
 

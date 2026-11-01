@@ -10,13 +10,13 @@ trägt der ARC-Agent hier ein.
 | **Haushalt** | Die zentrale Einheit: ein Wohnumfeld mit Mitgliedern, Aufgaben, Ausgaben und Terminen. Alle Daten sind einem Haushalt zugeordnet. |
 | **Haushaltsleitung** | Die Person, die den Haushalt erstellt hat; sie ernennt und entfernt Mitglieder und ist selbst immer Mitglied. |
 | **Haushaltsmitglied** | Person aus dem Nutzerverzeichnis, die von der Haushaltsleitung zum Haushalt ernannt wurde; die ernannte Zugehörigkeit ist Zugangsvoraussetzung zu den Aufgaben des Haushalts. |
-| **Aufgabe** | Eintrag eines Haushalts mit Titel, optionalem Markdown-Inhalt, Status (TODO/DOING/DONE), optionaler Zuständiger, Frist und Labels (Issue #1). |
+| **Aufgabe** | Eintrag eines Haushalts mit Titel, optionalem Markdown-Inhalt, Status (TODO/DOING/DONE), optionaler Zuständiger, Frist und Labels. |
 | **Label** | Frei benannter Text an einer Aufgabe; Identität ist groß-/kleinschreibungsunabhängig, angezeigt wird die zuerst gespeicherte Schreibweise; gleiche Namen erscheinen in gleicher Farbe. |
 | **Überfällig** | Aufgabe mit Frist vor dem heutigen (lokalen) Tag und Status ungleich DONE. |
 | **Workspace (der App)** | Der auf App-Ebene gewählte Haushalt; alle Ansichten zeigen ausschließlich dessen Daten. |
 | **Ausgabe** | Geldbetrag in einem Haushalt, optional mit Kategorie und Beleg (späterer Context). |
 | **Termin** | Zeitpunkt mit Beschreibung, ggf. wiederkehrend (späterer Context). |
-| **Müllkalender** | Die hinterlegte ICS-Quelle eines Haushalts samt der daraus abgeleiteten Abholtermine; je Haushalt gilt höchstens eine Quelle, sie ist optional (Issue #10). |
+| **Müllkalender** | Die hinterlegte ICS-Quelle eines Haushalts samt der daraus abgeleiteten Abholtermine; je Haushalt gilt höchstens eine Quelle, sie ist optional. |
 | **Quelle** | Die Adresse des ICS-Feeds, aus der die Termine eines Haushalts gelesen werden (`household.waste_calendar_url`). |
 | **Mülltermin** | Ein ganztägiger Abholtermin aus der Quelle: Tonnenart (`SUMMARY`) und Datum (`DTSTART`) — ohne Uhrzeit, unverändert übernommen. |
 | **Sechs-Wochen-Fenster** | Die 42 Tage ab dem Tag des Laufs, für die Termine gespeichert werden (R5). |

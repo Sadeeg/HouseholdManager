@@ -734,3 +734,89 @@ Nach den ersten 3–5 Features gegenprüfen: Steigen Fehlversuche, Rückfragen
 oder „falscher Skill geladen"-Fälle, wird die Kürzung an der Stelle
 zurückgenommen. Die Zahlen dafür stehen in §6.
 
+---
+
+## 16. Dritte Runde (2026-11-01) — angular-Skill und arc42-Schwelle
+
+### 16.1 `angular-developer` — Body kürzen, Referenzen behalten
+
+Der Body war eine reine Inhaltsverzeichnis-Seite über 43 Referenzen
+(11.516 B) und enthielt eine vollständige **`ng new`-Anleitung** — gegenstandslos,
+das Projekt existiert. Die 43 Referenzdateien (170 KB) bleiben **unangetastet**:
+sie werden nur geladen, wenn genau die Frage sie betrifft, und kosten dann
+nichts.
+
+**Neuer Body (4.459 B):** Projekt-Kontext (Angular 22, zoneless, Signal
+Forms, route-scoped Services, Tokens, Vitest), eine Referenztabelle mit den
+31 tatsächlich genutzten Dateien, und ein Hinweis auf die 12 Dateien, die
+für dieses Projekt nicht relevant sind (Tailwind, SSR/Hydration, Animationen,
+Migrationen, E2E, MCP).
+
+**Gegenprobe:** jede referenzierte Datei existiert; die genannten Themen
+(Signal Forms, `httpResource`) kommen im Projekt tatsächlich vor
+(`frontend/src/app/features/tasks/data/tasks-data.ts`).
+
+### 16.2 arc42 — die Schwelle „nur Architektur"
+
+**Befund:** arc42 wuchs **mit der Zahl der Features**, nicht mit der Zahl der
+Entscheidungen. Kapitel 05 hatte zwei „Zielbild"-Abschnitte (Issue #1, #10) mit
+je ~30 Zeilen Feature-Entwurf; Kapitel 06 hatte 8 Einzel-Szenarien, davon 5
+mit Issue-Bezug; 03, 08, 10, 11, 12 mischten Feature-Status mit stabiler
+Architektur.
+
+**Die Schwelle:**
+
+> **arc42 beschreibt, _wie_ das System gebaut ist und _warum_.**
+> Das **Issue** beschreibt, _was_ ein Feature macht.
+
+| In arc42 | Nicht in arc42 |
+|----------|----------------|
+| Bausteine, Ports, Adapter, Abhängigkeitsrichtungen | Feature-Abläufe, einzelne Nutzerflüsse |
+| bounded contexts und ihre Grenzen | Akzeptanzkriterien, Testlisten |
+| Laufzeitmuster, Jobs, externe Abrufe | „Zielbild"-Abschnitte pro Feature |
+| Querschnittskonzepte | Issue-Status, Reifegrade, Sprint-Scope |
+| Entscheidungen (ADR, in 09 verlinkt) | API-Verträge im Detail |
+| Risiken, technische Schulden | Wiederholungen aus 05, 08, 09 |
+| Fachbegriffe | |
+
+**Umsetzung:**
+
+1. **Agent `arc-agent`**: neuer Abschnitt „Die Schwelle: was in arc42 gehört"
+   mit der Trennlinie, der Normalfall-Erregel („nutzt ein Feature nur eine
+   bestehende Struktur, bleibt arc42 unberührt") und einem neuen
+   Ergebnis-Feld `Architektur-Betroffenheit: strukturell | nur Nutzung`.
+2. **Skill `anforderung-loop`**: Runde 2b als Schwellenprüfung beschrieben.
+3. **`.opencode/README.md`**: dieselbe Trennlinie als Tabelle.
+4. **Bestandsaufräumung** in den Kapiteln selbst:
+   - 05: zwei „Zielbild"-Abschnitte entfernt → dafür „Muster über alle
+     Contexts" (Use Case je Vorgang, Fach-Exception je Regelverletzung,
+     Repository-Port + Adapter, In-Port für Context-Zugriff, Scheduler-Adapter
+     …) und eine „Datenzuordnung"-Tabelle
+   - 06: 8 Szenarien → **ein** Request-Muster, die drei Arten eingehender
+     Adapter, die ausgehenden Adapter, der Context-Zugriff, der route-scoped
+     Lebenszyklus
+   - 03: „Scope des aktuellen Sprints" entfernt, Issue-Bezüge aus der
+     Context-Tabelle raus
+   - 08, 10, 11, 12: Issue-Bezüge raus, Q11–Q15 generalisiert
+
+**Wissens-Gegenprobe:** nach dem Aufräumen wurde geprüft, ob die
+Schlüsselbegriffe der entfernten Abschnitte noch auffindbar sind. Zwei
+Verluste wurden entdeckt und archtektonisch wieder verankert: `WorkspaceUseCase`
+(→ 05 „Muster über alle Contexts") und `SYNC_WINDOW_DAYS` / `MAX_URL_LENGTH`
+(→ 05 „Fachliche Konstanten im `domain`").
+
+### 16.3 Messung
+
+| Posten | vorher | nachher | Δ |
+|--------|--------|---------|---|
+| `angular-developer/SKILL.md` | 11.516 B | 4.459 B | **−61 %** |
+| arc42 gesamt | 73.694 B | 59.258 B | **−20 %** |
+| arc42/05 Bausteinsicht | 18.775 B | 9.288 B | −51 % |
+| arc42/06 Laufzeitsicht | 8.050 B | 4.946 B | −39 % |
+| arc42/03 Kontextabgrenzung | 3.837 B | 3.306 B | −14 % |
+| `arc-agent`-Beschreibung (Katalog) | 428 Z | 262 Z | −39 % |
+
+**Dauerhafter Effekt:** arc42 wächst nicht mehr je Feature. Bei 20 Features
+gespart wären das ~50 KB Wachstum — pro Feature ~2,5 KB, die bei jedem
+Arc42-Lesevorgang mitbezahlt werden.
+

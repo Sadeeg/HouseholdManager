@@ -68,6 +68,10 @@ Sheriff (`frontend/sheriff.config.ts`).
 
 ## Bausteine je Kontext
 
+Die Tabelle nennt die **Art** eines Bausteins und seine Verantwortung —
+nicht den Feature-Verlauf. Detaillierte Entwürfe einzelner Features stehen
+im jeweiligen GitHub-Issue.
+
 | Baustein | Art | Verantwortung |
 |-----------|-----|----------------|
 | `Household` (domain) | Fachmodell | Daten des Haushalts, keine Technik |
@@ -89,6 +93,44 @@ Sheriff (`frontend/sheriff.config.ts`).
 | `HouseholdItem` | UI (dumb) | Darstellung eines Haushalts |
 | `PageHeader` | Shared | Seitenkopf |
 
+### Muster über alle Contexts
+
+Diese Bausteinarten wiederholen sich je Fach-Kontext. Sie stehen hier
+**einmal** — nicht je Feature:
+
+| Muster | Ausprägung | Regel |
+|--------|-----------|-------|
+| **Use Case je Fach-Vorgang** | `HouseholdUseCase`, `TaskUseCase`, `MembershipUseCase`, `WasteCollectionUseCase` | Orchestrierung + Invariante; Transaktionsgrenze |
+| **Fach-Exception je Regelverletzung** | `InvalidHouseholdNameException`, `WasteFeedUnavailableException` | framework-frei; der Adapter übersetzt sie in einen Statuscode |
+| **Repository-Port + Adapter je Aggregat** | `HouseholdRepository` → `HouseholdRepositoryAdapter` | Mapping ausschließlich im Adapter |
+| **Controller je Kontext** | `HouseholdController`, `TaskController`, `MemberController`, `WasteCollectionController` | `api/<resource>`; DTO-Records in `dto/` |
+| **In-Port für Context-Zugriff** | `MembershipUseCase.requireMembership` | ein Context greift **nie** auf die Tabellen eines anderen zu (ADR 0003) |
+| **Scheduler-Adapter** | `WasteSyncJob` | löst genau einen Use Case aus, enthält keine Fachlogik (ADR 0005) |
+| **Workspace-Auswahl** | `WorkspaceUseCase`, `WorkspaceSelectionRepository` | app-weit in `core/workspace`; Auswahl wird je Person gemerkt (ADR 0004) |
+| **Feature-Ordner je Kontext** | `features/households/`, `features/tasks/`, `features/waste/` | `routes.ts`; route-scoped Data-Services |
+| **core-Bausteine** | `core/workspace/`, `core/users/` | app-weit, eine Instanz (`providedIn: 'root'`) |
+| **shared-Komponenten** | `shared/components/user-picker`, `page-header` | fachneutral, ohne Fachlogik |
+
+### Datenzuordnung
+
+| Tabelle | Kontext | Besonderheit |
+|---------|---------|--------------|
+| `household` | Haushalt | trägt die Adresse einer externen Quelle als untypisiertes Attribut — der Kontext kennt keine Fremdregeln |
+| `household_member` | Haushalt | Mitgliedschaft; geprüft über den In-Port des Haushalt-Kontexts |
+| `workspace_selection` | Haushalt | Workspace-Merkung je Person (ADR 0004) |
+| `task`, `label`, `task_label` | Aufgabe | Reihenfolge je Spalte über ein `position`-Feld |
+| `waste_collection`, `waste_sync_state` | Müllkalender | der Stand gehört dem **Lauf**, nicht dem Termin |
+
+**Fachliche Konstanten im `domain`:** `Household.MAX_NAME_LENGTH`,
+`WasteCalendar.SYNC_WINDOW_DAYS` (42) und `WasteCalendar.MAX_URL_LENGTH` (500).
+Das Fenster gibt der Use Case dem Feed-Port vor — eine Quelle der Wahrheit.
+Die Konstante steht im Fachmodell, damit Use Case und Adapter dieselbe
+Grenze kennen.
+
+**Migrationen:** jede Schema-Änderung ist eine **neue** `V`-Migration;
+bestehende Dateien werden nie editiert. `ddl-auto: validate` verlangt
+Übereinstimmung zwischen Entity und Migration.
+
 ## Testebenen
 
 | Test | Ebene | Werkzeug | Prüft |
@@ -99,105 +141,11 @@ Sheriff (`frontend/sheriff.config.ts`).
 | `households-page.spec.ts` | Frontend (Feature) | Vitest + `HttpTestingController` | Liste, Leerfall-Hinweis |
 | `app.spec.ts` | Frontend (App-Shell) | Vitest | App-Shell rendert |
 
+Die Ebenen-Tabelle gilt für **alle** Features — die konkreten Testnamen
+stehen im jeweiligen Issue unter `## Tests`.
+
 > **Offen:** Für `domain` und für die Frontend-`data`-Schicht gibt es noch
 > keinen eigenen Test — die Logik wird dort über die Nachbarschichten
 > abgedeckt.
 
 > **Offen:** Bausteine für die Contexts Ausgabe, Termin.
-
-## Zielbild: Context Aufgabe und Haushaltsmitgliedschaft (Issue #1, entworfen — nicht implementiert)
-
-### Backend
-
-| Baustein (Ziel) | Schicht | Anmerkung |
-|-----------|-------|-----------|
-| `Task`, `TaskStatus` (TODO/DOING/DONE), `HouseholdMembership` | `domain/model` | framework-frei; Frist ist ein Datum ohne Uhrzeit |
-| `TaskUseCase` (anlegen, bearbeiten, löschen, Status und Position wechseln (A15), Erledigte löschen), `MembershipUseCase` (Mitglieder auflisten, ernennen, entfernen) | `application/port/in` | Use Cases prüfen **zuerst** die Mitgliedschaft der angemeldeten Person (`CurrentUserPort` + `HouseholdMemberRepository`); Nicht-Mitglieder → Fachfehler → 403 |
-| `TaskRepository`, `HouseholdMemberRepository` | `application/port/out` | Label-Identität: normalisierter Name (lowercase, getrimmt) eindeutig je Haushalt; gespeichert wird die zuerst gespeicherte Schreibweise |
-| `TaskController` (`api/households/{householdId}/tasks`), `MemberController` (`api/households/{householdId}/members`) | `adapters/inbound/rest` | DTO-Records in `dto/`; Fehler über `GlobalExceptionHandler` |
-| `TaskJpaEntity`, `HouseholdMemberJpaEntity`, `LabelJpaEntity`, `TaskLabelJpaEntity` + Adapter | `adapters/outbound/persistence` | Mapping im Adapter; Zuweisung speichert die Nutzer-ID aus `UserDirectory` |
-| Migrationen `V2__…` (`household.created_by` NOT NULL + `household_member`) und `V3__…` (`task` mit `position`-Feld für die Reihenfolge je Spalte (A15), `label`, `task_label`) | `db/migration` | V1 wird nicht editiert; `created_by` NOT NULL ohne Backfill — frische Dev-DB (A14) |
-| `WorkspaceUseCase` (gemerkten Haushalt lesen, Haushalt merken), `WorkspaceSelectionRepository` | `application/port/in`, `application/port/out` | Merkung der Workspace-Auswahl je Person (ADR 0004); `selectWorkspace` prüft **zuerst** die Mitgliedschaft über `MembershipUseCase.requireMembership` — In-Port des Haushalt-Kontexts, nicht dessen Tabellen |
-| `WorkspaceController` (`api/me/workspace`): `GET` die gemerkte Haushaltskennung (404, wenn nie einer gewählt wurde), `PUT` setzt sie (403 ohne Mitgliedschaft) | `adapters/inbound/rest` | DTO-Record `dto/WorkspaceRequest`; Person über `CurrentUserPort`; dient dem Workspace-Wähler in `core/workspace/` |
-| `WorkspaceSelectionJpaEntity` (`workspace_selection`), `WorkspaceSelectionJpaRepository` + Adapter | `adapters/outbound/persistence` | `user_id` Primärschlüssel, `household_id` Fremdschlüssel mit `ON DELETE CASCADE`; Mapping im Adapter |
-| Migration `V4__workspace_selection.sql` (Tabelle `workspace_selection`: `user_id`, `household_id`, `updated_at`) | `db/migration` | V1–V3 bleiben unverändert |
-| `UserSearchUseCase` (`searchUsers(query)` → `UserRef` mit `id` + Anzeigename) | `application/port/in` | liest über den Out-Port `UserDirectory` (Nextcloud OCS); keine eigene Tabelle, keine Migration, keine E-Mail im Ergebnis |
-| `UserSearchController` (`api/users/search?q=`) | `adapters/inbound/rest` | DTO-Record `UserRefResponse` (`id`, `displayName`); liefert die Vorschläge für `shared/components/user-picker` — Zuständige auswählen (AC8), Mitglieder ernennen (AC11) |
-
-Der Aufgaben-Kontext nutzt die Mitgliedschaft über den In-Port des
-Haushalt-Kontexts (`MembershipUseCase`), nicht über dessen Tabellen.
-
-> **Stand:** Die Workspace-Auswahl (`api/me/workspace`, Migration V4) und die
-> Personensuche (`api/users/search`) sind als Backend-Bausteine umgesetzt; der
-> REST-Pfad `api/users/search` ist eine bewusste Erweiterung gegenüber dem
-> API-Vertrag von Issue #1 (Begründung in 3).
-
-### Frontend
-
-| Baustein (Ziel) | Schicht | Anmerkung |
-|-----------|-------|-----------|
-| `core/workspace/` — `WorkspaceService` + Workspace-Wähler im App-Rahmen | `core` | app-weit, eine Instanz; hält den gewählten Haushalt, lädt die Haushalte der Person, wählt beim nächsten Besuch wieder |
-| `core/users/` — `UserSearch` (Personensuche im Nutzerverzeichnis) | `core` | app-weit, eine Instanz (`providedIn: 'root'`); Query und Treffer sind geteilt, jedes Suchfeld setzt den Zustand beim Anlegen zurück (Issue #4) |
-| `features/tasks/` — `routes.ts` (auth_guard + Workspace vorausgesetzt), `tasks-page`, `model/`, `data/` (`httpResource` auf die WorkspaceId skoped), `ui/` (board-column, task-card, label-chip, task-dialog, confirm-dialog) | Feature | Reihenfolge je Spalte folgt `position` (A15); „überfällig“ wird im Frontend aus `dueDate` + Status berechnet (lokaler Tag, keine Uhrzeit); Label-Farbe = Hash des normalisierten Namens → `--hm-label-1…8` |
-| Mitglieder-Abschnitt in `features/households/` (inline im Listeneintrag) | Feature | keine neue Route |
-| `shared/components/page-header` — Erweiterung um einen Aktionen-Slot | `shared` | von Tafel und Haushaltsverwaltung genutzt |
-| `shared/components/user-picker` — Suchfeld für Personen | `shared` | dumb Component; spricht den `core`-Dienst `UserSearch` an (kein eigener HTTP-Zugriff) |
-
-**Geplant (Tests):** `TaskUseCaseImplTest` (ohne Spring, `Clock` fest für
-Grenzdaten), `TaskControllerTest` (`@WebMvcTest`),
-`TaskRepositoryAdapterTest` (`@DataJpaTest` + Testcontainers),
-`MembershipUseCaseImplTest`, `tasks-page.spec.ts` (Vitest, Leerzustände,
-Drag-Fehlerpfad AC19).
-
-> **Offen:** Markdown-Vorschau als `shared/components`-Komponente
-> (fachneutral) oder in `features/tasks/ui` — Entscheidung in Runde 3.
-> **Offen:** Anzeigename der Zugewiesenen: Live-Auflösung über
-> `UserDirectory` (Verzeichnisabhängigkeit je Request) oder Namens-Snapshot
-> bei Zuweisung — Entscheidung in Runde 3.
-
-## Zielbild: Context Müllkalender (Issue #10, umgesetzt)
-
-Neuer Fach-Kontext **Müllkalender**: er projiziert die Abholtermine eines
-Haushalts aus einer externen ICS-Quelle. Der Context ist **lesend** — er erzeugt
-keine Aufgaben, keine Ausgaben und keine Benachrichtigungen (AC7).
-
-### Backend
-
-| Baustein (Ziel) | Schicht | Anmerkung |
-|-----------|-------|-----------|
-| `WasteCollection` (Termin: `wasteType`, `date` als `LocalDate`, `sourceUid`), `WasteCalendar` (`MAX_URL_LENGTH = 500`, Fensterkonstante `SYNC_WINDOW_DAYS = 42`), `WasteFeedUnavailableException`, `InvalidWasteCalendarUrlException` | `domain/model` | framework-frei; ein Termin ist **ganztägig** (R12) und trägt nie eine Uhrzeit — auch ein Ereignis mit Uhrzeit wird auf seinen Kalendertag abgebildet. Der Term aus der Quelle ist kein Fachmodell, sondern das Record `FeedTerm` am ausgangs-Port |
-| `WasteCollectionUseCase` (`overview(userId, householdId)` → `WasteOverview`, `syncHousehold(householdId)`) | `application/port/in` | Ein Use Case für geplanten und sofortigen Lauf (ADR 0005); die Mitgliedschaft wird **zuerst** über `MembershipUseCase` geprüft (R1/R2). Die Quelle gehört nicht zu diesem Port, sondern zum Haushalt-Kontext (Zeile unten). Kein `syncAllHouseholds`: der Tageslauf ruft `syncHousehold` je Haushalt auf |
-| `WasteCalendarFeed` (`fetch(url, from, to)` → `List<FeedTerm>`), `WasteCollectionRepository`, `WasteSyncStateRepository` | `application/port/out` | Der Port bleibt **bibliotheksfrei**; das Fenster `[from, to]` gibt der Use Case vor — eine Quelle der Wahrheit (`WasteCalendar.SYNC_WINDOW_DAYS = 42`). Der Feed-Port wirft `WasteFeedUnavailableException` bei Timeout/nicht lesbarem Feed; eine **leere** Liste ist ein gültiges Ergebnis (Leerfall R8) und kein Fehler |
-| `WasteCollectionUseCaseImpl` | `application/usecase` | orchestriert: Quelle lesen → Feed abrufen → Fenster filtern → Bestand ersetzen → Stand fortschreiben; `@Transactional` je Haushalt; Fehler je Haushalt isoliert (ein Lauf bricht nicht ab) |
-| `HouseholdUseCase` — **Erweiterung**: `setWasteSource(userId, householdId, url)`, `removeWasteSource(userId, householdId)`, `listHouseholdsWithSource()` (→ `List<Household>`) | `application/port/in` (Haushalt-Kontext) | Die einzige Verbindung zum Haushalt-Kontext — **einseitig**: Müllkalender → Haushalt, nie umgekehrt (ADR 0003). Der Haushalt-Kontext trägt die Adresse als untypisiertes Attribut und kennt keine Müllkalender-Regeln |
-| `WasteCollectionController` (`api/households/{householdId}/waste`): `GET` Übersicht, `PUT …/waste/source`, `DELETE …/waste/source` | `adapters/inbound/rest` | DTO-Records in `dto/`; Fehler über `GlobalExceptionHandler` (400/403/404). `PUT` ruft **zwei Use Cases** nacheinander auf: Quelle speichern (Transaktion 1), dann Haushalt synchronisieren (Transaktion 2, 5-s-Grenze) — kein Ereignis, kein Listener, kein `@Async` (ADR 0005) |
-| `WasteSyncJob` (`syncDaily()`) | `adapters/inbound/scheduler` | **neue** Art von eingehendem Adapter: löst genau einen Use Case aus, enthält keine Fachlogik (ADR 0005). Geht die Haushalte mit Quelle durch (`listHouseholdsWithSource()`) und ruft `syncHousehold` je Haushalt — ein fehlerhafter Haushalt stoppt den Lauf nicht. Ohne `@Scheduled`-Annotation: der Composition Root (`config/ApplicationConfig`) trägt den Task als `CronTask` mit `householdmanager.waste.sync-cron` / `sync-zone` ein |
-| `IcsWasteCalendarFeed` (HTTP via `RestClient`, Timeout 5 s) + **ical4j 4.4.0** (`CalendarBuilder` → `Calendar`/`VEvent`) | `adapters/outbound/ics` | Muster des `RestClient`-Einsatzes aus `NextcloudUserDirectory`; die Bibliothek endet an der Adaptergrenze — `port/out/WasteCalendarFeed` bleibt **bibliotheksfrei** (ADR 0006); der Adapter übersetzt in `WasteEvent`; Formatfehler ≠ leere Quelle. **Tolerant:** Ereignis mit Uhrzeit → Kalendertag in Europe/Berlin; `RRULE` → auf das Fenster expandiert; Ereignis ohne verwendbares Startdatum → ignoriert |
-| `WasteCollectionJpaEntity` (`waste_collection`), `WasteSyncStateJpaEntity` (`waste_sync_state`) + Adapter, `HouseholdJpaEntity`/`HouseholdRepositoryAdapter` — **Erweiterung** um `waste_calendar_url` | `adapters/outbound/persistence` | Mapping im Adapter; die Spalte am Haushalt trägt nur die Adresse, der Stand gehört dem Müllkalender-Kontext |
-| Migration `V5__waste_collection.sql`: Spalte `household.waste_calendar_url VARCHAR(500) NULL`, Tabelle `waste_collection` (Termine), Tabelle `waste_sync_state` (Stand je Haushalt) | `db/migration` | V1–V4 bleiben unverändert; `ddl-auto: validate` verlangt Übereinstimmung |
-
-**Festgelegt (Issue #10):** Der Stand liegt in der eigenen Tabelle
-`waste_sync_state` (`household_id` Primärschlüssel, `last_synced_at`,
-`last_attempt_at`). Das Issue nennt im Begriffsverzeichnis noch
-`waste_collection.last_synced_at` — der Stand gehört **nicht** zum Termin,
-sondern zum Lauf des Haushalts, und wird nicht je Termin gespeichert.
-„Veraltet" (R13/AC20) heißt: `last_attempt_at` ist später als `last_synced_at`
-— also ist seit dem letzten erfolgreichen Lauf ein Lauf **fehlgeschlagen**.
-
-### Frontend
-
-| Baustein (Ziel) | Schicht | Anmerkung |
-|-----------|-------|-----------|
-| `features/waste/` — `routes.ts`, `waste-page.ts`/`.html`, `model/waste.model.ts`, `data/waste-api.ts` + `data/waste-data.ts` (`httpResource`, **route-scoped**), `ui/waste-source-panel.ts`, `ui/waste-collection-list.ts` | Feature | folgt dem Workspace (R11/AC17) wie die Aufgaben-Tafel; Lesezugriff über `httpResource`, Schreiben über `HttpClient` |
-| `features/households/ui/waste-calendar-section.ts` + Bereich „MÜLLKALENDER" in `households-page` | Feature *Haushalte* | pflegt die Adresse inline (kein Dialog); das Feature darf das Feature *Müllkalender* **nicht** importieren (Sheriff-Regel 1) — es nutzt sein eigenes Modell |
-| `core/` — Navigationspunkt „MÜLLTERMINE" in `app.html`/`app.ts`, Route `muelltermine` in `app.routes.ts` | core | sichtbar nur mit gewähltem Haushalt (wie „AUFGABEN") |
-| `sheriff.config.ts` — Modulgruppe `domain:waste` für `src/app/features/waste` | core | **nicht eingetragen** — das Feature wird von Sheriff nicht geprüft (nur `households` und `tasks` sind tagged) |
-| `Household`-Modell (Frontend) — **Erweiterung** um `wasteCalendarUrl` | Feature *Haushalte* | die Quelle steht im Haushaltseintrag; kein eigener Ladezustand im Bereich |
-
-**Geplant (Tests):** `WasteCollectionUseCaseImplTest` (ohne Spring, `Clock` fest:
-Fenster 42 Tage, Bestand ersetzen, Fehler → Bestand bleibt, Leerfall → Bestand
-geleert), `IcsWasteCalendarFeedTest` (Adapter mit ical4j: Ganztagsdatum,
-unveränderte Tonnenart, unbekannte Art, unlesbares Dokument),
-`WasteCollectionRepositoryAdapterTest` (`@DataJpaTest` + Testcontainers),
-`WasteCollectionControllerTest` (`@WebMvcTest`), `WasteSyncJobTest`,
-`waste-page.spec.ts`, `waste-calendar-section.spec.ts`.

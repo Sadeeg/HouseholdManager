@@ -12,14 +12,14 @@
 | Q6 | Ein Fehlerfall tritt auf | Der Nutzer sieht eine verständliche Meldung; intern bleibt der Fehler ein 5xx, fachlich ein 4xx | hoch | `GlobalExceptionHandler` + Tests |
 | Q7 | Die Liste ist leer | Die Oberfläche zeigt einen Hinweis, keine leere Fläche | mittel | `households-page.spec.ts` |
 | Q8 | Der Auftraggeber liest die Dokumentation | arc42 beschreibt Bausteine, Abläufe und offene Punkte ohne Code-Snippets | mittel | arc42/ |
-| Q9 | Eine Anforderung ist unklar | Der Prozess stellt genau **eine** Frage pro Zug und endet mit bestätigtem Verständnis | hoch | `anforderung` (Grilling, Stop-Kriterien) |
+| Q9 | Eine Anforderung ist unklar | Der Prozess stellt genau **eine** Frage pro Zug und endet mit bestätigtem Verständnis | hoch | `anforderung-loop` (Grilling, Stop-Kriterien) |
 | Q10 | Ein Feature gilt als fertig | Zwei unabhängige Gates (`OK` + `PASS`) liegen vor; Urteile kommen von Subagenten | hoch | `/review`, `/abnahme` |
 
-| Q11 | Eine Person bedient das Board ohne Maus oder ohne Farbwahrnehmung | Jeder Bahnwechsel hat ein Tastatur-Äquivalent; Status und Kennzeichnungen stehen als Text da, nie nur als Farbe | hoch | Issue #1 `## UX` (Barrierefreiheit), AC1/AC13/AC22 |
-| Q12 | Der Entsorger ist nicht erreichbar oder liefert kein ICS | Keine gespeicherten Termine gehen verloren; die Anzeige weist den Stand als **veraltet** aus; der Tageslauf bricht nicht ab | hoch | Issue #10 R7/R13, AC6 — `WasteCollectionUseCaseImplTest`, `IcsWasteCalendarFeedTest` |
-| Q13 | Der Entsorger führt eine neue Tonnenart ein | Sie erscheint in der Liste, ohne dass Code geändert werden muss | mittel | Issue #10 AC19 — `IcsWasteCalendarFeedTest` (Adapter, ical4j) |
-| Q14 | Der Tageslauf wird geprüft | Der Test läuft ohne Wartezeit, ohne Netz und ohne Datenbank — die Zeit ist eine `Clock`, der Job ein dünner Adapter | hoch | Issue #10 R4 — `WasteCollectionUseCaseImplTest`, `WasteSyncJobTest` |
-| Q15 | Die Anwendung startet, obwohl keine Quelle erreichbar ist | Der Start ist unauffällig; der Fehler erscheint erst im Lauf, je Haushalt protokolliert | mittel | Issue #10 — `WasteSyncJobTest` |
+| Q11 | Eine Person bedient das System ohne Maus oder ohne Farbwahrnehmung | Jeder Bahnwechsel hat ein Tastatur-Äquivalent; Status und Kennzeichnungen stehen als Text da, nie nur als Farbe | hoch | `ux-design`, Design-DNA (Barrierefreiheit) |
+| Q12 | Ein externer Dienst ist nicht erreichbar oder liefert Müll | Keine gespeicherten Daten gehen verloren; die Anzeige weist den Stand als **veraltet** aus; der Lauf bricht nicht ab | hoch | `WasteCollectionUseCaseImplTest`, `IcsWasteCalendarFeedTest` |
+| Q13 | Ein Lieferant führt eine neue Art ein | Sie erscheint in der Liste, ohne dass Code geändert werden muss | mittel | `IcsWasteCalendarFeedTest` (Adapter, ical4j) |
+| Q14 | Ein zeitgesteuerter Lauf wird geprüft | Der Test läuft ohne Wartezeit, ohne Netz und ohne Datenbank — die Zeit ist eine `Clock`, der Job ein dünner Adapter | hoch | `WasteCollectionUseCaseImplTest`, `WasteSyncJobTest` |
+| Q15 | Die Anwendung startet, obwohl eine externe Quelle nicht erreichbar ist | Der Start ist unauffällig; der Fehler erscheint erst im Lauf, je Kontext isoliert protokolliert | mittel | `WasteSyncJobTest` |
 
 ## Nicht-funktionale Anforderungen
 
@@ -27,11 +27,11 @@
 |-------|--------------|-------|
 | Performance | Liste lädt lokal < 300 ms (siehe 06) | Zielwert — Messung noch offen (siehe 06) |
 | Sicherheit | Keine unauthentifizierte API | **offen** — siehe 08 |
-| Datenschutz | Haushaltsdaten nur für Mitglieder des Haushalts sichtbar | entworfen (Issue #1): Mitgliedschaftsprüfung im Use Case (siehe 08) — Umsetzung ausstehend |
+| Datenschutz | Haushaltsdaten nur für Mitglieder des Haushalts sichtbar | entworfen: Mitgliedschaftsprüfung im Use Case (siehe 08) — Umsetzung ausstehend |
 | Wartbarkeit | Änderungen an der Fachlogik ohne Frontend-Änderung | durch Schichtregeln angestrebt |
 | Nachvollziehbarkeit | Entscheidungen als ADR, Anforderungen als Issue | vollständig |
 | Bedienbarkeit | Ein Feature ohne Einarbeitung nutzbar | pro Feature zu prüfen (Abnahme) |
-| Aktualität | Der Stand weist Veraltung **aus**, statt stillschweigend veraltete Daten zu zeigen; die Oberfläche leitet die Veraltung nicht aus dem Zeitstempel ab | umgesetzt (R13/AC20) — das Veraltet-Flag kommt vom Server |
+| Aktualität | Der Stand weist Veraltung **aus**, statt stillschweigend veraltete Daten zu zeigen; die Oberfläche leitet die Veraltung nicht aus dem Zeitstempel ab | umgesetzt — das Veraltet-Flag kommt vom Server |
 | Fremdformat | Das ICS-Format bleibt im ausgehenden Adapter; die Anwendung kennt keine Fremdbibliothek und kein Fremdformat | umgesetzt (ADR 0006) |
 
 > **Offen:** Prioritäten bestätigen, Schwellenwerte für Performance und

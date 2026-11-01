@@ -121,6 +121,31 @@ Querschnittskonzepte, Qualität, Risiken — und pflegt die
 Der Agent **entscheidet nichts**: Architekturfragen gehen als Rückfrage an
 den Auftraggeber, Entscheidungen werden als ADR festgehalten.
 
+### Was in arc42 gehört — und was nicht
+
+arc42 ist die **Architektur-Dokumentation**, nicht das Issue und nicht der
+Feature-Verlauf.
+
+> **arc42 beschreibt, _wie_ das System gebaut ist und _warum_.**
+> Das **Issue** beschreibt, _was_ ein Feature macht.
+
+| In arc42 | Nicht in arc42 |
+|----------|----------------|
+| Bausteine, Ports, Adapter, Abhängigkeitsrichtungen | Feature-Abläufe im Detail, einzelne Nutzerflüsse |
+| bounded contexts und ihre Grenzen | Akzeptanzkriterien, Testlisten |
+| Laufzeitmuster, Jobs, externe Abrufe | „Zielbild"-Abschnitte pro Feature |
+| Querschnittskonzepte (Security, Transaktionen, Fehler) | Issue-Status, Reifegrade, Sprint-Scope |
+| Entscheidungen (als ADR, in 09 verlinkt) | API-Verträge im Detail |
+| Risiken, technische Schulden | Wiederholungen aus 05, 08, 09 |
+| Fachbegriffe (Glossar) | |
+
+**Die Schwelle:** Ein Feature darf arc42 nur berühren, wenn es die
+**Struktur** verändert. Nutzt ein Feature nur eine bestehende Struktur,
+bleibt arc42 **unberührt** — das ist das Normalfall.
+
+arc42 wächst damit mit der Zahl der **architektonischen Entscheidungen**,
+nicht mit der Zahl der Features.
+
 ### Arbeitsstand: das GitHub-Issue
 
 **Es gibt keine lokale Draft-Datei.** Das Issue trägt den Arbeitsstand:

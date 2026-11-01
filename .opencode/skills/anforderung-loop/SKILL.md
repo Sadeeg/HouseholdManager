@@ -73,6 +73,13 @@ Design-DNA und schreibt `## UX` in den Body; `arc-agent` pflegt `arc42/` und
 liefert die Vorgaben für R3. Beide entscheiden nichts; offene Fragen gehen an
 den Auftraggeber und werden, wenn blockierend, **vor** R3 geklärt.
 
+**Die ARC-Runde ist eine Schwellenprüfung.** Der `arc-agent` dokumentiert nur,
+was die **Struktur** verändert (Bausteine, Ports, Context-Grenzen,
+Laufzeitverläufe, Entscheidungen, Risiken). Berührt ein Feature die
+Architektur nicht, bleibt arc42 **unberührt** — das ist das Normalfall, kein
+Fehler. Feature-Details (Abläufe, ACs, Zielbilder, Issue-Status) gehören in
+das Issue, nicht in arc42.
+
 ### Runde 3 — Technisches Refinement
 
 Ort im Code, Datenmodell, API, UI, Dateiliste, Tests, Verify. Alle Details:
