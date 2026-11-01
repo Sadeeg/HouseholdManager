@@ -141,6 +141,25 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("höchstens " + Label.MAX_NAME_LENGTH)));
     }
 
+    /**
+     * Auch das Bearbeiten meldet die zu langen Schreibweise — derselbe Fehler
+     * am Label, nicht am Titel. Sonst wäre die Meldung am Task-Endpoint
+     * unterschiedlich je nach Route.
+     */
+    @Test
+    void updateTask_withLabelBeyondColumnLimit_isBadRequest() throws Exception {
+        givenSignedInAs("alice");
+        when(taskUseCase.updateTask(anyString(), anyLong(), anyLong(), any()))
+                .thenThrow(new InvalidLabelNameException("Ein Label darf höchstens 60 Zeichen lang sein."));
+
+        mockMvc.perform(patch("/api/households/1/tasks/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Neu\",\"labels\":[\"zu lang\"]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Ungültiger Labelname"))
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("höchstens " + Label.MAX_NAME_LENGTH)));
+    }
+
     @Test
     void updateTask_mapsAllFields() throws Exception {
         givenSignedInAs("alice");

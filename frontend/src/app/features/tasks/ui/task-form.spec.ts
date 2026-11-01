@@ -187,6 +187,114 @@ describe('TaskForm', () => {
     expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(1);
   });
 
+  it('accepts a label just below the column limit (AC2)', async () => {
+    const { fixture, saved } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+    const justBelow = 'x'.repeat(MAX_LABEL_NAME_LENGTH - 1);
+
+    fill(element, '#task-title', 'X');
+    fill(element, '#task-label', justBelow);
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')).toBeNull();
+    expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(1);
+
+    clickButton(element, 'Speichern');
+    fixture.detectChanges();
+    expect(saved[0].labels).toEqual([justBelow]);
+  });
+
+  it('skips an empty label silently, without an error message (AC3)', async () => {
+    const { fixture, saved } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+
+    fill(element, '#task-title', 'X');
+    fill(element, '#task-label', '   ');
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    // Kein Fehler an der Eingabe — leere Labels bleiben still übersprungen.
+    expect(element.querySelector('#task-label-error')).toBeNull();
+    expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(0);
+
+    clickButton(element, 'Speichern');
+    fixture.detectChanges();
+    expect(saved[0].labels).toEqual([]);
+  });
+
+  it('keeps the title and the label input while the error is shown and after the correction (AC4)', async () => {
+    const { fixture } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+
+    fill(element, '#task-title', 'Müll raus');
+    fill(element, '#task-label', 'x'.repeat(MAX_LABEL_NAME_LENGTH + 1));
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')).not.toBeNull();
+    expect((element.querySelector('#task-title') as HTMLInputElement).value).toBe('Müll raus');
+
+    fill(element, '#task-label', 'Kurz');
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')).toBeNull();
+    // Der Titel ist unberührt, das Formular bleibt bedienbar.
+    expect((element.querySelector('#task-title') as HTMLInputElement).value).toBe('Müll raus');
+    expect((element.querySelector('#task-label') as HTMLInputElement).value).toBe('Kurz');
+  });
+
+  /**
+   * Die Grenze des Formulars muss die Grenze der Spalte `label.name`
+   * treffen — 60 Zeichen passen in die Spalte, 61 nicht. Die Zahl steht hier
+   * bewusst als Literal und nicht als Konstante: so fällt auf, wenn die
+   * Dublette im Frontend auseinanderläuft und das Formular einen Namen
+   * durchlässt, den das Backend ablehnt.
+   */
+  it('enforces the limit of the label column — 60 pass, 61 do not (AC1, AC2)', async () => {
+    const { fixture } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+
+    fill(element, '#task-label', 'x'.repeat(60));
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')).toBeNull();
+    expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(1);
+
+    fill(element, '#task-label', 'x'.repeat(61));
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')?.textContent).toContain('höchstens 60');
+    expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(1);
+  });
+
+  /**
+   * Gemessen wird nach dem Trimmen: Leerzeichen drumherum zählen nicht,
+   * weil sie nicht gespeichert werden. Sonst wäre das Formular strenger als
+   * der Fachkern — oder umgekehrt.
+   */
+  it('measures the label length after trimming (AC1, AC2)', async () => {
+    const { fixture } = await create();
+    const element = fixture.nativeElement as HTMLElement;
+
+    fill(element, '#task-label', `  ${'x'.repeat(60)}  `);
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')).toBeNull();
+    const chips = element.querySelectorAll('.task-form__labels .hm-chip');
+    expect(chips.length).toBe(1);
+    expect(chips[0].textContent).toContain('x'.repeat(60));
+
+    fill(element, '#task-label', `  ${'x'.repeat(61)}  `);
+    clickButton(element, 'Hinzufügen');
+    fixture.detectChanges();
+
+    expect(element.querySelector('#task-label-error')?.textContent).toContain('höchstens 60');
+    expect(element.querySelectorAll('.task-form__labels .hm-chip').length).toBe(1);
+  });
+
   it('rejects an invalid due date and hints at overdue dates', async () => {
     const { fixture, saved } = await create();
     const element = fixture.nativeElement as HTMLElement;

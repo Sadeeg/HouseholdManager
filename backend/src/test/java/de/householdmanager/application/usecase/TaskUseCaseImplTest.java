@@ -188,6 +188,106 @@ class TaskUseCaseImplTest {
         assertThat(created.labels()).containsExactly("Bad");
     }
 
+    /**
+     * Die Grenze ist eine Obergrenze: ein Zeichen darunter ist noch gültig.
+     * Die Prüfung darf nicht versehentlich bereits bei 59 Zeichen greifen.
+     */
+    @Test
+    void createTask_acceptsLabelJustBelowTheColumnLimit() {
+        String justBelow = "x".repeat(Label.MAX_NAME_LENGTH - 1);
+
+        TaskView created = useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of(justBelow)));
+
+        assertThat(created.labels()).containsExactly(justBelow);
+    }
+
+    /**
+     * Gemessen wird <em>nach</em> der Normalisierung (trimmen, kleinschreiben).
+     * Leerzeichen drumherum zählen nicht, weil sie nicht gespeichert werden —
+     * sonst wäre die Oberfläche strenger als der Fachkern (oder umgekehrt).
+     */
+    @Test
+    void createTask_measuresTheLabelLengthAfterTrimming() {
+        String padded = "  " + "x".repeat(Label.MAX_NAME_LENGTH) + "  ";
+
+        TaskView created = useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of(padded)));
+
+        assertThat(padded).hasSize(Label.MAX_NAME_LENGTH + 4); // roh zu lang …
+        assertThat(created.labels()).containsExactly("x".repeat(Label.MAX_NAME_LENGTH)); // … normalisiert gültig
+    }
+
+    /**
+     * Ein Zeichen über der Grenze bleibt auch nach dem Trimmen zu lang und wird
+     * abgelehnt — die Meldung nennt die Grenze.
+     */
+    @Test
+    void createTask_rejectsLabelBeyondTheLimitAfterTrimming() {
+        String padded = "  " + "x".repeat(Label.MAX_NAME_LENGTH + 1) + "  ";
+
+        assertThatThrownBy(() -> useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of(padded))))
+                .isInstanceOf(InvalidLabelNameException.class)
+                .hasMessageContaining("höchstens " + Label.MAX_NAME_LENGTH);
+    }
+
+    /**
+     * Gemessen wird die <em>normalisierte</em> Länge — und die normalisierte
+     * Form landet als {@code normalized_name} in der Spalte. Manche Zeichen
+     * werden beim Kleinschreiben länger (U+0130 wird zu zwei Zeichen), weshalb
+     * der reine Rohtext nicht als Maß taugt: 31 solche Zeichen wären im
+     * Rohtext 31 Zeichen lang, in der Spalte aber 62 — und passten nicht mehr
+     * hinein.
+     */
+    @Test
+    void createTask_measuresTheLabelLengthAfterLowerCasing() {
+        String thirty = "İ".repeat(30); // roh 30 Zeichen, normalisiert 60
+        String thirtyOne = "İ".repeat(31); // roh 31 Zeichen, normalisiert 62
+
+        TaskView created = useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of(thirty)));
+
+        assertThat(created.labels()).containsExactly(thirty);
+
+        assertThatThrownBy(() -> useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of(thirtyOne))))
+                .isInstanceOf(InvalidLabelNameException.class);
+    }
+
+    /**
+     * Ein abgelehntes Label darf die ganze Aufgabe nicht anlegen: der Nutzer
+     * bekommt einen Fehler, keine halb gespeicherte Aufgabe.
+     */
+    @Test
+    void createTask_withRejectedLabel_createsNoTask() {
+        assertThatThrownBy(() -> useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null,
+                        List.of("Kurz", "x".repeat(Label.MAX_NAME_LENGTH + 1)))))
+                .isInstanceOf(InvalidLabelNameException.class);
+
+        assertThat(tasks.findByHousehold(HOUSEHOLD)).isEmpty();
+    }
+
+    /**
+     * Eine abgelehnte Änderung lässt die gespeicherte Aufgabe unberührt: Titel
+     * und Labels bleiben, wie sie waren. Sonst wäre die Aufgabe halb geändert.
+     */
+    @Test
+    void updateTask_withRejectedLabel_leavesTheStoredTaskUnchanged() {
+        TaskView created = useCase.createTask(MEMBER, HOUSEHOLD,
+                new TaskCommand("Eine", null, null, null, List.of("Kurz")));
+
+        assertThatThrownBy(() -> useCase.updateTask(MEMBER, HOUSEHOLD, created.id(),
+                new TaskCommand("Geändert", null, null, null,
+                        List.of("Kurz", "x".repeat(Label.MAX_NAME_LENGTH + 1)))))
+                .isInstanceOf(InvalidLabelNameException.class);
+
+        Task stored = tasks.findById(HOUSEHOLD, created.id()).orElseThrow();
+        assertThat(stored.getTitle()).isEqualTo("Eine");
+        assertThat(stored.getLabels()).extracting(Label::name).containsExactly("Kurz");
+    }
+
     // --- Bearbeiten (AC5) -------------------------------------------------------------------
 
     @Test
