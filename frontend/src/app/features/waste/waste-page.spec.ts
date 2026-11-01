@@ -30,7 +30,9 @@ class AndereSeite {}
  * Datum (bei gleichem Datum nach Tonnenart). Die Reihenfolge entsteht eine
  * Ebene über der Liste — der Data-Service sortiert (R9, Annahme 8). Der Test
  * prüft deshalb die Anzeige als Ganzes: die Seite liefert die Termine
- * unsortiert vom Server und muss sie sortiert darstellen.
+ * unsortiert vom Server und muss sie sortiert darstellen. Die Ebene, die die
+ * Reihenfolge *entscheidet*, belegt separat `data/waste-data.spec.ts`
+ * (Issue #11, Befund 2).
  *
  * <p>AC6 (R7, R17): Schlägt ein Synchronisationslauf fehl, bleiben die
  * gespeicherten Termine unverändert erhalten, und die Anzeige weist aus, dass
@@ -117,7 +119,11 @@ describe('WastePage', () => {
 
   // --- Zustände der Seite (AC14, AC15, AC16, AC17, R11) ---------------------
 
-  /** AC14: ohne gewählten Haushalt zeigt die Seite den Grund, nicht eine leere Liste. */
+  /**
+   * Zustand „Kein Haushalt gesetzt" (UX-Abschnitt, kein Akzeptanzkriterium):
+   * die Seite nennt den Grund, nicht eine leere Liste. Die Bezeichnungen der
+   * folgenden Tests folgen der Nummerierung des Issues.
+   */
   it('names the missing household instead of an empty list', async () => {
     TestBed.inject(WorkspaceService).currentHouseholdId.set(null);
 

@@ -264,8 +264,10 @@ describe('HouseholdsPage', () => {
   });
 
   /**
-   * Das Entfernen der Quelle braucht die Bestätigung: erst der Dialog, dann der
-   * Löschauftrag. Vor der Bestätigung geht kein DELETE raus (AC23).
+   * Das Entfernen der Quelle gehört zum Pflegen (AC9) und braucht die
+   * Bestätigung aus UX-Schritt 7: erst der Dialog, dann der Löschauftrag.
+   * Vor der Bestätigung geht kein DELETE raus. (AC23 ist das Abbrechen —
+   * das belegt `households-page-abort.spec.ts`.)
    */
   it('removes the source only after the confirmation', async () => {
     const workspace = TestBed.inject(WorkspaceService);
