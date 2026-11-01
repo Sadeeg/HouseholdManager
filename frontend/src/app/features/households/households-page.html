@@ -132,6 +132,7 @@
               [chatsFailed]="!!telegramChats.error()"
               [disconnecting]="disconnectingChat()"
               [disconnectError]="disconnectError()"
+              [disconnectErrorChatId]="disconnectErrorChatId()"
               (retryCode)="reloadTelegram()"
               (retryChats)="reloadTelegram()"
               (disconnectRequested)="pendingChatDisconnect.set({ chat: $event, householdId: household.id })"

@@ -1,9 +1,10 @@
 <section class="telegram-chats" [attr.aria-label]="`Telegram-Chats von ${householdName()}`">
   @if (!botConfigured()) {
-    <!-- Ohne Bot-Token wird kein Code erzeugt und keine Chat-Liste gezeigt:
+    <!-- Ohne Bot-Token wird kein Code erzeugt und kein Code-Feld gezeigt:
          der Code liefe ins Leere, eine Freischaltung wäre unmöglich, und
          „Freischalt-Code anzeigen" wäre eine wirkungslose Aktion
-         (Zustandstabelle). -->
+         (Zustandstabelle). Die Chat-Liste bleibt sichtbar — bestehende
+         Verbindungen verschwinden nicht, weil der Token fehlt. -->
     <p class="telegram-chats__notice">
       Der Telegram-Bot ist nicht konfiguriert. Ohne Bot-Token lassen sich keine Chats freischalten.
     </p>
@@ -61,9 +62,11 @@
         </p>
       }
     </div>
+  }
 
-    <!-- Chat-Liste -->
-    <div class="telegram-chats__list">
+  <!-- Chat-Liste — sie steht auch ohne Bot-Token: bestehende Verbindungen
+       verschwinden nicht, weil der Token fehlt. -->
+  <div class="telegram-chats__list">
       @if (chatsLoading()) {
         <p class="telegram-chats__state">Telegram-Chats werden geladen …</p>
       } @else if (chatsFailed()) {
@@ -74,8 +77,12 @@
         </p>
       } @else if ((chats() ?? []).length === 0) {
         <p class="telegram-chats__state">
-          Noch kein Telegram-Chat freigeschaltet. Sende den Code oben an den Bot, um eine Gruppe
-          oder einen Einzelchat zu verbinden.
+          @if (botConfigured()) {
+            Noch kein Telegram-Chat freigeschaltet. Sende den Code oben an den Bot, um eine Gruppe
+            oder einen Einzelchat zu verbinden.
+          } @else {
+            Kein Telegram-Chat freigeschaltet. Ohne Bot-Token lassen sich keine Chats freischalten.
+          }
         </p>
       } @else {
         <ul class="telegram-chats__rows">
@@ -84,7 +91,7 @@
               <div class="telegram-chats__row-main">
                 <span class="telegram-chats__name">{{ chat.chatName }}</span>
                 <span class="hm-badge hm-badge--neutral telegram-chats__kind">{{ chat.chatKind }}</span>
-                <span class="telegram-chats__activated">Freigeschaltet von {{ chat.activatedBy }}</span>
+                <span class="telegram-chats__activated">Freigeschaltet von {{ chat.activatedByName }}</span>
               </div>
               @if (chat.ownConnection) {
                 <button
@@ -97,12 +104,13 @@
                 </button>
               }
               @if (disconnectError(); as error) {
-                <p class="telegram-chats__error telegram-chats__error--row" role="alert">{{ error }}</p>
+                @if (chat.chatId === disconnectErrorChatId()) {
+                  <p class="telegram-chats__error telegram-chats__error--row" role="alert">{{ error }}</p>
+                }
               }
             </li>
           }
         </ul>
       }
     </div>
-  }
 </section>

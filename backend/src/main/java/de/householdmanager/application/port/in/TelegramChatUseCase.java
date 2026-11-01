@@ -42,7 +42,22 @@ public interface TelegramChatUseCase {
     Optional<String> code(String userId, long householdId);
 
     /** Die freigeschalteten Chats des Haushalts (AC11, AC12). */
-    List<TelegramChat> listChats(String userId, long householdId);
+    List<ChatView> listChats(String userId, long householdId);
+
+    /**
+     * Ein freigeschalteter Chat als Anzeigewert.
+     *
+     * <p>Die Oberfläche nennt das freischaltende <strong>Mitglied</strong>, nicht
+     * die technische Kennung — deshalb trägt die Sicht den aufgelösten
+     * Anzeigenamen. Lässt er sich nicht auflösen, bleibt die Kennung stehen.
+     */
+    record ChatView(
+            String chatId,
+            String chatName,
+            TelegramChat.ChatKind kind,
+            String activatedBy,
+            String activatedByName) {
+    }
 
     /**
      * Verarbeitet eine Nachricht aus einem Telegram-Chat.

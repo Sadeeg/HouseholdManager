@@ -50,6 +50,12 @@ export class TelegramChatSection {
   /** Der Fehler des letzten Trennens — steht unter der betroffenen Zeile. */
   readonly disconnectError = input<string | null>(null);
 
+  /**
+   * Der Chat, zu dem der Fehler gehört — die Fehlerzeile steht nur unter
+   * dieser Zeile, nicht unter allen.
+   */
+  readonly disconnectErrorChatId = input<string | null>(null);
+
   readonly retryCode = output<void>();
   readonly retryChats = output<void>();
   readonly disconnectRequested = output<TelegramChat>();

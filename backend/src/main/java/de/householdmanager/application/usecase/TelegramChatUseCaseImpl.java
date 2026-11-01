@@ -11,8 +11,10 @@ import de.householdmanager.domain.model.NotChatOwnerException;
 import de.householdmanager.domain.model.TelegramChat;
 import de.householdmanager.domain.model.TelegramChatNotFoundException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -97,13 +99,36 @@ public class TelegramChatUseCaseImpl implements TelegramChatUseCase {
         return Optional.of(chatRepository.ensureCode(householdId, userId));
     }
 
+    /**
+     * Die Chats des Haushalts als Anzeigewerte (AC11, AC12).
+     *
+     * <p>Die freischaltende Person wird mit ihrem Namen genannt, nicht mit
+     * ihrer technischen Kennung. Der Name wird aus der Mitgliederliste des
+     * Haushalts aufgelöst — er ist ein Snapshot der Anzeige, kein gespeicherter
+     * Zustand. Lässt sich der Name nicht auflösen (die Person ist kein Mitglied
+     * mehr), bleibt die Kennung stehen.
+     */
     @Override
     @Transactional(readOnly = true)
-    public List<TelegramChat> listChats(String userId, long householdId) {
+    public List<TelegramChatUseCase.ChatView> listChats(String userId, long householdId) {
         membershipUseCase.requireMembership(householdId, userId);
         requireHousehold(householdId);
         // Nur die Chats dieses Haushalts (AC12) — der Port filtert bereits.
-        return chatRepository.findByHousehold(householdId);
+        List<TelegramChat> chats = chatRepository.findByHousehold(householdId);
+
+        Map<String, String> names = membershipUseCase.listMembers(userId, householdId).stream()
+                .filter(member -> member.displayName() != null && !member.displayName().isBlank())
+                .collect(Collectors.toMap(MembershipUseCase.MemberView::userId,
+                        MembershipUseCase.MemberView::displayName, (first, second) -> first));
+
+        return chats.stream()
+                .map(chat -> new TelegramChatUseCase.ChatView(
+                        chat.getChatId(),
+                        chat.getChatName(),
+                        chat.getKind(),
+                        chat.getActivatedBy(),
+                        names.getOrDefault(chat.getActivatedBy(), chat.getActivatedBy())))
+                .toList();
     }
 
     // --- Freischaltung aus dem Chat -----------------------------------------
@@ -167,13 +192,14 @@ public class TelegramChatUseCaseImpl implements TelegramChatUseCase {
             return;
         }
 
-        String chatName = telegramBot.chatName(chatId);
-        TelegramBot.ChatKind kind = telegramBot.chatKind(chatId);
+        // Name und Art kommen aus einem Aufruf — die Chat-Beschreibung bei
+        // Telegram trägt beides (AC11).
+        TelegramBot.ChatInfo info = telegramBot.chatInfo(chatId);
         chatRepository.save(TelegramChat.builder()
                 .householdId(owner.householdId())
                 .chatId(chatId)
-                .chatName(chatName)
-                .kind(toDomainKind(kind))
+                .chatName(info.name())
+                .kind(toDomainKind(info.kind()))
                 .activatedBy(owner.userId())
                 .build());
     }

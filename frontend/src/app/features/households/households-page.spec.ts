@@ -336,6 +336,7 @@ describe('HouseholdsPage', () => {
       chatName: string;
       chatKind: string;
       activatedBy: string;
+      activatedByName?: string;
       ownConnection: boolean;
     }[] = [],
   ): Promise<{ fixture: ReturnType<typeof TestBed.createComponent>; compiled: HTMLElement }> {
@@ -371,6 +372,7 @@ describe('HouseholdsPage', () => {
         chatName: 'WG Flur',
         chatKind: 'GRUPPE',
         activatedBy: 'alice',
+        activatedByName: 'Alice Muster',
         ownConnection: true,
       },
     ]);
@@ -428,6 +430,7 @@ describe('HouseholdsPage', () => {
         chatName: 'WG Flur',
         chatKind: 'GRUPPE',
         activatedBy: 'alice',
+        activatedByName: 'Alice Muster',
         ownConnection: true,
       },
     ]);
@@ -463,6 +466,7 @@ describe('HouseholdsPage', () => {
         chatName: 'WG Flur',
         chatKind: 'GRUPPE',
         activatedBy: 'alice',
+        activatedByName: 'Alice Muster',
         ownConnection: true,
       },
     ]);

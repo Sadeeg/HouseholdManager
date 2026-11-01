@@ -71,6 +71,9 @@ public class NotificationDelivery {
         /**
          * Der Versuch läuft oder das Ergebnis steht noch aus — der Vermerk
          * wurde angelegt, aber es liegt noch kein Ergebnis des Versuchs vor.
+         *
+         * <p>Der Zustand ist ein flüchtiger Zwischenzustand innerhalb der
+         * Transaktion des Laufs: dauerhaft gespeichert wird er nicht.
          */
         PENDING,
         /** Der letzte Versuch war erfolgreich — der Vermerk ist erledigt. */

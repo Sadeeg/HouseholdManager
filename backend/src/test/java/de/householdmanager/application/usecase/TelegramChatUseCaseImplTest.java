@@ -269,10 +269,37 @@ class TelegramChatUseCaseImplTest {
         chats.save(chatOf(HOUSEHOLD, CHAT_ID, "WG Flur"));
         chats.save(chatOf(OTHER_HOUSEHOLD, "-999", "Fremde Gruppe"));
 
-        List<TelegramChat> listed = useCase.listChats(MEMBER, HOUSEHOLD);
+        List<TelegramChatUseCase.ChatView> listed = useCase.listChats(MEMBER, HOUSEHOLD);
 
-        assertThat(listed).extracting(TelegramChat::getChatId).containsExactly(CHAT_ID);
-        assertThat(listed).extracting(TelegramChat::getChatName).containsExactly("WG Flur");
+        assertThat(listed).extracting(TelegramChatUseCase.ChatView::chatId).containsExactly(CHAT_ID);
+        assertThat(listed).extracting(TelegramChatUseCase.ChatView::chatName).containsExactly("WG Flur");
+    }
+
+    /**
+     * Die freischaltende Person wird mit ihrem Namen genannt, nicht mit der
+     * technischen Kennung.
+     */
+    @Test
+    void listChats_namesTheActivatingMember() {
+        chats.save(chatOf(HOUSEHOLD, CHAT_ID, "WG Flur"));
+        membership.members = List.of(MEMBER, OTHER_MEMBER);
+        membership.names.put(MEMBER, "Alice Muster");
+
+        List<TelegramChatUseCase.ChatView> listed = useCase.listChats(MEMBER, HOUSEHOLD);
+
+        assertThat(listed).extracting(TelegramChatUseCase.ChatView::activatedByName)
+                .containsExactly("Alice Muster");
+    }
+
+    /** Lässt sich der Name nicht auflösen, bleibt die Kennung stehen. */
+    @Test
+    void listChats_fallsBackToTheIdWhenTheNameIsUnknown() {
+        chats.save(chatOf(HOUSEHOLD, CHAT_ID, "WG Flur"));
+
+        List<TelegramChatUseCase.ChatView> listed = useCase.listChats(MEMBER, HOUSEHOLD);
+
+        assertThat(listed).extracting(TelegramChatUseCase.ChatView::activatedByName)
+                .containsExactly(MEMBER);
     }
 
     /** AC16: wer kein Mitglied ist, sieht keine Chats des Haushalts. */
@@ -494,13 +521,18 @@ class TelegramChatUseCaseImplTest {
 
         private List<String> members;
 
+        /** Die Anzeigenamen der Mitglieder — leer heißt: kein Name auflösbar. */
+        private final Map<String, String> names = new LinkedHashMap<>();
+
         StubMembership(String... members) {
             this.members = List.of(members);
         }
 
         @Override
         public List<MemberView> listMembers(String currentUserId, long householdId) {
-            return List.of();
+            return members.stream()
+                    .map(userId -> new MemberView(userId, names.get(userId), false))
+                    .toList();
         }
 
         @Override

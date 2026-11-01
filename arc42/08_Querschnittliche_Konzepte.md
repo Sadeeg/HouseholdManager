@@ -96,12 +96,18 @@ erschöpften sich die drei Versuche in Sekunden statt in zwei Stunden. Der
 Adapter liefert die **Kandidaten** (`findRetryCandidates()`), die Fälligkeit
 entscheidet die Anwendung (`NotificationDelivery.isDueAt(now)`).
 
-Der Zustellvermerk entsteht **vor** dem Versand. Bricht der Vorgang zwischen
-Versand und Vermerk ab, bleibt der Vermerk im Zustand `PENDING` bestehen — der
-Zustellzustand geht nicht verloren. Er wird aber **nicht** erneut versucht:
-Telegram könnte die Nachricht schon angenommen haben, ein zweiter Versand liefe
-auf eine doppelte Zustellung hinaus. Wiederholt wird nur ein Vermerk im Zustand
-`FAILED` — dort steht fest, dass der Versand fehlgeschlagen ist (AC26).
+Der Zustellvermerk entsteht **vor** dem Versand — der Zustand des Versuchs ist
+so jederzeit nachvollziehbar. `PENDING` ist dabei ein **flüchtiger
+Zwischenzustand innerhalb der Transaktion** des Laufs: der Versand und die
+Fortschreibung des Vermerks (`DELIVERED`, `FAILED`, `REJECTED`) passieren in
+derselben Transaktion (arc42/06). Bricht der Vorgang dazwischen ab, wird die
+Transaktion verworfen — ein dauerhafter `PENDING`-Datensatz entsteht nicht.
+
+Dauerhaft wiederholt wird ausschließlich ein Vermerk im Zustand `FAILED` — dort
+steht fest, dass der Versand nachweislich fehlgeschlagen ist (AC26). Ein
+`PENDING` wird **nicht** wiederholt: Telegram könnte die Nachricht schon
+angenommen haben, ein zweiter Versand liefe auf eine doppelte Zustellung
+hinaus.
 
 ## Validierung
 

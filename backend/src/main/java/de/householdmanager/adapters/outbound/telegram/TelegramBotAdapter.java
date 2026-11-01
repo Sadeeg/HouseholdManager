@@ -62,15 +62,37 @@ public class TelegramBotAdapter implements TelegramBot {
         }
     }
 
+    /**
+     * Name und Art des Chats — aus <strong>einem</strong> Aufruf.
+     *
+     * <p>Die Chat-Beschreibung bei Telegram trägt beides; zwei Aufrufe wären
+     * zwei Requests für dieselbe Information.
+     */
+    @Override
+    public ChatInfo chatInfo(String chatId) {
+        TelegramApiClient.ApiChat chat = readChat(chatId);
+        return new ChatInfo(nameOf(chat), kindOf(chat));
+    }
+
     @Override
     public String chatName(String chatId) {
-        TelegramApiClient.ApiChat chat = readChat(chatId);
+        return chatInfo(chatId).name();
+    }
+
+    @Override
+    public ChatKind chatKind(String chatId) {
+        return chatInfo(chatId).kind();
+    }
+
+    /**
+     * Der Anzeigename des Chats: eine Gruppe trägt einen Titel, ein
+     * Einzelchat Vor- und Nachnamen; der Benutzername ist der letzte Ausweg.
+     */
+    private String nameOf(TelegramApiClient.ApiChat chat) {
         String title = chat.title();
         if (title != null && !title.isBlank()) {
             return title;
         }
-        // Ein Einzelchat trägt Vor- und Nachnamen; der Benutzername ist der
-        // letzte Ausweg.
         String firstName = chat.firstName() == null ? "" : chat.firstName();
         String lastName = chat.lastName() == null ? "" : chat.lastName();
         String name = (firstName + " " + lastName).trim();
@@ -80,9 +102,8 @@ public class TelegramBotAdapter implements TelegramBot {
         return chat.username() == null ? "" : chat.username();
     }
 
-    @Override
-    public ChatKind chatKind(String chatId) {
-        TelegramApiClient.ApiChat chat = readChat(chatId);
+    /** Die Art des Chats — eine Eigenschaft, kein Akzent (AC11). */
+    private ChatKind kindOf(TelegramApiClient.ApiChat chat) {
         String type = chat.type();
         if ("group".equals(type) || "supergroup".equals(type) || "channel".equals(type)) {
             return ChatKind.GROUP;

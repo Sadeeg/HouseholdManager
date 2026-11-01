@@ -76,6 +76,8 @@ export class HouseholdsPage {
   );
   protected readonly disconnectingChat = signal(false);
   protected readonly disconnectError = signal<string | null>(null);
+  /** Der Chat, zu dem der Trenn-Fehler gehört — er steht nur unter dieser Zeile. */
+  protected readonly disconnectErrorChatId = signal<string | null>(null);
 
   protected readonly telegramCode = this.householdsData.telegramCode;
   protected readonly telegramChats = this.householdsData.telegramChats;
@@ -260,6 +262,7 @@ export class HouseholdsPage {
   /** Öffnet (bzw. schließt) den Telegram-Abschnitt. */
   protected toggleTelegramChats(householdId: number): void {
     this.disconnectError.set(null);
+    this.disconnectErrorChatId.set(null);
     const isOpen = this.expandedTelegramHouseholdId() === householdId;
     this.expandedTelegramHouseholdId.set(isOpen ? null : householdId);
     // Ohne offenen Abschnitt läuft kein Request.
@@ -289,6 +292,7 @@ export class HouseholdsPage {
     } catch {
       // Die Zeile bleibt stehen, der Dialog schließt (Zustandstabelle).
       this.pendingChatDisconnect.set(null);
+      this.disconnectErrorChatId.set(pending.chat.chatId);
       this.disconnectError.set(
         'Die Verbindung konnte nicht getrennt werden. Bitte später erneut versuchen.',
       );

@@ -15,6 +15,8 @@ export interface TelegramChat {
   readonly chatKind: string;
   /** Die Kennung des freischaltenden Mitglieds. */
   readonly activatedBy: string;
+  /** Der Anzeigename des freischaltenden Mitglieds — fällt auf die Kennung zurück. */
+  readonly activatedByName: string;
   /** True, wenn die Verbindung die eigene ist — nur dann darf getrennt werden. */
   readonly ownConnection: boolean;
   /** Technische Kennung des Chats — wird nicht angezeigt, nur für das Löschen gebraucht. */

@@ -1,6 +1,6 @@
 package de.householdmanager.adapters.inbound.rest.dto;
 
-import de.householdmanager.domain.model.TelegramChat;
+import de.householdmanager.application.port.in.TelegramChatUseCase;
 
 /**
  * Ausgehendes DTO: ein freigeschalteter Telegram-Chat.
@@ -18,21 +18,23 @@ public record TelegramChatResponse(
         String chatName,
         String chatKind,
         String activatedBy,
+        String activatedByName,
         boolean ownConnection) {
 
     /**
-     * Übersetzt das Fachmodell.
+     * Übersetzt die Anzeigewerte.
      *
      * @param currentUserId die angemeldete Person — sie entscheidet, ob die
      *     Verbindung die eigene ist und damit getrennt werden darf (AC13,
      *     AC14).
      */
-    public static TelegramChatResponse from(TelegramChat chat, String currentUserId) {
+    public static TelegramChatResponse from(TelegramChatUseCase.ChatView chat, String currentUserId) {
         return new TelegramChatResponse(
-                chat.getChatId(),
-                chat.getChatName(),
-                chat.getKind().label(),
-                chat.getActivatedBy(),
-                chat.getActivatedBy().equals(currentUserId));
+                chat.chatId(),
+                chat.chatName(),
+                chat.kind().label(),
+                chat.activatedBy(),
+                chat.activatedByName(),
+                chat.activatedBy().equals(currentUserId));
     }
 }

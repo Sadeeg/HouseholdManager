@@ -21,6 +21,7 @@ describe('TelegramChatSection', () => {
       chatName: 'WG Flur',
       chatKind: 'GRUPPE',
       activatedBy: 'alice',
+      activatedByName: 'Alice Muster',
       ownConnection: true,
     },
     {
@@ -28,6 +29,7 @@ describe('TelegramChatSection', () => {
       chatName: 'Direkt',
       chatKind: 'EINZELCHAT',
       activatedBy: 'bob',
+      activatedByName: 'Bob Beispiel',
       ownConnection: false,
     },
   ];
@@ -42,6 +44,7 @@ describe('TelegramChatSection', () => {
     chatsFailed?: boolean;
     disconnecting?: boolean;
     disconnectError?: string | null;
+    disconnectErrorChatId?: string | null;
   }
 
   function open(inputs: Inputs = {}) {
@@ -57,6 +60,7 @@ describe('TelegramChatSection', () => {
     fixture.componentRef.setInput('chatsFailed', inputs.chatsFailed ?? false);
     fixture.componentRef.setInput('disconnecting', inputs.disconnecting ?? false);
     fixture.componentRef.setInput('disconnectError', inputs.disconnectError ?? null);
+    fixture.componentRef.setInput('disconnectErrorChatId', inputs.disconnectErrorChatId ?? null);
     fixture.detectChanges();
     return fixture;
   }
@@ -152,8 +156,8 @@ describe('TelegramChatSection', () => {
     const fixture = open();
 
     const rows = compiled(fixture).querySelectorAll('.telegram-chats__row');
-    expect(rows[0].textContent).toContain('alice');
-    expect(rows[1].textContent).toContain('bob');
+    expect(rows[0].textContent).toContain('Alice Muster');
+    expect(rows[1].textContent).toContain('Bob Beispiel');
   });
 
   it('never shows the technical chat id (Out of Scope des Issues)', () => {
@@ -222,11 +226,23 @@ describe('TelegramChatSection', () => {
   it('shows the error of a failed disconnect below the row (Zustandstabelle)', () => {
     const fixture = open({
       disconnectError: 'Die Verbindung konnte nicht getrennt werden. Bitte später erneut versuchen.',
+      disconnectErrorChatId: CHATS[0].chatId,
     });
 
     const alert = compiled(fixture).querySelector('.telegram-chats__error--row');
     expect(alert?.textContent).toContain('Die Verbindung konnte nicht getrennt werden');
     expect(alert?.getAttribute('role')).toBe('alert');
+  });
+
+  it('shows the error only below the affected row (Zustandstabelle)', () => {
+    const fixture = open({
+      disconnectError: 'Die Verbindung konnte nicht getrennt werden. Bitte später erneut versuchen.',
+      disconnectErrorChatId: CHATS[0].chatId,
+    });
+
+    const rows = compiled(fixture).querySelectorAll('.telegram-chats__row');
+    expect(rows[0].querySelector('.telegram-chats__error--row')).not.toBeNull();
+    expect(rows[1].querySelector('.telegram-chats__error--row')).toBeNull();
   });
 
   // --- Der Bot-Token-Hinweis ------------------------------------------------
@@ -237,6 +253,20 @@ describe('TelegramChatSection', () => {
     expect(compiled(fixture).textContent).toContain(
       'Der Telegram-Bot ist nicht konfiguriert. Ohne Bot-Token lassen sich keine Chats freischalten.',
     );
+  });
+
+  it('shows no code field without a configured bot (Zustandstabelle)', () => {
+    const fixture = open({ botConfigured: false });
+
+    expect(compiled(fixture).querySelector('.telegram-chats__code-value')).toBeNull();
+    expect(compiled(fixture).querySelector('.telegram-chats__copy')).toBeNull();
+  });
+
+  /** Die Chat-Liste bleibt sichtbar: bestehende Verbindungen verschwinden nicht. */
+  it('keeps the chat list visible without a configured bot (Zustandstabelle)', () => {
+    const fixture = open({ botConfigured: false });
+
+    expect(compiled(fixture).querySelectorAll('.telegram-chats__row').length).toBe(2);
   });
 
   it('does not warn when the bot is configured', () => {
@@ -255,11 +285,15 @@ describe('TelegramChatSection', () => {
     expect(compiled(fixture).querySelector('.telegram-chats__copy')).toBeNull();
   });
 
-  it('shows no chat list without a configured bot (Zustandstabelle)', () => {
-    // Die Chat-Liste ist ohne Bot leer: eine Freischaltung wäre unmöglich.
-    const fixture = open({ botConfigured: false });
+  it('shows the empty chat list without a configured bot (Zustandstabelle)', () => {
+    // Die Chat-Liste steht auch ohne Bot — nur ist sie leer: eine
+    // Freischaltung wäre unmöglich.
+    const fixture = open({ botConfigured: false, chats: [] });
 
-    expect(compiled(fixture).querySelector('.telegram-chats__list')).toBeNull();
+    expect(compiled(fixture).querySelector('.telegram-chats__list')).not.toBeNull();
     expect(compiled(fixture).querySelector('.telegram-chats__rows')).toBeNull();
+    expect(compiled(fixture).textContent).toContain(
+      'Kein Telegram-Chat freigeschaltet. Ohne Bot-Token lassen sich keine Chats freischalten.',
+    );
   });
 });

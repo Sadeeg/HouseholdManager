@@ -1,6 +1,6 @@
 package de.householdmanager.adapters.inbound.rest.dto;
 
-import de.householdmanager.domain.model.TelegramChat;
+import de.householdmanager.application.port.in.TelegramChatUseCase;
 import java.util.List;
 
 /**
@@ -11,7 +11,8 @@ import java.util.List;
  */
 public record TelegramChatListResponse(List<TelegramChatResponse> chats) {
 
-    public static TelegramChatListResponse from(List<TelegramChat> chats, String currentUserId) {
+    public static TelegramChatListResponse from(
+            List<TelegramChatUseCase.ChatView> chats, String currentUserId) {
         return new TelegramChatListResponse(chats.stream()
                 .map(chat -> TelegramChatResponse.from(chat, currentUserId))
                 .toList());

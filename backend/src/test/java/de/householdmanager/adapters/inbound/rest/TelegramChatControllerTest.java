@@ -110,18 +110,17 @@ class TelegramChatControllerTest {
     void chats_returnsNameKindAndActivatingMember() throws Exception {
         givenSignedInAs("alice");
         when(telegramChatUseCase.listChats("alice", 1L)).thenReturn(List.of(
-                TelegramChat.builder().id(1L).householdId(1L).chatId(CHAT_ID)
-                        .chatName("WG Flur").kind(TelegramChat.ChatKind.GROUP)
-                        .activatedBy("alice").build(),
-                TelegramChat.builder().id(2L).householdId(1L).chatId("-200")
-                        .chatName("Direkt").kind(TelegramChat.ChatKind.PRIVATE)
-                        .activatedBy("bob").build()));
+                new TelegramChatUseCase.ChatView(CHAT_ID, "WG Flur",
+                        TelegramChat.ChatKind.GROUP, "alice", "Alice Muster"),
+                new TelegramChatUseCase.ChatView("-200", "Direkt",
+                        TelegramChat.ChatKind.PRIVATE, "bob", "Bob Beispiel")));
 
         mockMvc.perform(get("/api/households/1/telegram/chats"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.chats[0].chatName").value("WG Flur"))
                 .andExpect(jsonPath("$.chats[0].chatKind").value("GRUPPE"))
                 .andExpect(jsonPath("$.chats[0].activatedBy").value("alice"))
+                .andExpect(jsonPath("$.chats[0].activatedByName").value("Alice Muster"))
                 .andExpect(jsonPath("$.chats[0].ownConnection").value(true))
                 .andExpect(jsonPath("$.chats[1].chatKind").value("EINZELCHAT"))
                 .andExpect(jsonPath("$.chats[1].ownConnection").value(false));
@@ -133,9 +132,8 @@ class TelegramChatControllerTest {
     void chats_carriesTheChatIdForTheDisconnectCall() throws Exception {
         givenSignedInAs("alice");
         when(telegramChatUseCase.listChats("alice", 1L)).thenReturn(List.of(
-                TelegramChat.builder().id(1L).householdId(1L).chatId(CHAT_ID)
-                        .chatName("WG Flur").kind(TelegramChat.ChatKind.GROUP)
-                        .activatedBy("alice").build()));
+                new TelegramChatUseCase.ChatView(CHAT_ID, "WG Flur",
+                        TelegramChat.ChatKind.GROUP, "alice", "Alice Muster")));
 
         mockMvc.perform(get("/api/households/1/telegram/chats"))
                 .andExpect(status().isOk())

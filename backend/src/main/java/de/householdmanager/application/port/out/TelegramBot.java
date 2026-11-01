@@ -54,6 +54,21 @@ public interface TelegramBot {
     void sendMessage(String chatId, String text);
 
     /**
+     * Name und Art eines Chats in einem Aufruf (AC11).
+     *
+     * <p>Beides kommt aus derselben Chat-Beschreibung bei Telegram — der
+     * Adapter liest sie in einem Request. Die Standardimplementierung
+     * verkettet die beiden Einzelabfragen; ein Adapter, der die Beschreibung
+     * kennt, überschreibt sie.
+     *
+     * @throws de.householdmanager.domain.model.TelegramDeliveryException
+     *     wenn Telegram nicht erreichbar ist.
+     */
+    default ChatInfo chatInfo(String chatId) {
+        return new ChatInfo(chatName(chatId), chatKind(chatId));
+    }
+
+    /**
      * Der Anzeigename eines Chats, wie von Telegram geliefert (AC11).
      *
      * @throws de.householdmanager.domain.model.TelegramDeliveryException
@@ -68,4 +83,13 @@ public interface TelegramBot {
      *     wenn Telegram nicht erreichbar ist.
      */
     ChatKind chatKind(String chatId);
+
+    /**
+     * Die Beschreibung eines Chats: Anzeigename und Art.
+     *
+     * @param name der von Telegram gelieferte Anzeigename.
+     * @param kind die Art des Chats.
+     */
+    record ChatInfo(String name, ChatKind kind) {
+    }
 }

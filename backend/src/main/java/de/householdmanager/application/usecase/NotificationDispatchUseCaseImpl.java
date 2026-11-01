@@ -266,13 +266,18 @@ public class NotificationDispatchUseCaseImpl implements NotificationDispatchUseC
      * <strong>vor</strong> dem Versand — so ist der Zustand des Versuchs
      * jederzeit nachvollziehbar.
      *
-     * <p>Bricht der Versand zwischen dem Speichern des Vermerks und dem
-     * Abschluss ab, bleibt der Vermerk im Zustand {@code PENDING} stehen.
-     * Ein solcher Vermerk wird <strong>nicht</strong> erneut versucht: Telegram
-     * könnte die Nachricht schon angenommen haben, und ein zweiter Versand
-     * liefe auf eine doppelte Zustellung hinaus. Der Wiederholungslauf
-     * nimmt nur Vermerke im Zustand {@code FAILED} auf — also solche, bei
-     * denen der Versand <em>nachweislich</em> fehlgeschlagen ist (AC26).
+     * <p>{@code PENDING} ist ein <strong>flüchtiger Zwischenzustand</strong>:
+     * das Speichern des Vermerks, der Versand und die Fortschreibung auf
+     * {@code DELIVERED}, {@code FAILED} oder {@code REJECTED} passieren in
+     * derselben Transaktion des Laufs. Bricht der Versand dazwischen ab,
+     * wird die Transaktion verworfen — ein dauerhafter {@code PENDING}-Datensatz
+     * entsteht nicht.
+     *
+     * <p>Der Wiederholungslauf nimmt ohnehin nur Vermerke im Zustand
+     * {@code FAILED} auf — also solche, bei denen der Versuch
+     * <em>nachweislich</em> fehlgeschlagen ist (AC26). Ein {@code PENDING} würde
+     * auch nicht wiederholt: Telegram könnte die Nachricht schon angenommen
+     * haben, ein zweiter Versand liefe auf eine doppelte Zustellung hinaus.
      */
     private void send(long householdId, String chatId, String message) {
         NotificationDelivery delivery = deliveryRepository.save(NotificationDelivery.builder()
