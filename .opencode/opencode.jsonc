@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Tool-Ergebnisse werden in **jedem** Folge-Turn mitgeschickt. Kürzen:
+  // Default ist 2000 Zeilen / 51.200 Byte.
+  "tool_output": {
+    "max_lines": 400,
+    "max_bytes": 20000
+  },
+  // Kompaktierung früher auslösen: kleinerer Kontext je Turn.
+  // `keep` = wie viele Tokens frischer Kontext erhalten bleiben,
+  // `buffer` = Anteil des Fensters, der frei bleiben muss, bevor
+  // automatisch kompaktiert wird.
+  "compaction": {
+    "auto": true,
+    "keep": { "tokens": 10000 },
+    "buffer": "30%"
+  },
+  "experimental": {
+    // Subagenten starten keine Subagenten (kein Fan-out, 1 Slot).
+    "subagent_depth": 1,
+    // Kompaktierungs-Zusammenfassung im Hintergrund schreiben.
+    "background_compaction": true
+  }
+}

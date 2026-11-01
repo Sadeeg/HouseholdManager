@@ -141,7 +141,7 @@ npm run build
 ## Anforderungen
 
 Issues sind der Arbeitsstand für Anforderungen. Der Loop aus
-`.opencode/skills/anforderung-loop` führt von der Idee in drei Runden zu
+`.opencode/skills/anforderung` führt von der Idee in drei Runden zu
 einem Issue, das ohne Rückfragen umsetzbar ist:
 
 ```text
