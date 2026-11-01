@@ -14,11 +14,10 @@ import { UserPicker } from './user-picker';
  * Wechselwirkung zweier gleichzeitiger Suchfelder (geteilter Zustand) und
  * das Verhalten beim Verlassen der Route.
  *
- * Zwei Tests sind mit `it.fails` markiert: der Fehlerpfad der Suche ist ein
- * **vorbestehender** Defekt (gegen `origin/main` verifiziert — dort bricht
- * `user-picker.html:20` mit `ResourceValueError` genauso). Sie bleiben als
- * Tripwire stehen: sobald der Defekt behoben ist, schlägt `it.fails` fehl
- * und weist auf die Reparatur hin — Issue #18.
+ * Der Fehlerpfad war bis Issue #18 defekt (`httpResource.value()` wirft im
+ * Fehlerzustand einen `ResourceValueError`) und ist jetzt als normaler Test
+ * festgehalten: die Meldung „Nutzerverzeichnis nicht erreichbar." muss
+ * erscheinen, und die Suche muss sich danach erholen.
  */
 describe('UserPicker — geteilter Zustand (Issue #4)', () => {
   let httpMock: HttpTestingController;
@@ -49,7 +48,7 @@ describe('UserPicker — geteilter Zustand (Issue #4)', () => {
     ) as HTMLInputElement;
   }
 
-  it.fails('shows the error when the user directory is unreachable (Defekt vorbestehend)', async () => {
+  it('shows the error when the user directory is unreachable', async () => {
     const fixture = TestBed.createComponent(UserPicker);
     fixture.detectChanges();
 
@@ -66,7 +65,7 @@ describe('UserPicker — geteilter Zustand (Issue #4)', () => {
     );
   });
 
-  it.fails('recovers from an error: the next search shows results again (Defekt vorbestehend)', async () => {
+  it('recovers from an error: the next search shows results again', async () => {
     const fixture = TestBed.createComponent(UserPicker);
     fixture.detectChanges();
 

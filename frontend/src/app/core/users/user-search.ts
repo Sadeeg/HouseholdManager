@@ -61,9 +61,17 @@ export class UserSearch {
    *
    * Unter zwei Zeichen bleibt die Liste leer — auch wenn die Resource noch
    * einen alten Wert hält: nach `reset()` darf kein Treffer stehen bleiben.
+   *
+   * Im Fehlerzustand wird der Wert der Resource **nicht** gelesen:
+   * `httpResource.value()` wirft dort einen `ResourceValueError`. Ohne diese
+   * Prüfung brach die Komponente während des Renderns ab und die Meldung
+   * „Nutzerverzeichnis nicht erreichbar." kam nie an (Issue #18).
    */
   readonly results = computed<readonly UserRef[]>(() => {
     if (this.query().trim().length < 2) {
+      return NO_USERS;
+    }
+    if (this.searchResource.error() != null) {
       return NO_USERS;
     }
     return this.searchResource.value() ?? NO_USERS;

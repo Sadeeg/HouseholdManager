@@ -62,4 +62,159 @@ describe('UserSearch', () => {
     expect(search.query()).toBe('');
     expect(search.results()).toEqual([]);
   });
+
+  it('reports the error and returns no results instead of throwing', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 500,
+      statusText: 'Server Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // `httpResource.value()` wirft im Fehlerzustand — der Dienst darf den
+    // Wert dort nicht lesen (Issue #18).
+    expect(search.failed()).toBe(true);
+    expect(search.results()).toEqual([]);
+  });
+
+  it('reports the error for a 404 as well', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush('not found', {
+      status: 404,
+      statusText: 'Not Found',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(true);
+    expect(search.results()).toEqual([]);
+  });
+
+  it('reports the error even when the error body is empty', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush(null, {
+      status: 500,
+      statusText: 'Server Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(true);
+    expect(search.results()).toEqual([]);
+  });
+
+  it('reports the error when the backend is unreachable (network error)', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    // Status 0: der Request kommt gar nicht erst an (Backend gestoppt).
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 0,
+      statusText: 'Unknown Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(true);
+    expect(search.results()).toEqual([]);
+  });
+
+  it('reports no error when the query changes during a running request', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    const first = httpMock.expectOne('/api/users/search?q=car');
+
+    // Der Begriff wird gewechselt, während der erste Request läuft: der
+    // Request wird abgebrochen — das ist kein Fehler des Verzeichnisses.
+    search.search('carla');
+    fixture.detectChanges();
+
+    expect(first.cancelled).toBe(true);
+    httpMock.expectOne('/api/users/search?q=carla').flush([
+      { id: 'carla', displayName: 'Carla Simpson' },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(false);
+    expect(search.results()).toEqual([{ id: 'carla', displayName: 'Carla Simpson' }]);
+  });
+
+  it('clears the error when the query is reset', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 500,
+      statusText: 'Server Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(search.failed()).toBe(true);
+
+    search.reset();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(search.failed()).toBe(false);
+    expect(search.results()).toEqual([]);
+  });
+
+  /**
+   * Bekannte Grenze (Issue #18, MINOR-Befund der Abnahme): derselbe
+   * Suchbegriff löst keinen zweiten Request aus — das Signal ändert sich
+   * nicht. Der Fehlerzustand bleibt deshalb stehen, bis der Begriff
+   * geändert wird. Das Testet dieser Fall, damit die Grenze sichtbar
+   * bleibt und nicht unbemerkt verschwindet.
+   */
+  it('keeps the error state when the same query is set again — no second request', async () => {
+    const search = TestBed.inject(UserSearch);
+    const fixture = TestBed.createComponent(Probe);
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    httpMock.expectOne('/api/users/search?q=car').flush('boom', {
+      status: 500,
+      statusText: 'Server Error',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    search.search('car');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    httpMock.expectNone('/api/users/search?q=car');
+    expect(search.failed()).toBe(true);
+    expect(search.results()).toEqual([]);
+  });
 });

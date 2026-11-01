@@ -83,7 +83,7 @@ Nutzer sieht dieselbe Bedienung.
 
 | # | Was | Wo |
 |---|---|---|
-| Issue #18 | **MAJOR aus der Abnahme:** Der Fehlerpfad der Suche ist kaputt — `searchResource.value()` wirft im Fehlerzustand `ResourceValueError`, die Meldung „Nutzerverzeichnis nicht erreichbar." wird nie erreicht. Vorbestehend (gegen `origin/main` verifiziert), nicht durch #4 verursacht; als `it.fails`-Tripwire abgesichert | `frontend/src/app/core/users/user-search.ts` |
+| Issue #18 | **MAJOR aus der Abnahme:** Der Fehlerpfad der Suche ist kaputt — `searchResource.value()` wirft im Fehlerzustand `ResourceValueError`, die Meldung „Nutzerverzeichnis nicht erreichbar." wird nie erreicht. Vorbestehend (gegen `origin/main` verifiziert), nicht durch #4 verursacht; als `it.fails`-Tripwire abgesichert — **erledigt durch Issue #18** (Branch `feature/18-fehlerpfad-personensuche`) | `frontend/src/app/core/users/user-search.ts` |
 | MINOR aus dem Review | `arc42/05_Bausteinsicht.md` führt `core/users/` nicht — im Zuge von #4 nachgetragen | `arc42/05_Bausteinsicht.md` |
 | MINOR aus dem Review | `shared/README.md` nannte `components/user-picker/` nicht und verschwieg den Umweg `shared → core` — im Zuge von #4 nachgetragen | `frontend/src/app/shared/README.md` |
 
