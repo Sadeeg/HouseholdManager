@@ -153,9 +153,19 @@ in die Ausgangsbahn zurückfallen.
 in `core/` wird deshalb `providedIn: 'root'` gestellt. Wird er in einer
 Komponente per `providers: [...]` erzeugt, ist er faktisch ein `shared`-Dienst
 mit eigenem Zustand — dann gehört er nach `shared/` (oder der Grund für den
-geteilten Zustand steht als Kommentar an der Datei). Für
-`core/users/user-search.ts` ist genau das der Fall: eigener Query-Zustand pro
-Verwender, begründet an der Datei — siehe Issue #4.
+geteilten Zustand steht als Kommentar an der Datei).
+
+**Entscheidung zu `core/users/user-search.ts` (Issue #4):** Die Kapsel bleibt
+in `core/` und ist `providedIn: 'root'` — **eine** Instanz für die ganze App.
+Begründung: Das Nutzerverzeichnis ist Infrastruktur wie die Auth (app-weit,
+kein Fachwissen über ein Feature); ein Umzug nach `shared/` würde Backend-Zugriff
+dort hineinbringen, den `shared/README.md` ausschließt. Der Zustand (Query,
+Treffer) ist damit **geteilt**: alle Suchfelder sehen denselben Stand, ein
+Request pro Suchbegriff. Damit jedes Feld frisch startet, setzt der
+`UserPicker` den Zustand beim Anlegen und nach einer Auswahl zurück (`reset()`);
+Treffer werden erst ab zwei Zeichen gezeigt. Wer einen weiteren Verwender
+aufnimmt, muss diese Reset-Regel beachten — sonst erbt er den Zustand eines
+anderen Feldes.
 
 ## Naming (Angular 22)
 

@@ -218,7 +218,7 @@ der Code. Sonst entsteht eine zusätzliche Review-Runde — hier Runde 1 → Kor
 | # | Was | Wo |
 |---|---|---|
 | Issue #3 | Start-Route-Guard ohne Test (Scoping, Umleitung auf die Tafel des zuletzt gewählten Haushalts) | `frontend/src/app/core/auth/start-route.guard.ts` |
-| Issue #4 | Instanz-Strategie der Nutzersuche klären (`core`-Position, nicht root-provided → eine Instanz je Komponente) | `frontend/src/app/core/users/user-search.ts` |
+| Issue #4 | Instanz-Strategie der Nutzersuche klären (`core`-Position, nicht root-provided → eine Instanz je Komponente) — **erledigt**: `UserSearch` ist jetzt `providedIn: 'root'`, der Zustand geteilt, Reset-Regel im Skill und an der Datei | `frontend/src/app/core/users/user-search.ts` |
 | Issue #5 | `UserRefResponse` nach `adapters/inbound/rest/dto/` verschieben | `UserSearchController.java:31` |
 | Issue #8 | Stille Verwerfung von Labels > 60 Zeichen sichtbar machen (Hinweis im Formular, Test) | `TaskUseCaseImpl.java:186` |
 | offen | Branch-Schutz für `main` (PR-Pflicht + Status-Checks) nachweislich nicht gesetzt: PR #2 eröffnete mit `mergeable_state: clean` | GitHub → Settings → Branches |
@@ -266,7 +266,7 @@ verankert, an der sie beim Bauen gebraucht wird:
 | 2 arc42 nachgetragen (MAJOR) | `anforderung-technisch` §7 („im selben Commit wie der Code"); `anforderung-gate` Runde 3 |
 | 2 Labels > 60 Zeichen still verworfen | `backend-ports-adapters` Regel 9 („Kein stilles Verwerfen"); `feature-testing` „Stilles Verwerfen ist ein Fehlerfall"; `anforderung-fachlich` §7 |
 | 2 Start-Route-Guard ohne Test | `feature-testing` Testorte (Navigation/Guards) — Issue #3 |
-| 2 `core`-Dienst wird pro Komponente erzeugt (`UserSearch`) | `frontend-feature-architecture` „`core` heißt: genau eine Instanz" — die Ausnahme `core/users/user-search.ts` ist kommentiert und als Issue #4 geführt |
+| 2 `core`-Dienst wird pro Komponente erzeugt (`UserSearch`) | `frontend-feature-architecture` „`core` heißt: genau eine Instanz" — erledigt in Issue #4: `UserSearch` ist jetzt `providedIn: 'root'` (eine Instanz), der Zustand ist geteilt und die Reset-Regel steht im Skill und an der Datei |
 | 3 Angular-22-Testfallen | `feature-testing` „Die Angular-22-Fallen" (Tabelle) |
 | 4 „Muster nicht nachbauen" | `frontend-feature-architecture` „Fallen"; `ux-design` §3a |
 | 5 Erkenntnisse festhalten | `AGENTS.md` Definition of Done Punkt 6 „Nachbereitung"; `anforderung-loop` „Erkenntnisse werden zu Regeln, nicht nur zu Text" |
