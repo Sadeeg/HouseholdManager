@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Ausgehender Adapter: setzt den ausgehenden Port auf JPA um.
@@ -24,7 +23,6 @@ public class NotificationDeliveryRepositoryAdapter implements NotificationDelive
     private final Clock clock;
 
     @Override
-    @Transactional(readOnly = true)
     public List<NotificationDelivery> findRetryable() {
         return deliveryJpaRepository
                 .findAllByCompletedFalseAndStatusAndAttemptCountLessThan(
@@ -36,15 +34,6 @@ public class NotificationDeliveryRepositoryAdapter implements NotificationDelive
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<NotificationDelivery> findByHousehold(long householdId) {
-        return deliveryJpaRepository.findAllByHouseholdId(householdId).stream()
-                .map(this::toDomain)
-                .toList();
-    }
-
-    @Override
-    @Transactional
     public NotificationDelivery save(NotificationDelivery delivery) {
         NotificationDeliveryJpaEntity entity = deliveryJpaRepository.save(NotificationDeliveryJpaEntity.builder()
                 .id(delivery.getId())

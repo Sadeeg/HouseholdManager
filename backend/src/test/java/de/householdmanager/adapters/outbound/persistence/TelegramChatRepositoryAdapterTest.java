@@ -1,6 +1,7 @@
 package de.householdmanager.adapters.outbound.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.householdmanager.config.ClockConfig;
 import de.householdmanager.domain.model.TelegramChat;
@@ -14,6 +15,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
@@ -38,6 +40,9 @@ class TelegramChatRepositoryAdapterTest {
     @Autowired
     private HouseholdJpaRepository householdJpaRepository;
 
+    @Autowired
+    private TelegramChatJpaRepository chatJpaRepository;
+
     private long householdA;
     private long householdB;
 
@@ -56,7 +61,6 @@ class TelegramChatRepositoryAdapterTest {
         String second = adapter.ensureCode(householdA, "bob");
 
         assertThat(second).isEqualTo(first);
-        assertThat(adapter.findCode(householdA)).contains(first);
     }
 
     /** Der Code besteht aus Ziffern — er wird im Chat abgetippt. */
@@ -105,11 +109,28 @@ class TelegramChatRepositoryAdapterTest {
         assertThat(stored.getActivatedBy()).isEqualTo("alice");
     }
 
-    /** AC7: derselbe Chat wird für einen Haushalt nicht doppelt angelegt. */
+    /**
+ * AC7: derselbe Chat wird für einen Haushalt nicht doppelt angelegt. Die
+ * Eindeutigkeit sichert der Unique-Index über (Haushalt, Chat-ID) — der
+ * Anwendungscode prüft es zusätzlich, bevor er anlegt.
+ */
     @Test
-    void save_doesNotCreateASecondChatForTheSameHouseholdAndChatId() {
+    void save_rejectsASecondChatForTheSameHouseholdAndChatId() {
         adapter.save(chat(householdA, "-100", "WG Flur", TelegramChat.ChatKind.GROUP, "alice"));
-        adapter.save(chat(householdA, "-100", "WG Flur neu", TelegramChat.ChatKind.GROUP, "alice"));
+
+        // Der zweite Versuch verletzt den Unique-Index. Der Verstoß wird erst
+        // beim Flush der Transaktion sichtbar — deshalb wird er hier
+        // ausgelöst und die Anzahl der Chats **vorher** geprüft.
+        assertThatThrownBy(() -> {
+            adapter.save(chat(householdA, "-100", "WG Flur neu", TelegramChat.ChatKind.GROUP, "alice"));
+            chatJpaRepository.flush();
+        }).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /** Ein Chat wird für einen Haushalt genau einmal angelegt. */
+    @Test
+    void save_storesOneChatForTheHouseholdAndChatId() {
+        adapter.save(chat(householdA, "-100", "WG Flur", TelegramChat.ChatKind.GROUP, "alice"));
 
         assertThat(adapter.findByHousehold(householdA)).hasSize(1);
     }

@@ -33,6 +33,9 @@ class NotificationDeliveryRepositoryAdapterTest {
     private NotificationDeliveryRepositoryAdapter adapter;
 
     @Autowired
+    private NotificationDeliveryJpaRepository deliveryJpaRepository;
+
+    @Autowired
     private HouseholdJpaRepository householdJpaRepository;
 
     private long householdA;
@@ -49,12 +52,12 @@ class NotificationDeliveryRepositoryAdapterTest {
         adapter.save(delivery(householdA, "chat-1", "Müllabfuhr morgen", 2,
                 NotificationDelivery.Status.FAILED, "nicht erreichbar", false));
 
-        NotificationDelivery stored = adapter.findByHousehold(householdA).getFirst();
+        NotificationDeliveryJpaEntity stored = deliveryJpaRepository.findAll().getFirst();
         assertThat(stored.getContent()).isEqualTo("Müllabfuhr morgen");
         assertThat(stored.getAttemptCount()).isEqualTo(2);
         assertThat(stored.getStatus()).isEqualTo(NotificationDelivery.Status.FAILED);
         assertThat(stored.getLastError()).isEqualTo("nicht erreichbar");
-        assertThat(stored.isCompleted()).isFalse();
+        assertThat(stored.getCompleted()).isFalse();
     }
 
     /** AC26: ein fehlgeschlagener, offener Vermerk wird erneut versucht. */
@@ -101,7 +104,7 @@ class NotificationDeliveryRepositoryAdapterTest {
 
         adapter.save(saved.failed(Instant.now(), "nicht erreichbar"));
 
-        NotificationDelivery stored = adapter.findByHousehold(householdA).getFirst();
+        NotificationDeliveryJpaEntity stored = deliveryJpaRepository.findAll().getFirst();
         assertThat(stored.getAttemptCount()).isEqualTo(1);
         assertThat(stored.getStatus()).isEqualTo(NotificationDelivery.Status.FAILED);
     }

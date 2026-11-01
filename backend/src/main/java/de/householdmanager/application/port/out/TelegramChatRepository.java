@@ -32,22 +32,11 @@ public interface TelegramChatRepository {
     /** Der Chat eines Haushalts mit dieser Chat-ID; leer, wenn keiner existiert. */
     Optional<TelegramChat> findByHouseholdAndChatId(long householdId, String chatId);
 
-    /** Der Freischalt-Code eines Haushalts; leer, wenn noch keiner erzeugt wurde. */
-    Optional<String> findCode(long householdId);
-
-    /**
-     * Der Haushalt, zu dem ein Code gehört; leer, wenn der Code zu keinem
-     * Haushalt passt (AC9, AC10).
-     *
-     * <p>Der Code ist nicht vorhersagbar und eindeutig — zu einem Code gehört
-     * höchstens ein Haushalt.
-     */
-    Optional<Long> findHouseholdByCode(String code);
-
     /**
      * Der Haushalt, zu dem ein Code gehört, <strong>und</strong> die Person,
      * die den Code angefordert hat — die freischaltende Person der
-     * Verbindung (AC13).
+     * Verbindung (AC13). Leer, wenn der Code zu keinem Haushalt passt
+     * (AC9, AC10).
      *
      * <p>Der Code wird im Namen eines Mitglieds angefordert und im Chat an
      * den Bot geschickt; der Bot kennt keine Person. Deshalb trägt der Code

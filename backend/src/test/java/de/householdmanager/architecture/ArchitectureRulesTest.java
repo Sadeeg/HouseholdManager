@@ -4,6 +4,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -70,14 +72,28 @@ class ArchitectureRulesTest {
                             "tools.jackson..")
                     .because("die Anwendung kennt nur domain und ihre eigenen Ports");
 
+    /**
+     * Die Transaktionsgrenze liegt an der Use Case — nicht im Adapter.
+     *
+     * <p>Die Regel prüft <strong>Methoden</strong>: im Projekt trägt keine
+     * Klasse {@code @Transactional} auf Klassenebene, sondern jede
+     * transaktionale Methode einzeln. Eine Prüfung auf Klassenebene hätte
+     * deshalb kein einziges Subjekt gehabt und keinen Verstoß gefunden.
+     */
     @ArchTest
     static final ArchRule transaktionen_liegen_an_der_use_case =
             classes()
-                    .that()
-                    .areAnnotatedWith(Transactional.class)
+                    .that(new DescribedPredicate<JavaClass>("mit einer transaktionalen Methode") {
+                        @Override
+                        public boolean test(JavaClass candidate) {
+                            return candidate.getMethods().stream()
+                                    .anyMatch(method -> method.tryGetAnnotationOfType(Transactional.class)
+                                            .isPresent());
+                        }
+                    })
                     .should()
                     .resideInAPackage("..application.usecase..")
-                    .because("Transaktionen gehören an die Use-Case-Grenze, nicht in den Adapter")
+                    .because("Transaktionen gehören an der Use-Case-Grenze, nicht in den Adapter")
                     // Ohne Produktionscode (z. B. im Architektur-Test selbst)
                     // hat die Regel nichts zu prüfen — das ist kein Verstoß.
                     .allowEmptyShould(true);

@@ -381,16 +381,6 @@ class NotificationDispatchUseCaseImplTest {
         }
 
         @Override
-        public Optional<String> findCode(long householdId) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Long> findHouseholdByCode(String code) {
-            return Optional.empty();
-        }
-
-        @Override
         public Optional<CodeOwner> findCodeOwner(String code) {
             return Optional.empty();
         }
@@ -419,11 +409,6 @@ class NotificationDispatchUseCaseImplTest {
         @Override
         public List<NotificationDelivery> findRetryable() {
             return deliveries.stream().filter(NotificationDelivery::isRetryable).toList();
-        }
-
-        @Override
-        public List<NotificationDelivery> findByHousehold(long householdId) {
-            return deliveries.stream().filter(d -> d.getHouseholdId() == householdId).toList();
         }
 
         @Override

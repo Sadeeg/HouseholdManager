@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Ausgehender Adapter: setzt den ausgehenden Port auf JPA um.
@@ -44,7 +43,6 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<TelegramChat> findByHousehold(long householdId) {
         return chatJpaRepository.findAllByHouseholdIdOrderByChatNameAsc(householdId).stream()
                 .map(this::toDomain)
@@ -52,31 +50,16 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<TelegramChat> findByHouseholdAndChatId(long householdId, String chatId) {
         return chatJpaRepository.findByHouseholdIdAndChatId(householdId, chatId).map(this::toDomain);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Long> findHouseholdsWithChats() {
         return chatJpaRepository.findHouseholdIds();
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<String> findCode(long householdId) {
-        return codeJpaRepository.findByHouseholdId(householdId).map(TelegramActivationCodeJpaEntity::getCode);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Long> findHouseholdByCode(String code) {
-        return codeJpaRepository.findByCode(code).map(TelegramActivationCodeJpaEntity::getHouseholdId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Optional<CodeOwner> findCodeOwner(String code) {
         return codeJpaRepository.findByCode(code)
                 .map(entity -> new CodeOwner(entity.getHouseholdId(), entity.getActivatedBy()));
@@ -88,7 +71,6 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
      * wenn ein anderes Mitglied ihn anfordert.
      */
     @Override
-    @Transactional
     public String ensureCode(long householdId, String userId) {
         return codeJpaRepository.findByHouseholdId(householdId)
                 .map(TelegramActivationCodeJpaEntity::getCode)
@@ -116,22 +98,15 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
     }
 
     /**
-     * Der Chat wird gespeichert. Ein bereits vorhandener Chat für denselben
-     * Haushalt wird <strong>nicht</strong> doppelt angelegt (AC7): der
- * vorhandene Eintrag bleibt, und nur sein Anzeigename wird aktualisiert.
+     * Der Chat wird angelegt.
+ *
+     * <p>Ein bereits vorhandener Chat für denselben Haushalt wird <strong>nicht</strong>
+     * doppelt angelegt (AC7): die Eindeutigkeit sichert der Use Case (er
+     * kehrt bei einem vorhandenen Chat zurück) und der Unique-Index über
+     * (Haushalt, Chat-ID) in der Migration {@code V6}.
  */
     @Override
-    @Transactional
     public TelegramChat save(TelegramChat chat) {
-        Optional<TelegramChatJpaEntity> existing =
-                chatJpaRepository.findByHouseholdIdAndChatId(chat.getHouseholdId(), chat.getChatId());
-        if (existing.isPresent()) {
-            TelegramChatJpaEntity entity = existing.get();
-            entity.setChatName(chat.getChatName());
-            entity.setKind(chat.getKind());
-            return toDomain(entity);
-        }
-
         TelegramChatJpaEntity entity = chatJpaRepository.save(TelegramChatJpaEntity.builder()
                 .id(chat.getId())
                 .householdId(chat.getHouseholdId())
@@ -145,7 +120,6 @@ public class TelegramChatRepositoryAdapter implements TelegramChatRepository {
     }
 
     @Override
-    @Transactional
     public void delete(long householdId, String chatId) {
         chatJpaRepository.findByHouseholdIdAndChatId(householdId, chatId)
                 .ifPresent(chatJpaRepository::delete);

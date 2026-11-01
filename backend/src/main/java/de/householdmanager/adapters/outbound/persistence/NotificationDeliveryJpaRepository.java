@@ -16,7 +16,4 @@ interface NotificationDeliveryJpaRepository extends JpaRepository<NotificationDe
      */
     List<NotificationDeliveryJpaEntity> findAllByCompletedFalseAndStatusAndAttemptCountLessThan(
             NotificationDelivery.Status status, int attemptCount);
-
-    /** Die Vermerke eines Haushalts. */
-    List<NotificationDeliveryJpaEntity> findAllByHouseholdId(long householdId);
 }

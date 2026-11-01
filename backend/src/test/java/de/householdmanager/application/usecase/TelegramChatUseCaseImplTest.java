@@ -303,21 +303,6 @@ class TelegramChatUseCaseImplTest {
         }
 
         @Override
-        public Optional<String> findCode(long householdId) {
-            return Optional.ofNullable(codes.get(householdId));
-        }
-
-        @Override
-        public Optional<Long> findHouseholdByCode(String code) {
-            return findCodeOwner(code).map(CodeOwner::householdId);
-        }
-
-        /**
-         * Der Code gehört zum Haushalt, der ihn angefordert hat — und zu der
-         * Person, die ihn angefordert hat. Ein unbekannter Code (Flag
-         * {@code codeKnown}) gehört zu keinem Haushalt.
-         */
-        @Override
         public Optional<CodeOwner> findCodeOwner(String code) {
             if (!codeKnown) {
                 return Optional.empty();

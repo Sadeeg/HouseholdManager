@@ -19,8 +19,5 @@ public interface NotificationDeliveryRepository {
     /** Die Vermerke, die einen weiteren Versuch brauchen (AC26). */
     List<NotificationDelivery> findRetryable();
 
-    /** Die Vermerke eines Haushalts — für die Fehlerisolierung je Haushalt. */
-    List<NotificationDelivery> findByHousehold(long householdId);
-
     NotificationDelivery save(NotificationDelivery delivery);
 }
